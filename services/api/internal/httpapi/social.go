@@ -32,15 +32,31 @@ func (s *Server) syncUser(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "INVALID_WALLET", "wallet_address must be a Solana public key")
 		return
 	}
-	// This route doesn't require auth, but when a token is sent
-	// it must belong to the user being synced.
-	id, present, err := s.optionalPrivyID(r.Context(), r)
-	if present && err != nil {
+	// Requires the user's own token, and the wallet must be one of the
+	// Solana wallets Privy has linked to them; otherwise anyone who knew a
+	// Privy id could rebind that user's wallet.
+	token, ok := bearer(r)
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing Authorization: Bearer <privy access token>")
+		return
+	}
+	id, err := s.verifier.Verify(r.Context(), token)
+	if err != nil {
 		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "invalid or expired access token")
 		return
 	}
-	if present && id != in.PrivyUserID {
+	if id != in.PrivyUserID {
 		writeError(w, http.StatusForbidden, "FORBIDDEN", "token does not belong to privy_user_id")
+		return
+	}
+	owns, err := s.wallets.OwnsSolanaWallet(r.Context(), in.PrivyUserID, in.WalletAddress)
+	if err != nil {
+		s.log.Error("privy wallet lookup", "err", err)
+		writeError(w, http.StatusBadGateway, "PRIVY_UNAVAILABLE", "could not verify the wallet with Privy")
+		return
+	}
+	if !owns {
+		writeError(w, http.StatusForbidden, "WALLET_NOT_LINKED", "wallet_address is not a Solana wallet linked to this Privy user")
 		return
 	}
 	if in.DisplayName != nil {

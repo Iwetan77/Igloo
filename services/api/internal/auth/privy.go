@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -152,3 +153,61 @@ func (DevVerifier) Verify(_ context.Context, token string) (string, error) {
 	}
 	return id, nil
 }
+
+// WalletChecker reports whether a Solana wallet address belongs to a user.
+type WalletChecker interface {
+	OwnsSolanaWallet(ctx context.Context, privyUserID, address string) (bool, error)
+}
+
+// PrivyWallets looks the user up with Privy's server API (app id + secret)
+// and checks their linked Solana wallets.
+type PrivyWallets struct {
+	appID, appSecret string
+	baseURL          string
+	http             *http.Client
+}
+
+func NewPrivyWallets(appID, appSecret string) *PrivyWallets {
+	return &PrivyWallets{appID: appID, appSecret: appSecret, baseURL: "https://auth.privy.io", http: &http.Client{Timeout: 10 * time.Second}}
+}
+
+func (p *PrivyWallets) OwnsSolanaWallet(ctx context.Context, privyUserID, address string) (bool, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.baseURL+"/api/v1/users/"+url.PathEscape(privyUserID), nil)
+	if err != nil {
+		return false, err
+	}
+	req.SetBasicAuth(p.appID, p.appSecret)
+	req.Header.Set("privy-app-id", p.appID)
+	resp, err := p.http.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("privy users api: status %d", resp.StatusCode)
+	}
+	var u struct {
+		LinkedAccounts []struct {
+			Type      string `json:"type"`
+			ChainType string `json:"chain_type"`
+			Address   string `json:"address"`
+		} `json:"linked_accounts"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&u); err != nil {
+		return false, err
+	}
+	for _, a := range u.LinkedAccounts {
+		if a.Type == "wallet" && a.ChainType == "solana" && a.Address == address {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// AnyWallet accepts every wallet. Used with AUTH_MODE=dev only.
+type AnyWallet struct{}
+
+func (AnyWallet) OwnsSolanaWallet(context.Context, string, string) (bool, error) { return true, nil }

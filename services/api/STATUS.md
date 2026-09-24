@@ -23,10 +23,12 @@ Branch: `backend`.
    resolved or cancelled, and Panta's API only supports primary buys. So a successful
    quote → build needs a market that is actually in its primary phase: a new Panta listing,
    or one we create (costs real USDC).
-3. **`/users/sync` is unauthenticated per the API spec.** Anyone who knows a Privy user id can
-   rebind that user's wallet and display name. The backend enforces a match whenever a token
-   *is* sent. I recommend making the route require auth and having the frontend
-   always send the token.
+3. **`/users/sync` now requires the user's Privy token** (401 without it) and checks with
+   Privy's server API (app id + secret) that `wallet_address` is a **Solana** wallet linked to
+   that user (`403 WALLET_NOT_LINKED` otherwise). Before this, anyone who knew a Privy id could
+   rebind that user's wallet.
+4. **Enable Solana embedded wallets in Privy.** The reused Privy app's existing users only have
+   Ethereum wallets, and a sync with an Ethereum address is rejected.
 
 ## Additions beyond the original API spec
 

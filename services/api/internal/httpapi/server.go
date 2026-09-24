@@ -19,16 +19,18 @@ type Server struct {
 	store    *store.Store
 	panta    *panta.Client
 	verifier auth.Verifier
+	wallets  auth.WalletChecker
 	orders   *orderSessions
 	markets  *marketCache
 	log      *slog.Logger
 }
 
-func New(st *store.Store, pc *panta.Client, v auth.Verifier, log *slog.Logger) *Server {
+func New(st *store.Store, pc *panta.Client, v auth.Verifier, wc auth.WalletChecker, log *slog.Logger) *Server {
 	return &Server{
 		store:    st,
 		panta:    pc,
 		verifier: v,
+		wallets:  wc,
 		orders:   newOrderSessions(),
 		markets:  newMarketCache(pc),
 		log:      log,

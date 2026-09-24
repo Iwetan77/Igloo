@@ -57,8 +57,8 @@ func Load() (Config, error) {
 	}
 	switch c.AuthMode {
 	case "privy":
-		if c.PrivyAppID == "" {
-			return c, fmt.Errorf("AUTH_MODE=privy requires PRIVY_APP_ID (set AUTH_MODE=dev for local curl testing)")
+		if c.PrivyAppID == "" || c.PrivyAppSecret == "" {
+			return c, fmt.Errorf("AUTH_MODE=privy requires PRIVY_APP_ID and PRIVY_APP_SECRET (set AUTH_MODE=dev for local curl testing)")
 		}
 	case "dev":
 	default:

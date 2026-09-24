@@ -41,14 +41,15 @@ func run(log *slog.Logger) error {
 	defer st.Close()
 
 	var verifier auth.Verifier = auth.NewPrivyVerifier(cfg.PrivyAppID)
+	var wallets auth.WalletChecker = auth.NewPrivyWallets(cfg.PrivyAppID, cfg.PrivyAppSecret)
 	if cfg.AuthMode == "dev" {
-		log.Warn("AUTH_MODE=dev: accepting unsigned dev:<privy_user_id> tokens; never use in production")
-		verifier = auth.DevVerifier{}
+		log.Warn("AUTH_MODE=dev: accepting unsigned dev:<privy_user_id> tokens and any wallet; never use in production")
+		verifier, wallets = auth.DevVerifier{}, auth.AnyWallet{}
 	}
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpapi.New(st, panta.New(cfg.PantaBaseURL, cfg.PantaAPIKey), verifier, log).Handler(),
+		Handler:           httpapi.New(st, panta.New(cfg.PantaBaseURL, cfg.PantaAPIKey), verifier, wallets, log).Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	errc := make(chan error, 1)
