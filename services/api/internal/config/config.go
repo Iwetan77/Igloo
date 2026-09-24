@@ -10,9 +10,8 @@ import (
 type Config struct {
 	Port string
 
-	// PantaMode is kept because the API spec names the variable, but only
-	// "live" is supported: Panta trades on Solana mainnet only and this
-	// service does not mock it.
+	// PantaMode only supports "live": Panta trades on Solana mainnet only
+	// and this service does not mock it.
 	PantaMode    string
 	PantaAPIKey  string
 	PantaBaseURL string
@@ -20,8 +19,7 @@ type Config struct {
 	SupabaseURL            string
 	SupabaseServiceRoleKey string
 	// DatabaseURL is the Postgres connection string for the Supabase database.
-	// Not in the API spec's env list: the service role key alone cannot open a
-	// Postgres connection. Required.
+	// The service role key alone cannot open a Postgres connection. Required.
 	DatabaseURL string
 
 	SolanaRPCURL string

@@ -1,7 +1,7 @@
 # services/api
 
-Go backend for Igloo. Implements `/api/v1` on top of
-live Panta (Solana mainnet) and the Supabase Postgres schema from §2.
+Go backend for Igloo. Implements the `/api/v1` routes on top of live Panta (Solana mainnet)
+and the Supabase Postgres schema in `supabase/migrations`.
 
 ## Run
 

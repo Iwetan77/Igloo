@@ -32,7 +32,7 @@ func (s *Server) syncUser(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "INVALID_WALLET", "wallet_address must be a Solana public key")
 		return
 	}
-	// The API spec doesn't mark this route (auth), but when a token is sent
+	// This route doesn't require auth, but when a token is sent
 	// it must belong to the user being synced.
 	id, present, err := s.optionalPrivyID(r.Context(), r)
 	if present && err != nil {

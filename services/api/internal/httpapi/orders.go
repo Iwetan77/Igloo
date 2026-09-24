@@ -12,7 +12,7 @@ import (
 )
 
 // orderSession remembers what Panta needs across the buy flow but the
-// API spec's request bodies don't carry: the buyer wallet (needed by build)
+// API's request bodies don't carry: the buyer wallet (needed by build)
 // and Panta's orderId (needed by submit/verify, keyed by quote or signature).
 // In-process only: a restart mid-buy loses the session and the client must
 // requote. The service is meant to run as a single instance.
@@ -106,7 +106,7 @@ func (s *Server) quoteOrder(w http.ResponseWriter, r *http.Request) {
 		PantaMarketID string      `json:"panta_market_id"`
 		Side          string      `json:"side"`
 		USDCAmount    json.Number `json:"usdc_amount"`
-		// Not in the API spec: Panta needs the buyer wallet at quote time.
+		// Optional: Panta needs the buyer wallet at quote time.
 		// Signed-in callers can omit it; the synced user's wallet is used.
 		WalletAddress string `json:"wallet_address"`
 	}

@@ -7,7 +7,7 @@ Branch: `backend`.
 1. **Every Panta trade is real mainnet money.** Details are in `docs/panta-notes.md`. Panta
    has no devnet. `pk_test_` keys return canned fixtures that touch no chain. Per your
    instruction, **nothing is mocked**. The service runs only against live Panta and requires
-   a `pk_live_` key. `PANTA_MODE` is still read (the API spec names it), but only `live` is
+   a `pk_live_` key. `PANTA_MODE` is still read, but only `live` is
    accepted.
 2. **Right now no mainnet market is open for buying.** The quote calls do hit real mainnet
    markets on live Panta, and Panta refuses them. Rechecked 2026-09-24 ~23:30 WAT. The
@@ -25,20 +25,20 @@ Branch: `backend`.
    or one we create (costs real USDC).
 3. **`/users/sync` is unauthenticated per the API spec.** Anyone who knows a Privy user id can
    rebind that user's wallet and display name. The backend enforces a match whenever a token
-   *is* sent. I recommend marking the route `(auth)` in the API spec and having the frontend
+   *is* sent. I recommend making the route require auth and having the frontend
    always send the token.
 
 ## Additions beyond the original API spec
 
 | What | Why |
 |---|---|
-| New env var `DATABASE_URL` (required) | The API spec says "talk to Postgres directly with `SUPABASE_SERVICE_ROLE_KEY`", but a service-role key can't open a Postgres connection. That needs the DB connection string. |
+| New env var `DATABASE_URL` (required) | The plan was to talk to Postgres directly with `SUPABASE_SERVICE_ROLE_KEY`, but a service-role key can't open a Postgres connection. That needs the DB connection string. |
 | New env var `AUTH_MODE` (`privy` default, or `dev`) | `dev` accepts `Bearer dev:<privy_user_id>` so routes can be tested with curl without a Privy login. It logs a warning at startup. Never set it in a deployed env. |
 | New env var `PORT` (default 8080) | Standard. |
-| `POST /orders/quote` also accepts an optional `wallet_address` | Panta needs the buyer wallet at quote time and the API spec body has none. If a valid Bearer token for a synced user is sent, that user's wallet is used and `wallet_address` can be omitted. Frontend: just send the token. |
+| `POST /orders/quote` also accepts an optional `wallet_address` | Panta needs the buyer wallet at quote time and the spec'd body has none. If a valid Bearer token for a synced user is sent, that user's wallet is used and `wallet_address` can be omitted. Frontend: just send the token. |
 | Protected routes return `403 USER_NOT_SYNCED` | Valid token, but `/users/sync` hasn't been called for that Privy user yet. Bad or missing token is `401`. |
 
-## Concrete types the API spec left open
+## Concrete types the spec left open
 
 - Prices, shares and fees are JSON **numbers** (`yes_price`, `no_price`, `fee_usdc`,
   `estimated_shares`, `shares`). `usdc_amount` accepts a number or numeric string.

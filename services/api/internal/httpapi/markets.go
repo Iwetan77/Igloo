@@ -7,7 +7,7 @@ import (
 	"github.com/Iwetan77/Igloo/services/api/internal/store"
 )
 
-// Stretch routes : market creation and win claims. The wallet
+// Market creation and win claims. The wallet
 // is always the signed-in user's, never taken from the body.
 
 func (s *Server) marketQuote(w http.ResponseWriter, r *http.Request, u store.User) {
