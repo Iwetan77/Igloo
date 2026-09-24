@@ -34,6 +34,7 @@ Branch: `backend`.
 
 | What | Why |
 |---|---|
+| `POST /uploads/video` (auth) | Video posts need somewhere to put the file. It returns a one-time Supabase Storage signed upload URL for the public `videos` bucket, so no anon write policy is needed. |
 | New env var `DATABASE_URL` (required) | The plan was to talk to Postgres directly with `SUPABASE_SERVICE_ROLE_KEY`, but a service-role key can't open a Postgres connection. That needs the DB connection string. |
 | New env var `AUTH_MODE` (`privy` default, or `dev`) | `dev` accepts `Bearer dev:<privy_user_id>` so routes can be tested with curl without a Privy login. It logs a warning at startup. Never set it in a deployed env. |
 | New env var `PORT` (default 8080) | Standard. |
@@ -141,6 +142,9 @@ POST /markets/quote  (no token)             -> 401
 ```
 
 ## Blocked on
+
+- **Owner:** `SUPABASE_SERVICE_ROLE_KEY` (the `sb_secret_…` key) in `services/api/.env`, then the
+  `videos` bucket gets created and uploads are tested end to end.
 
 - **Owner:** a funded mainnet wallet and a market in primary phase, to run a real buy end to end.
   Also a decision on flag 3.

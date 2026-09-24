@@ -33,6 +33,22 @@ go run .
 
 The quote → order mapping lives in process memory, so run a single instance.
 
+## Video uploads
+
+1. `POST /uploads/video` (auth) with `{ "content_type": "video/mp4" | "video/webm" | "video/quicktime" }`
+   returns `{ path, token, upload_url, public_url }`.
+2. The browser uploads with `supabase.storage.from("videos").uploadToSignedUrl(path, token, file)`.
+3. `POST /posts` with `video_url: public_url`.
+
+The `videos` bucket is public-read with no anon write policy. Only backend-signed URLs can
+upload. This needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; without them the route returns 503.
+
+## Tests
+
+`go test ./...` runs everything. The store tests start a real Postgres (embedded-postgres) and
+apply `supabase/migrations/*.sql` from the repo root. Point `IGLOO_MIGRATIONS_DIR` elsewhere
+if needed, or use `-short` to skip them.
+
 ## Errors
 
 Every error is `{ "code": "...", "message": "...", "fields"?: {...} }`. Panta's business
