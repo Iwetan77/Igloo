@@ -75,7 +75,7 @@ Each app has a `.env.example` in its own directory:
   `SUPABASE_SERVICE_ROLE_KEY`, `SOLANA_RPC_URL`, `PRIVY_APP_ID`,
   `PRIVY_APP_SECRET`.
 
-The variable names are fixed by the shared contract — don't rename them. Set
+These are the exact variable names the apps read — don't rename them. Set
 `PANTA_MODE=mock` to develop without a live Panta account.
 
 ## 5. Run everything side by side

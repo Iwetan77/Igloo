@@ -1,4 +1,4 @@
--- Igloo initial schema (verbatim from IGLOO_CONTRACT.md Section 2)
+-- Igloo initial schema
 
 create table users (
   id uuid primary key default gen_random_uuid(),
