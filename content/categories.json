@@ -1,0 +1,10 @@
+[
+  { "id": "crypto", "label": "Crypto" },
+  { "id": "politics", "label": "Politics" },
+  { "id": "sports", "label": "Sports" },
+  { "id": "entertainment", "label": "Entertainment" },
+  { "id": "finance", "label": "Finance" },
+  { "id": "science", "label": "Science" },
+  { "id": "world", "label": "World" },
+  { "id": "other", "label": "Other" }
+]

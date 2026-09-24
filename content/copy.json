@@ -1,0 +1,11 @@
+{
+  "feed.empty": "No posts yet. Be the first to share your take on a market.",
+  "buy.error.rejected": "Signature declined. You can try again when you're ready.",
+  "buy.error.expired": "This quote has expired. Refresh and try again.",
+  "buy.error.broadcast": "Couldn't submit your order. Please try again.",
+  "share.fallback": "Link copied to your clipboard. Share it anywhere.",
+  "onboarding.blurb": "Watch predictions, share your own takes, and trade YES or NO on the markets that matter to you.",
+  "comment.placeholder": "Add a comment…",
+  "comments.empty": "No comments yet. Start the conversation.",
+  "error.generic": "Something went wrong. Please try again."
+}
