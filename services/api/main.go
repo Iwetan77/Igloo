@@ -15,6 +15,7 @@ import (
 	"github.com/Iwetan77/Igloo/services/api/internal/config"
 	"github.com/Iwetan77/Igloo/services/api/internal/httpapi"
 	"github.com/Iwetan77/Igloo/services/api/internal/panta"
+	"github.com/Iwetan77/Igloo/services/api/internal/storage"
 	"github.com/Iwetan77/Igloo/services/api/internal/store"
 )
 
@@ -47,9 +48,16 @@ func run(log *slog.Logger) error {
 		verifier, wallets = auth.DevVerifier{}, auth.AnyWallet{}
 	}
 
+	var sc *storage.Client
+	if cfg.SupabaseURL != "" && cfg.SupabaseServiceRoleKey != "" {
+		sc = storage.New(cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
+	} else {
+		log.Warn("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set: POST /uploads/video will return 503")
+	}
+
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpapi.New(st, panta.New(cfg.PantaBaseURL, cfg.PantaAPIKey), verifier, wallets, log).Handler(),
+		Handler:           httpapi.New(st, panta.New(cfg.PantaBaseURL, cfg.PantaAPIKey), verifier, wallets, sc, log).Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	errc := make(chan error, 1)

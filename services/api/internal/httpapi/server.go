@@ -12,6 +12,7 @@ import (
 
 	"github.com/Iwetan77/Igloo/services/api/internal/auth"
 	"github.com/Iwetan77/Igloo/services/api/internal/panta"
+	"github.com/Iwetan77/Igloo/services/api/internal/storage"
 	"github.com/Iwetan77/Igloo/services/api/internal/store"
 )
 
@@ -20,17 +21,19 @@ type Server struct {
 	panta    *panta.Client
 	verifier auth.Verifier
 	wallets  auth.WalletChecker
+	storage  *storage.Client // nil when Supabase Storage isn't configured
 	orders   *orderSessions
 	markets  *marketCache
 	log      *slog.Logger
 }
 
-func New(st *store.Store, pc *panta.Client, v auth.Verifier, wc auth.WalletChecker, log *slog.Logger) *Server {
+func New(st *store.Store, pc *panta.Client, v auth.Verifier, wc auth.WalletChecker, sc *storage.Client, log *slog.Logger) *Server {
 	return &Server{
 		store:    st,
 		panta:    pc,
 		verifier: v,
 		wallets:  wc,
+		storage:  sc,
 		orders:   newOrderSessions(),
 		markets:  newMarketCache(pc),
 		log:      log,
@@ -52,6 +55,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET "+p+"/orders/verify", s.verifyOrder)
 	mux.HandleFunc("GET "+p+"/positions", s.positions)
 
+	mux.HandleFunc("POST "+p+"/uploads/video", s.requireUser(s.uploadVideo))
 	mux.HandleFunc("POST "+p+"/posts", s.requireUser(s.createPost))
 	mux.HandleFunc("GET "+p+"/posts/{id}/comments", s.listComments)
 	mux.HandleFunc("POST "+p+"/posts/{id}/comments", s.requireUser(s.createComment))
