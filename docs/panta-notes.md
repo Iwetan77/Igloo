@@ -8,8 +8,9 @@ The live API (`https://live-api.panta.market/api/v1`) with a `pk_live_` key trad
 settling in **mainnet USDC (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`)**. A `pk_test_`
 key does not switch to devnet. It returns static sandbox fixtures (one fake market, canned
 ids, empty instruction list, fake blockhash) and never touches any chain. So there is no
-"devnet-safe real trading" option. **`PANTA_MODE` should default to `mock`.** Use `live` only
-if the project owner explicitly decides the demo will spend real mainnet USDC from a funded wallet.
+"devnet-safe real trading" option. On the evidence alone, `PANTA_MODE` should default to
+`mock`. **Decision (2026-09-24): no mocks.** The backend runs `live` only, so any
+buy spends real mainnet USDC.
 
 ## Evidence (what was actually run)
 
