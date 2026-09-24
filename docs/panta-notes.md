@@ -65,7 +65,9 @@ buy spends real mainnet USDC.
   not a transaction, so the backend compiles the v0 `VersionedTransaction` itself (payer = wallet).
 - The Cloudflare edge returns 403 to Python's default `User-Agent`, so send an explicit UA.
 - `GET /markets/?cursor=` pagination loops. `nextCursor` keeps returning the same 50 rows
-  (1,550 rows fetched, 50 unique). The catalog is effectively 50 markets.
+  (1,550 rows fetched, 50 unique). Filtered queries (`status=primary`, `phase=primary`,
+  `category=<allowlisted>`) return other rows: 96 unique markets in total. Of the 14 labelled
+  `primary`, none accepts a quote. The catalog `phase` is stale versus on-chain state.
 - The catalog categories include values **not** in `GET /categories/`: live rows use `weather`,
   `stocks`, `commodities`, `pop-culture`, `gaming`, `business`. The `/categories/` allowlist is
   `sports, crypto, politics, entertainment, finance, science, world, other`.

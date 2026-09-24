@@ -9,11 +9,20 @@ Branch: `backend`.
    instruction, **nothing is mocked**. The service runs only against live Panta and requires
    a `pk_live_` key. `PANTA_MODE` is still read (the API spec names it), but only `live` is
    accepted.
-2. **Right now no mainnet market is open for buying.** At 2026-09-24 ~23:00 WAT, the only
-   `phase: primary` catalog rows were two stale devnet markets. Panta returns
-   `MARKET_NOT_FOUND` for both. Every mainnet market is secondary, resolved or cancelled
-   (`MARKET_NOT_IN_PRIMARY`). The buy flow can't complete end to end until someone creates a
-   market (that costs real USDC too) or Panta lists a new one.
+2. **Right now no mainnet market is open for buying.** The quote calls do hit real mainnet
+   markets on live Panta, and Panta refuses them. Rechecked 2026-09-24 ~23:30 WAT. The
+   unfiltered `GET /markets/` loops on the same 50 rows, but filtered queries (`status=`,
+   `phase=`, `category=`) turn up 96 unique markets, 14 of them labelled `primary`. I quoted
+   all 14 for 1 USDC directly against Panta:
+   - 2 are devnet leftovers: `MARKET_NOT_FOUND`.
+   - 7 return `MARKET_NOT_IN_PRIMARY`.
+   - 5 return `INVALID_MARKET_PARAMS`.
+
+   The 12 mainnet ones are sports fixtures that started in July 2026. The catalog label is
+   stale, and Panta's own buy endpoint won't sell into them. Everything else is secondary,
+   resolved or cancelled, and Panta's API only supports primary buys. So a successful
+   quote → build needs a market that is actually in its primary phase: a new Panta listing,
+   or one we create (costs real USDC).
 3. **`/users/sync` is unauthenticated per the API spec.** Anyone who knows a Privy user id can
    rebind that user's wallet and display name. The backend enforces a match whenever a token
    *is* sent. I recommend marking the route `(auth)` in the API spec and having the frontend
