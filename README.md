@@ -23,22 +23,27 @@ content/       Static JSON (categories, UI copy, seed posts)
 docs/          README-adjacent docs and demo script
 ```
 
-## 1. Apply the database migrations
+## 1. Create the Supabase project and apply migrations
 
-Migrations live in `supabase/migrations/`. Apply them to your Supabase project:
+Create a Supabase project first (hosted or local). Migrations live in
+`supabase/migrations/` and run in order — `0001_init.sql` (schema), then
+`0002_rls.sql` (row-level security).
 
 ```bash
 # local Supabase stack
 supabase start
-supabase db reset        # applies supabase/migrations/*.sql against local DB
+supabase db reset        # applies supabase/migrations/*.sql in order
 
 # or, against a hosted project
 supabase link --project-ref <your-project-ref>
 supabase db push
 ```
 
-This creates the `users`, `posts`, `comments`, `likes`, `shares`, and
+`0001` creates the `users`, `posts`, `comments`, `likes`, `shares`, and
 `positions_cache` tables and enables Realtime on `comments` and `likes`.
+`0002` enables row-level security on those tables and allows public reads on
+`comments` and `likes` (the backend connects as the database owner and bypasses
+RLS — this only locks down the browser's anon key).
 
 ## 2. Run the backend (`services/api`)
 
@@ -71,12 +76,17 @@ Each app has a `.env.example` in its own directory:
   `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SOLANA_RPC_URL`.
 - `services/api/.env.example` — `PANTA_API_KEY`, `PANTA_BASE_URL`,
-  `PANTA_MODE` (`live` or `mock`), `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`, `SOLANA_RPC_URL`, `PRIVY_APP_ID`,
-  `PRIVY_APP_SECRET`.
+  `PANTA_MODE`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`,
+  `SOLANA_RPC_URL`, `PRIVY_APP_ID`, `PRIVY_APP_SECRET`.
 
-These are the exact variable names the apps read — don't rename them. Set
-`PANTA_MODE=mock` to develop without a live Panta account.
+These are the exact variable names the apps read — don't rename them.
+
+Notes:
+
+- Panta runs on **Solana mainnet only** — there is no mock mode, and buys spend
+  real USDC.
+- Set `DATABASE_URL` to the Supabase **transaction pooler** URL (port `6543`),
+  with `?sslmode=require`. The direct connection port (`5432`) times out on TLS.
 
 ## 5. Run everything side by side
 

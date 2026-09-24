@@ -14,37 +14,30 @@ A literal walkthrough for driving the live demo. Follow one line at a time.
 5. Scroll down the feed to show several posts load.
 6. Point out a post's market question, YES/NO prices, and the like/comment/share counts.
 
-## Buy (trade YES/NO)
+## Buy flow (show only — no live purchase)
 
 7. On one post, tap the **YES** button.
-8. Enter an amount (for example `5` USDC) in the buy sheet.
-9. Tap **Confirm buy**.
-10. Approve the signature prompt that appears from the wallet.
-11. Wait for the order to show **Confirmed**.
-12. Note the updated position for that market (if a positions view is shown).
+8. Note the buy sheet opens with the amount entry and the YES/NO prices.
+9. Explain that markets are currently in opening-sale phase and don't accept buys yet, so a live purchase isn't part of the demo.
 
 ## Comment
 
-13. On the same post, tap the **comments** icon.
-14. Type a short comment in the comment box.
-15. Tap **Post**.
-16. Confirm the new comment appears at the top of the list.
+10. On the same post, tap the **comments** icon.
+11. Type a short comment in the comment box.
+12. Tap **Post**.
+13. Confirm the new comment appears at the top of the list.
 
 ## Share
 
-17. Tap the **share** icon on the post.
-18. If the native share sheet opens, pick a destination and send it.
-19. If a fallback appears instead, tap **Copy link**.
-20. Open a new browser tab and paste the copied link to confirm it loads the post.
+14. Tap the **share** icon on the post.
+15. If the native share sheet opens, pick a destination and send it.
+16. If a fallback appears instead, tap **Copy link**.
+17. Open a new browser tab and paste the copied link to confirm it loads the post.
 
 ## Post a new video
 
-21. Tap the **+** (create) button in the bottom bar.
-22. Pick or record a short video.
-23. Add a caption.
-24. Tap **Post**.
-25. Confirm the new post appears at the top of the feed.
-
-## Optional: error paths (only if time allows)
-
-26. Trigger a declined signature by tapping **Cancel** on the wallet prompt, then read out the error message shown.
+18. Tap the **+** (create) button in the bottom bar.
+19. Pick or record a short video.
+20. Add a caption.
+21. Tap **Post**.
+22. Confirm the new post appears at the top of the feed.

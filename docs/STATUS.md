@@ -5,50 +5,55 @@ Progress notes for the `supabase/`, `content/`, and `docs/` work. Branch: `data`
 ## Done
 
 - `supabase/migrations/0001_init.sql` — full schema (`users`, `posts`,
-  `comments`, `likes`, `shares`, `positions_cache`) plus Realtime enabled on
-  `comments` and `likes`.
-- `content/categories.json` — category list. See note 1.
-- `content/copy.json` — UI copy. All required keys plus two extras (note 3).
-- `content/seed-posts.json` — 10 fallback posts.
-- `README.md` — local setup instructions.
-- `docs/DEMO_SCRIPT.md` — step-by-step demo walkthrough.
+  `comments`, `likes`, `shares`, `positions_cache`) plus Realtime on `comments`
+  and `likes`. Verified applying cleanly to Postgres 18 and the live project.
+- `supabase/migrations/0002_rls.sql` — row-level security on all six tables plus
+  public-read policies on `comments` and `likes` (matching what was run by hand).
+- `content/categories.json` — 15 categories (see note 1).
+- `content/copy.json` — UI copy (required keys plus `comments.empty` and
+  `error.generic`).
+- `content/seed-posts.json` — 4 posts backed by real Panta markets (note 2).
+- `README.md` — local setup, updated for mainnet-only Panta and the pooler
+  `DATABASE_URL` (note 3).
+- `docs/DEMO_SCRIPT.md` — demo walkthrough; buy flow is show-only (note 3).
 
 ## Notes
 
-### 1. Categories — real Panta data, but test keys return sandbox fixtures
+### 1. Categories
 
-I registered a throwaway Panta account, minted a `pk_test_` key, and hit the
-categories endpoint. Two things worth knowing:
+Live Panta markets use slugs beyond the eight in Panta's own docs example. Added
+`weather`, `stocks`, `commodities`, `pop-culture`, `gaming`, `business`, and
+`macroeconomics` (with labels). The full list is 15 slugs, sorted alphabetically,
+stored as `{ "id": <slug>, "label": <Title Case> }`.
 
-- The live endpoint is `GET /api/v1/categories/` (trailing slash required). The
-  `GET /markets/categories` path from the design notes doesn't return a list.
-- A `pk_test_` key returns a sandbox fixture with only four slugs —
-  `crypto`, `politics`, `sports`, `entertainment` — and a `"disclaimer"` saying
-  it's test mode.
-- Panta's docs list the full production allowlist of eight slugs: `sports`,
-  `crypto`, `politics`, `entertainment`, `finance`, `science`, `world`, `other`.
+### 2. Seed posts — real Panta market IDs
 
-I wrote all eight documented slugs into `content/categories.json` as
-`{ "id": <slug>, "label": <Title Case> }`. `id` holds the slug to pass to
-Panta's `category` params; `label` is for display.
+Replaced the fake `demo-*` IDs with four real markets (fetched with a `pk_live_`
+key):
 
-### 2. Seed-post `category` casing
+- `GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V` — "Will GTA 6 release on
+  November 19th, 2026" (`gaming`).
+- `BpPmo7wHrh8bi3ea2ohiVy64sxEnSTufx67zTA9ntnfT` — "Will $ANSEM reach a $1B
+  market cap by December 31, 2026?" (`crypto`).
+- `1Nm7PCxoHUwGk1J9NoSfy26TQZkitwDf6mamFTZDn1r` — "Will Bitcoin (BTC) be priced
+  at $81,000.00 or higher on Tuesday, September 8, 2026, at 12:00 PM UTC?"
+  (`crypto`).
+- `C2XGH1Z6YivhXMqRRBhKDHnFZTAoqkRcwBFTEZ7bdUrr` — "Will Witty Cruz top The
+  Pantas FPL Leaderboard by end of GW3?" (`sports`).
 
-`content/seed-posts.json` uses title-case categories (e.g. `"Crypto"`) to match
-the example shape, while `categories.json` uses lowercase slugs as `id`. If the
-backend needs seed-post `category` to match the Panta slug (`"crypto"`) instead,
-that's a one-line change.
+Two quirks worth knowing:
 
-### 3. `copy.json` extra keys
+- Panta's API returns `category: "sports"` for the two crypto markets (likely a
+  catalog mislabel); the seed posts use the semantically correct `crypto`.
+- Some markets have an empty `title`/`description` in the API response (the
+  Bitcoin question lives in `description`; the $ANSEM and FPL questions were
+  supplied by the team). Seed posts carry the correct question text regardless.
 
-Added two keys beyond the required set:
+### 3. README / demo script corrections
 
-- `comments.empty` — shown when a post has no comments.
-- `error.generic` — generic fallback error message.
-
-### 4. Migration not verified locally
-
-The schema is copied straight from the spec, but I couldn't run
-`supabase db reset` here (no Supabase CLI / Docker in this environment), so the
-migration hasn't been applied against a fresh local stack yet. Worth running
-once before relying on it.
+- Panta runs on Solana mainnet only — no mock mode, buys spend real USDC.
+- The backend's `DATABASE_URL` must use the Supabase transaction pooler
+  (port `6543`, `?sslmode=require`); port `5432` times out on TLS.
+- Migration order is `0001_init.sql` then `0002_rls.sql`.
+- No Panta market currently accepts buys (opening-sale phase only), so the demo
+  script shows the buy sheet without completing a purchase.

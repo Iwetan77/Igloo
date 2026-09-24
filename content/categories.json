@@ -1,10 +1,17 @@
 [
+  { "id": "business", "label": "Business" },
+  { "id": "commodities", "label": "Commodities" },
   { "id": "crypto", "label": "Crypto" },
-  { "id": "politics", "label": "Politics" },
-  { "id": "sports", "label": "Sports" },
   { "id": "entertainment", "label": "Entertainment" },
   { "id": "finance", "label": "Finance" },
+  { "id": "gaming", "label": "Gaming" },
+  { "id": "macroeconomics", "label": "Macroeconomics" },
+  { "id": "other", "label": "Other" },
+  { "id": "politics", "label": "Politics" },
+  { "id": "pop-culture", "label": "Pop Culture" },
   { "id": "science", "label": "Science" },
-  { "id": "world", "label": "World" },
-  { "id": "other", "label": "Other" }
+  { "id": "sports", "label": "Sports" },
+  { "id": "stocks", "label": "Stocks" },
+  { "id": "weather", "label": "Weather" },
+  { "id": "world", "label": "World" }
 ]
