@@ -22,7 +22,7 @@ func openTestStore(t *testing.T) *Store {
 	}
 	dir := os.Getenv("IGLOO_MIGRATIONS_DIR")
 	if dir == "" {
-		dir = filepath.Join("..", "..", "..", "supabase", "migrations")
+		dir = filepath.Join("..", "..", "..", "..", "supabase", "migrations")
 	}
 	files, _ := filepath.Glob(filepath.Join(dir, "*.sql"))
 	if len(files) == 0 {
