@@ -167,6 +167,26 @@ Migration `0004_quote_posts.sql` and `seed.sql` were applied to the live project
 one of them a quote of the GTA 6 post. The public feed returns `quoted_post` and `quote_count`
 as documented in the README.
 
+## Feeds, markets, people and profiles (live 2026-09-25)
+
+Migrations `0005` and `0006` were applied to the live project, and the backend was switched
+over (`d0fb318`). The following are live on the public URL:
+- `/me` and interests, profile edit, avatar uploads, and `/usernames/:username`
+- follows and user search
+- For You ranking and the following and market feeds
+- `/markets` backed by the catalog refresher, and `/events/view`
+
+Checked through the tunnel: feed 200 with `@igloo` authors, username lookup and search, and
+401 on the following tab, `/me` and `PATCH /me` without a valid token. Verified locally on a
+throwaway database against live Panta (see git history for traces): onboarding, follow and
+friend, search, the following, market and liked feeds, view events, profile validation
+(409 duplicate username, 400 on bad username, bio or avatar), stable For You pages with no
+back-to-back author and market repeats, finished markets hidden, and feed market data served from
+cache (2.3 s on the first fetch of an unknown market, 0.003 s after).
+
+**Not verified live yet:** any of the new signed-in routes with a real Privy token. The frontend
+doesn't call them yet.
+
 ## Blocked on
 
 
