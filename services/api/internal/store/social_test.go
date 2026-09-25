@@ -71,14 +71,20 @@ func TestSocialAndRanking(t *testing.T) {
 	})
 
 	t.Run("markets list hides resolved and question-less markets", func(t *testing.T) {
-		all, err := st.ListMarkets(ctx, "", 0, 50)
+		all, err := st.ListMarkets(ctx, "", "", 0, 50)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if len(all) != 2 || all[0].ID != "mkt-crypto" { // crypto has 2 posts, so it sorts first
 			t.Errorf("all: %+v", all)
 		}
-		sports, _ := st.ListMarkets(ctx, "sports", 0, 50)
+		if hits, _ := st.ListMarkets(ctx, "", "btc 100", 0, 50); len(hits) != 1 || hits[0].ID != "mkt-crypto" {
+			t.Errorf("search by question: %+v", hits)
+		}
+		if hits, _ := st.ListMarkets(ctx, "", "%", 0, 50); len(hits) != 0 {
+			t.Errorf("wildcard not escaped in market search: %+v", hits)
+		}
+		sports, _ := st.ListMarkets(ctx, "sports", "", 0, 50)
 		if len(sports) != 1 || sports[0].ID != "mkt-sports" {
 			t.Errorf("sports: %+v", sports)
 		}

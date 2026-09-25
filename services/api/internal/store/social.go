@@ -291,9 +291,10 @@ func (s *Store) CachedMarketByID(ctx context.Context, id string) (CachedMarket, 
 }
 
 // ListMarkets returns open markets (primary or secondary, not past their
-// end time) that have a question, optionally in one category: markets with posts first, then by
+// end time) that have a question, optionally in one category and/or whose
+// question contains query: markets with posts first, then by
 // most recently refreshed. offset paginates.
-func (s *Store) ListMarkets(ctx context.Context, category string, offset, limit int) ([]CachedMarket, error) {
+func (s *Store) ListMarkets(ctx context.Context, category, query string, offset, limit int) ([]CachedMarket, error) {
 	rows, err := s.db.Query(ctx, `
 		select `+marketCols+`
 		  from markets_cache mc
@@ -301,9 +302,10 @@ func (s *Store) ListMarkets(ctx context.Context, category string, offset, limit 
 		   and (mc.end_time is null or mc.end_time > now())
 		   and coalesce(mc.question, '') <> ''
 		   and ($1::text is null or mc.category = $1::text)
+		   and ($4::text is null or mc.question ilike '%' || replace(replace(replace($4, '\', '\\'), '%', '\%'), '_', '\_') || '%')
 		 order by (select count(*) from posts p where p.panta_market_id = mc.panta_market_id) desc,
 		          mc.updated_at desc, mc.panta_market_id
-		 offset $2 limit $3`, nullable(category), offset, limit)
+		 offset $2 limit $3`, nullable(category), offset, limit, nullable(query))
 	if err != nil {
 		return nil, err
 	}
