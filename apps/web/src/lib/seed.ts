@@ -26,6 +26,8 @@ export const demoPosts: FeedPost[] = seedPosts.map((post, index) => ({
   like_count: 0,
   comment_count: 0,
   share_count: 0,
+  quote_count: 0,
+  quoted_post: null,
   liked_by_me: false,
   demo: true,
 }));

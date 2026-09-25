@@ -14,7 +14,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
           ethereum: { createOnLogin: "off" },
           solana: { createOnLogin: "users-without-wallets" },
         },
-        appearance: { theme: "dark", accentColor: "#B9F381" },
+        appearance: {
+          theme: "#1b2422",
+          accentColor: "#afe9a5",
+          landingHeader: "Sign in to Igloo",
+          logo: <span className="privy-logo"><span className="privy-logo-mark" />Igloo</span>,
+        },
       }}
     >
       {children}

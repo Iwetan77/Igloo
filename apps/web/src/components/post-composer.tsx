@@ -21,9 +21,10 @@ async function durationOf(file: File): Promise<number> {
 }
 
 export function PostComposer({
-  posts, session, onClose, onPosted,
+  posts, quotePost, session, onClose, onPosted,
 }: {
   posts: FeedPost[];
+  quotePost?: FeedPost | null;
   session: Session;
   onClose: () => void;
   onPosted: (id: string) => void;
@@ -40,6 +41,10 @@ export function PostComposer({
   async function choose(candidate?: File) {
     if (!candidate) return;
     setError("");
+    if (candidate.size > 50 * 1024 * 1024) {
+      setError("Videos must be 50 MB or smaller.");
+      return;
+    }
     if (!["video/mp4", "video/webm", "video/quicktime"].includes(candidate.type)) {
       setError("Choose a video file.");
       return;
@@ -60,7 +65,7 @@ export function PostComposer({
 
   async function publish(event: React.FormEvent) {
     event.preventDefault();
-    if (!file || !marketId.trim() || busy) return;
+    if (!file || (!quotePost && !marketId.trim()) || busy) return;
     if (!session.authenticated) {
       session.login();
       return;
@@ -76,7 +81,11 @@ export function PostComposer({
       const signed = await session.authorized((token) => requestVideoUpload(file.type, token));
       const upload = await supabase.storage.from(VIDEO_BUCKET).uploadToSignedUrl(signed.path, signed.token, file, { contentType: file.type });
       if (upload.error) throw upload.error;
-      const post = await session.authorized((token) => createPost({
+      const post = await session.authorized((token) => createPost(quotePost ? {
+        quoted_post_id: quotePost.id,
+        video_url: signed.public_url,
+        caption: caption.trim() || undefined,
+      } : {
         panta_market_id: marketId.trim(),
         video_url: signed.public_url,
         caption: caption.trim() || undefined,
@@ -96,9 +105,10 @@ export function PostComposer({
     <div className="overlay" role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget && !busy) onClose();
     }}>
-      <section className="sheet composer-sheet" role="dialog" aria-modal="true" aria-label="Create post">
-        <div className="sheet-head"><div><span className="eyebrow">New take</span><h2>Post a video</h2></div><button type="button" className="icon-action" onClick={onClose} disabled={busy} aria-label="Close post composer" title="Close"><X size={20} /></button></div>
+      <section className="sheet composer-sheet" role="dialog" aria-modal="true" aria-label={quotePost ? "Quote post" : "Create post"}>
+        <div className="sheet-head"><div><span className="eyebrow">{quotePost ? "Quote" : "New post"}</span><h2>{quotePost ? "Quote this post" : "Post a video"}</h2></div><button type="button" className="icon-action" onClick={onClose} disabled={busy} aria-label="Close post composer" title="Close"><X size={20} /></button></div>
         <form onSubmit={publish}>
+          {quotePost && <div className="quote-source"><video src={quotePost.video_url} muted playsInline preload="auto" aria-hidden="true" /><div><span>Original post</span><strong>{quotePost.author.display_name || "Igloo member"}</strong><p>{quotePost.market.question || quotePost.caption || "Market post"}</p>{quotePost.caption && quotePost.caption !== quotePost.market.question && <small>{quotePost.caption}</small>}</div></div>}
           <div className="upload-area">
             {preview ? <video src={preview} muted playsInline controls className="preview-video" /> : <div className="upload-placeholder"><Upload size={30} /><span>Choose a video, up to 60 seconds</span></div>}
             <div className="upload-actions">
@@ -108,16 +118,18 @@ export function PostComposer({
             <input ref={fileInput} className="hidden-input" type="file" accept="video/*" onChange={(event) => { void choose(event.target.files?.[0]); }} />
             <input ref={cameraInput} className="hidden-input" type="file" accept="video/*" capture="environment" onChange={(event) => { void choose(event.target.files?.[0]); }} />
           </div>
-          <label className="field-label" htmlFor="market-ref">Market</label>
-          <select id="market-ref" value={marketId} onChange={(event) => setMarketId(event.target.value)}>
-            {posts.map((post) => <option key={post.id} value={post.panta_market_id}>{post.market.question || post.caption || post.panta_market_id}</option>)}
-          </select>
-          <label className="field-label" htmlFor="market-id">Or paste a market ID</label>
-          <input id="market-id" className="text-field" value={marketId} onChange={(event) => setMarketId(event.target.value)} />
+          {!quotePost && <>
+            <label className="field-label" htmlFor="market-ref">Market</label>
+            <select id="market-ref" value={marketId} onChange={(event) => setMarketId(event.target.value)}>
+              {posts.map((post) => <option key={post.id} value={post.panta_market_id}>{post.market.question || post.caption || post.panta_market_id}</option>)}
+            </select>
+            <label className="field-label" htmlFor="market-id">Or paste a market ID</label>
+            <input id="market-id" className="text-field" value={marketId} onChange={(event) => setMarketId(event.target.value)} />
+          </>}
           <label className="field-label" htmlFor="caption">Caption</label>
           <textarea id="caption" className="text-field" rows={3} maxLength={500} value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="What's your take?" />
           {error && <p className="inline-error" role="alert">{error}</p>}
-          <button type="submit" className="solid-action" disabled={busy || !file || !marketId.trim()}>{busy ? "Publishing..." : "Publish video"}</button>
+          <button type="submit" className="solid-action" disabled={busy || !file || (!quotePost && !marketId.trim())}>{busy ? "Publishing..." : quotePost ? "Publish quote" : "Publish video"}</button>
         </form>
       </section>
     </div>

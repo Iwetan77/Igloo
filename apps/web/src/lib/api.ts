@@ -98,10 +98,10 @@ export function sharePost(id: string, token: string) {
   );
 }
 export function createPost(
-  input: { panta_market_id: string; video_url: string; caption?: string },
+  input: { video_url: string; caption?: string } & ({ panta_market_id: string; quoted_post_id?: never } | { quoted_post_id: string; panta_market_id?: never }),
   token: string,
 ) {
-  return apiRequest<{ id: string; panta_market_id: string; video_url: string; caption: string | null; author_user_id: string; created_at: string }>(
+  return apiRequest<{ id: string; panta_market_id: string; video_url: string; caption: string | null; quoted_post_id: string | null; author_user_id: string; created_at: string }>(
     "/posts", { method: "POST", body: input, token },
   );
 }

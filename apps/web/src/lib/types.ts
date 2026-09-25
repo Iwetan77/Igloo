@@ -6,6 +6,14 @@ export type Market = {
   category: string | null;
 };
 
+export type QuotedPost = {
+  id: string;
+  video_url: string;
+  caption: string | null;
+  created_at: string;
+  author: { id: string; display_name: string | null };
+};
+
 export type FeedPost = {
   id: string;
   panta_market_id: string;
@@ -17,6 +25,8 @@ export type FeedPost = {
   like_count: number;
   comment_count: number;
   share_count: number;
+  quote_count?: number;
+  quoted_post?: QuotedPost | null;
   liked_by_me: boolean;
   demo?: boolean;
 };

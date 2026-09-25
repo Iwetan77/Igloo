@@ -11,6 +11,8 @@ Branch: `frontend`.
 - Buy flow: quote, build, Privy signing, mainnet RPC broadcast, submit, and verification polling. Backend error codes have user-facing copy, including `MARKET_NOT_IN_PRIMARY`.
 - Account view with mainnet USDC balance and positions.
 - Video composer using the backend-signed upload URL for the public-read `videos` bucket, followed by `POST /posts`.
+- Quote action on each live video, direct-parent previews in feed, and a quote composer that inherits the original market without a picker. Original posts still select a market.
+- Privy modal uses Igloo background, accent, wordmark, and login heading via supported appearance configuration.
 
 ## Configuration
 
@@ -23,5 +25,7 @@ Set `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SOLANA_
 - Public backend `GET /api/v1/feed?limit=1`: HTTP 200 on 2026-09-25, with an empty posts list.
 - First live Google sign-in, Solana wallet creation, and backend account sync succeeded on 2026-09-25, confirmed by the user account screen showing a Solana address and Account connected. The Privy creation modal stayed open until dismissed; a redundant fallback wallet creation call has been removed.
 - Two-session Realtime and signed video upload still need interactive checks.
+- Quote API rollout and a real quote submission are pending backend confirmation. Older feed payloads remain supported; missing quote fields render as no parent and zero quotes.
+- The themed Privy login modal was visually checked in a fresh browser at a true 390px viewport. Desktop and mobile feed captures were reviewed; mobile had no horizontal overflow.
 - No Panta market currently accepts buys. The flow is implemented, but a successful mainnet trade cannot be verified until an opening sale exists.
 - Demo fallback videos are sample assets, not market footage. They are labeled Demo.

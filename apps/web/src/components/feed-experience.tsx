@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bookmark, Check, Compass, Copy, Heart, MessageCircle, Plus, Share2, UserRound, Volume2, VolumeX, Wallet, X } from "lucide-react";
+import { Bookmark, Check, Compass, Copy, Heart, MessageCircle, Plus, Quote, Share2, UserRound, Volume2, VolumeX, Wallet, X } from "lucide-react";
 import { getFeed, sharePost, toggleLike } from "@/lib/api";
 import { errorCopy, uiCopy } from "@/lib/copy";
 import { demoPosts } from "@/lib/seed";
@@ -39,7 +39,7 @@ export function FeedExperience({ initialPostId }: { initialPostId?: string }) {
   const [toast, setToast] = useState("");
   const [buy, setBuy] = useState<{ post: FeedPost; side: Side } | null>(null);
   const [comments, setComments] = useState<FeedPost | null>(null);
-  const [composer, setComposer] = useState(false);
+  const [composer, setComposer] = useState<FeedPost | "original" | null>(null);
   const [positions, setPositions] = useState(false);
   const [account, setAccount] = useState(false);
   const walletSetupShown = useRef(false);
@@ -201,11 +201,26 @@ export function FeedExperience({ initialPostId }: { initialPostId?: string }) {
 
   function openComposer() {
     if (!session.authenticated) { session.login(); return; }
-    setComposer(true);
+    setComposer("original");
+  }
+
+  function openQuote(post: FeedPost) {
+    if (post.demo) { notify("This is a demo post."); return; }
+    if (!session.authenticated) { session.login(); return; }
+    setComposer(post);
+  }
+
+  function openOriginal(id: string) {
+    const loaded = posts.some((post) => post.id === id);
+    if (loaded) {
+      document.getElementById("post-" + id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.location.assign("/post/" + encodeURIComponent(id));
+    }
   }
 
   function onPosted(id: string) {
-    setComposer(false);
+    setComposer(null);
     notify("Video published.");
     void refresh(id);
   }
@@ -257,11 +272,12 @@ export function FeedExperience({ initialPostId }: { initialPostId?: string }) {
               <div className="video-shade" aria-hidden />
               <div className="post-topline"><span className="category-tag">{post.market.category || "Market"}</span>{post.demo && <span className="demo-tag">Demo</span>}</div>
               <div className="post-content">
-                <div className="post-copy"><span className="creator">{"@" + (post.author.display_name || short(post.author.wallet_address || "igloo")).replace(/\s+/g, "").toLowerCase()}</span><h1>{question(post)}</h1>{post.caption && post.caption !== post.market.question && <p>{post.caption}</p>}</div>
+                <div className="post-copy"><span className="creator">{"@" + (post.author.display_name || short(post.author.wallet_address || "igloo")).replace(/\s+/g, "").toLowerCase()}</span><h1>{question(post)}</h1>{post.caption && post.caption !== post.market.question && <p>{post.caption}</p>}{post.quoted_post && <button type="button" className="quoted-preview" onClick={() => openOriginal(post.quoted_post!.id)}><video src={post.quoted_post.video_url} muted playsInline preload="metadata" aria-hidden="true" /><span><small>Quoted post</small><strong>{post.quoted_post.author.display_name || "Igloo member"}</strong><em>{post.quoted_post.caption || "View original"}</em></span></button>}</div>
                 <div className="action-rail">
                   <button type="button" className={"rail-button" + (post.liked_by_me ? " selected" : "")} onClick={() => { void like(post); }} aria-label="Like" title="Like"><Heart size={25} fill={post.liked_by_me ? "currentColor" : "none"} /><span>{post.like_count}</span></button>
                   <button type="button" className="rail-button" onClick={() => setComments(post)} aria-label="Comments" title="Comments"><MessageCircle size={25} /><span>{post.comment_count}</span></button>
                   <button type="button" className="rail-button" onClick={() => { void share(post); }} aria-label="Share" title="Share"><Share2 size={24} /><span>{post.share_count}</span></button>
+                  <button type="button" className="rail-button" onClick={() => openQuote(post)} aria-label="Quote" title="Quote"><Quote size={24} /><span>{post.quote_count ?? 0}</span></button>
                   <button type="button" className="rail-button sound-button" onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} aria-label={unmutedId === post.id ? "Mute video" : "Unmute video"} title={unmutedId === post.id ? "Mute" : "Unmute"}>{unmutedId === post.id ? <Volume2 size={23} /> : <VolumeX size={23} />}</button>
                 </div>
                 <div className="market-strip"><div className="market-heading"><span>Trade the market</span><span>{post.market.phase || "Live market"}</span></div><div className="trade-sides">
@@ -285,7 +301,7 @@ export function FeedExperience({ initialPostId }: { initialPostId?: string }) {
       <aside className="right-panel">
         <div className="right-title">Now watching</div>
         {activePost && <><span className="right-category">{activePost.market.category || "Market"}</span><h2>{question(activePost)}</h2><div className="right-prices"><div><span>YES</span><strong>{price(activePost.market.yes_price)}</strong></div><div><span>NO</span><strong>{price(activePost.market.no_price)}</strong></div></div><p className="right-caption">{activePost.caption}</p></>}
-        <div className="right-bottom"><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()}><Wallet size={17} />View positions</button><button type="button" onClick={openComposer}><Plus size={17} />Post a take</button></div>
+        <div className="right-bottom"><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()}><Wallet size={17} />View positions</button><button type="button" onClick={openComposer}><Plus size={17} />Post</button></div>
       </aside>
 
       {toast && <div className="toast" role="status">{toast}</div>}
@@ -293,7 +309,7 @@ export function FeedExperience({ initialPostId }: { initialPostId?: string }) {
       {comments && <CommentsDrawer post={comments} session={session} onClose={() => setComments(null)} onAdded={() => {
         setPosts((current) => current.map((post) => post.id === comments.id ? { ...post, comment_count: post.comment_count + 1 } : post));
       }} />}
-      {composer && <PostComposer posts={posts} session={session} onClose={() => setComposer(false)} onPosted={onPosted} />}
+      {composer && <PostComposer posts={posts} quotePost={composer === "original" ? null : composer} session={session} onClose={() => setComposer(null)} onPosted={onPosted} />}
       {positions && <PositionsPanel session={session} onClose={() => setPositions(false)} />}
       {account && <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccount(false); }}><section className="sheet account-sheet" role="dialog" aria-modal="true" aria-label="Account"><div className="sheet-head"><div><span className="eyebrow">Igloo account</span><h2>Your wallet</h2></div><button type="button" className="icon-action" onClick={() => setAccount(false)} aria-label="Close account" title="Close"><X size={20} /></button></div><p className="wallet-balance">{session.balance === null ? "\u2014" : session.balance.toFixed(2)} <span>USDC</span></p><div className="address-line"><span>{session.address || "Connecting wallet"}</span>{session.address && <button type="button" className="icon-action" onClick={() => { void navigator.clipboard.writeText(session.address || ""); notify("Address copied."); }} aria-label="Copy wallet address" title="Copy"><Copy size={17} /></button>}</div><p className="account-state">{session.synced ? <><Check size={16} />Account connected</> : session.syncError || (!session.address ? "Create your Solana wallet to continue." : "Connecting account...")}</p>{!session.address && <button type="button" className="subtle-button" disabled={!session.ready || session.walletCreating} onClick={() => { void session.createSolanaWallet(); }}>{session.walletCreating ? "Creating wallet..." : "Create Solana wallet"}</button>}{session.address && session.syncError && <button type="button" className="subtle-button" onClick={() => { void session.syncNow().catch(() => notify(uiCopy("error.generic"))); }}>Retry sync</button>}{session.balanceError && <p className="inline-error">{session.balanceError}</p>}<button type="button" className="signout-button" onClick={() => { void session.logout(); setAccount(false); }}>Sign out</button></section></div>}
     </div>
