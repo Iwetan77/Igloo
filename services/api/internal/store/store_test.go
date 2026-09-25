@@ -46,9 +46,15 @@ func openTestStore(t *testing.T) *Store {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Supabase provides this publication; the migrations add tables to it.
-	if _, err := c.Exec(ctx, "create publication supabase_realtime"); err != nil {
-		t.Fatal(err)
+	// Supabase provides these; the migrations reference them.
+	for _, stmt := range []string{
+		"create publication supabase_realtime",
+		"create role anon nologin",
+		"create role authenticated nologin",
+	} {
+		if _, err := c.Exec(ctx, stmt); err != nil {
+			t.Fatal(err)
+		}
 	}
 	for _, f := range files {
 		sql, err := os.ReadFile(f)
