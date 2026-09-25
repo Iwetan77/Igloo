@@ -7,6 +7,10 @@ export function uiCopy(key: CopyKey): string {
   return copy[key];
 }
 
+export function optionalCopy(key: string, fallback: string): string {
+  return (copy as Record<string, string>)[key] || fallback;
+}
+
 const missingCopy: Record<string, string> = {
   AMOUNT_TOO_SMALL: "This amount is below the market minimum.",
   MARKET_NOT_IN_PRIMARY: "This market is not open for buying right now.",

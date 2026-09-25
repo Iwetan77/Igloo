@@ -5,6 +5,7 @@ import { Check, LoaderCircle, X } from "lucide-react";
 import { ApiError, buildOrder, quoteOrder, submitOrder, verifyOrder } from "@/lib/api";
 import { errorCopy, uiCopy } from "@/lib/copy";
 import { signAndBroadcast } from "@/lib/trade";
+import { marketEnded } from "@/lib/markets";
 import type { FeedPost, Quote, Side } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 
@@ -13,7 +14,7 @@ type Step = "amount" | "quoting" | "quoted" | "building" | "signing" | "broadcas
 export function BuySheet({
   post, side, session, onClose, onConfirmed,
 }: {
-  post: FeedPost;
+  post: Pick<FeedPost, "panta_market_id" | "market" | "caption">;
   side: Side;
   session: Session;
   onClose: () => void;
@@ -35,6 +36,7 @@ export function BuySheet({
   }, [quote]);
 
   async function getQuote() {
+    if (marketEnded(post.market.end_time)) { setError("This market has ended."); return; }
     if (!session.authenticated) {
       session.login();
       return;

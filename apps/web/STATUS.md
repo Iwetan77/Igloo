@@ -28,4 +28,7 @@ Set `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SOLANA_
 - Quote API rollout and a real quote submission are pending backend confirmation. Older feed payloads remain supported; missing quote fields render as no parent and zero quotes.
 - The themed Privy login modal was visually checked in a fresh browser at a true 390px viewport. Desktop and mobile feed captures were reviewed; mobile had no horizontal overflow.
 - No Panta market currently accepts buys. The flow is implemented, but a successful mainnet trade cannot be verified until an opening sale exists.
-- Demo fallback videos are sample assets, not market footage. They are labeled Demo.
+- For You uses the five real live feed posts, including one quote; seed fallback appears only for zero posts or feed errors and is labeled Demo.
+- Live Markets list, Crypto category filtering, and one market detail page with two videos and Quote controls were visually checked at 390px with no overflow. Market end times disable buys and refresh on open pages.
+- Onboarding, Following, follows, profile/search API, and authenticated watch-event sends are implemented but need a signed-in verification pass after migration 0005. View events queue for retry and the API handles HTTP 204.
+- Real signed upload, two-browser comments, and quote submission are deferred at the owner's request until a video is ready.

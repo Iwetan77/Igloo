@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useCreateWallet, useWallets } from "@privy-io/react-auth/solana";
-import { ApiError, syncUser } from "@/lib/api";
+import { ApiError, getMe, putInterests, syncUser } from "@/lib/api";
+import type { Me } from "@/lib/types";
 import { getUsdcBalance } from "@/lib/balance";
 
 export function useSession() {
@@ -11,6 +12,8 @@ export function useSession() {
   const { ready: walletsReady, wallets } = useWallets();
   const { createWallet } = useCreateWallet();
   const [synced, setSynced] = useState(false);
+  const [me, setMe] = useState<Me | null>(null);
+  const [meError, setMeError] = useState("");
   const [syncError, setSyncError] = useState("");
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceError, setBalanceError] = useState("");
@@ -49,12 +52,21 @@ export function useSession() {
     if (record.wallet_address !== address) throw new Error("Wallet address mismatch");
     setSynced(true);
     setSyncError("");
+    try {
+      setMe(await getMe(token));
+      setMeError("");
+    } catch (error) {
+      if (!(error instanceof ApiError && error.status === 404)) {
+        setMeError("Your profile is temporarily unavailable.");
+      }
+    }
     return token;
   }, [user, getAccessToken, address]);
 
   useEffect(() => {
     if (!authenticated || !user?.id || !address) {
       setSynced(false);
+      setMe(null);
       return;
     }
     const key = user.id + ":" + address;
@@ -94,6 +106,12 @@ export function useSession() {
     }
   }, [authenticated, getAccessToken, synced, syncNow]);
 
+  const saveInterests = useCallback(async (categories: string[]) => {
+    const token = await authorized((value) => putInterests(categories, value).then(() => value));
+    setMe((current) => current ? { ...current, interests: categories, onboarded: true } : current);
+    try { setMe(await getMe(token)); } catch { /* optimistic state remains until next refresh */ }
+  }, [authorized]);
+
   return {
     ready: ready,
     authenticated: authenticated,
@@ -106,6 +124,9 @@ export function useSession() {
     walletCreating,
     createSolanaWallet,
     synced,
+    me,
+    meError,
+    saveInterests,
     syncError,
     balance,
     balanceError,

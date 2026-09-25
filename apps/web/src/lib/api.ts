@@ -1,4 +1,4 @@
-import type { Comment, FeedPage, OrderStatus, Position, Quote, Side } from "@/lib/types";
+import type { Comment, FeedPage, FeedTab, MarketPage, MarketSummary, Me, OrderStatus, Position, Quote, Side, UserProfile } from "@/lib/types";
 
 export type SyncedUser = {
   id: string;
@@ -20,7 +20,7 @@ const base = configured.endsWith("/api/v1") ? configured : configured + "/api/v1
 
 export async function apiRequest<T>(
   path: string,
-  options: { method?: "GET" | "POST"; body?: unknown; token?: string | null; signal?: AbortSignal } = {},
+  options: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown; token?: string | null; signal?: AbortSignal; keepalive?: boolean } = {},
 ): Promise<T> {
   const response = await fetch(base + path, {
     method: options.method || "GET",
@@ -31,6 +31,7 @@ export async function apiRequest<T>(
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: options.signal,
     cache: "no-store",
+    keepalive: options.keepalive,
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => null) as
@@ -38,6 +39,7 @@ export async function apiRequest<T>(
       | null;
     throw new ApiError(payload?.code || "HTTP_ERROR", response.status, payload?.message, payload?.fields);
   }
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
 
@@ -48,10 +50,47 @@ export function syncUser(
   return apiRequest<SyncedUser>("/users/sync", { method: "POST", body: input, token });
 }
 
-export function getFeed(cursor?: string | null, token?: string | null, signal?: AbortSignal) {
+export function getFeed(cursor?: string | null, token?: string | null, scope?: { tab?: FeedTab; marketId?: string }) {
   const query = new URLSearchParams({ limit: "10" });
   if (cursor) query.set("cursor", cursor);
-  return apiRequest<FeedPage>("/feed?" + query, { token, signal });
+  if (scope?.marketId) query.set("market_id", scope.marketId);
+  else if (scope?.tab) query.set("tab", scope.tab);
+  return apiRequest<FeedPage>("/feed?" + query, { token });
+}
+
+export function getMe(token: string) {
+  return apiRequest<Me>("/me", { token });
+}
+export function putInterests(categories: string[], token: string) {
+  return apiRequest<Me>("/me/interests", { method: "PUT", body: { categories }, token });
+}
+export function getMarkets(category?: string, cursor?: string | null, token?: string | null) {
+  const query = new URLSearchParams();
+  if (category) query.set("category", category);
+  if (cursor) query.set("cursor", cursor);
+  return apiRequest<MarketPage>("/markets" + (query.size ? "?" + query : ""), { token });
+}
+export function getMarket(id: string, token?: string | null) {
+  return apiRequest<MarketSummary>("/markets/" + encodeURIComponent(id), { token });
+}
+export function getUserProfile(id: string, token: string) {
+  return apiRequest<UserProfile>("/users/" + encodeURIComponent(id), { token });
+}
+export function getUserPosts(id: string, token: string) {
+  return apiRequest<FeedPage>("/users/" + encodeURIComponent(id) + "/posts", { token });
+}
+export function searchUsers(query: string, token: string) {
+  return apiRequest<{ users: UserProfile[] }>("/users/search?q=" + encodeURIComponent(query), { token });
+}
+export function setFollow(id: string, following: boolean, token: string) {
+  return apiRequest<{ following: boolean; follower_count: number }>("/users/" + encodeURIComponent(id) + "/follow", {
+    method: following ? "POST" : "DELETE", token,
+  });
+}
+export function postView(post_id: string, watch_ms: number, completed: boolean, token: string) {
+  return apiRequest<unknown>("/events/view", {
+    method: "POST", body: { post_id, watch_ms, completed }, token, keepalive: true,
+  });
 }
 
 export function quoteOrder(

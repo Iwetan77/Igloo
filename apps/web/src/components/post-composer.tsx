@@ -5,7 +5,7 @@ import { Camera, Upload, X } from "lucide-react";
 import { createPost, requestVideoUpload } from "@/lib/api";
 import { errorCopy } from "@/lib/copy";
 import { getSupabase, VIDEO_BUCKET } from "@/lib/supabase";
-import type { FeedPost } from "@/lib/types";
+import type { FeedPost, MarketSummary } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 
 async function durationOf(file: File): Promise<number> {
@@ -21,9 +21,9 @@ async function durationOf(file: File): Promise<number> {
 }
 
 export function PostComposer({
-  posts, quotePost, session, onClose, onPosted,
+  market, quotePost, session, onClose, onPosted,
 }: {
-  posts: FeedPost[];
+  market?: MarketSummary | null;
   quotePost?: FeedPost | null;
   session: Session;
   onClose: () => void;
@@ -33,7 +33,7 @@ export function PostComposer({
   const cameraInput = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
-  const [marketId, setMarketId] = useState(posts[0]?.panta_market_id || "");
+  const marketId = market?.panta_market_id || "";
   const [caption, setCaption] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -118,14 +118,7 @@ export function PostComposer({
             <input ref={fileInput} className="hidden-input" type="file" accept="video/*" onChange={(event) => { void choose(event.target.files?.[0]); }} />
             <input ref={cameraInput} className="hidden-input" type="file" accept="video/*" capture="environment" onChange={(event) => { void choose(event.target.files?.[0]); }} />
           </div>
-          {!quotePost && <>
-            <label className="field-label" htmlFor="market-ref">Market</label>
-            <select id="market-ref" value={marketId} onChange={(event) => setMarketId(event.target.value)}>
-              {posts.map((post) => <option key={post.id} value={post.panta_market_id}>{post.market.question || post.caption || post.panta_market_id}</option>)}
-            </select>
-            <label className="field-label" htmlFor="market-id">Or paste a market ID</label>
-            <input id="market-id" className="text-field" value={marketId} onChange={(event) => setMarketId(event.target.value)} />
-          </>}
+          {!quotePost && market && <div className="composer-market"><span>Posting on {market.category || "market"}</span><strong>{market.question || market.panta_market_id}</strong></div>}
           <label className="field-label" htmlFor="caption">Caption</label>
           <textarea id="caption" className="text-field" rows={3} maxLength={500} value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="What's your take?" />
           {error && <p className="inline-error" role="alert">{error}</p>}
