@@ -6,6 +6,7 @@ import { ApiError, buildOrder, quoteOrder, submitOrder, verifyOrder } from "@/li
 import { errorCopy, uiCopy } from "@/lib/copy";
 import { signAndBroadcast } from "@/lib/trade";
 import { marketEnded } from "@/lib/markets";
+import { dollarPerShareIllustration } from "@/lib/payout";
 import type { FeedPost, Quote, Side } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 
@@ -118,6 +119,7 @@ export function BuySheet({
     }
   }
 
+  const illustrativePayout = quote ? dollarPerShareIllustration(quote.estimated_shares) : null;
   const busy = ["quoting", "building", "signing", "broadcasting", "verifying"].includes(step);
   const question = post.market.question?.trim() || post.caption || "Market " + post.panta_market_id.slice(0, 8);
 
@@ -145,6 +147,7 @@ export function BuySheet({
             {quote && !signature && (
               <div className="quote-details">
                 <div><span>Estimated shares</span><strong>{quote.estimated_shares.toLocaleString(undefined, { maximumFractionDigits: 4 })}</strong></div>
+                {illustrativePayout !== null && <><div><span>At $1 per winning share</span><strong>≈ ${illustrativePayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></div><small><span>Illustration only. Panta sets the actual payout from final pools after the primary sale; it may be higher or lower.</span></small></>}
                 <div><span>Fee</span><strong>${quote.fee_usdc.toFixed(2)}</strong></div>
                 <div><span>Quote expires</span><strong className={secondsLeft < 15 ? "warning-text" : ""}>{secondsLeft}s</strong></div>
               </div>
