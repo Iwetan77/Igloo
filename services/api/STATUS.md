@@ -141,10 +141,18 @@ POST /markets/register {cr_nope, "x"}       -> 400 INVALID_MARKET_PARAMS + field
 POST /markets/quote  (no token)             -> 401
 ```
 
+## Video storage (done 2026-09-25)
+
+The `videos` bucket exists on the live project: public read, 50 MB limit, `video/mp4|webm|quicktime`
+only. Verified against the live project:
+- a backend-style signed URL accepted a PUT with no key (200)
+- the public URL served the file back as `video/mp4`
+- `storage.objects` has RLS on and **zero** policies, so the public key can't upload directly
+
+The test object was deleted. Not verified: the `/uploads/video` route with a real Privy token.
+
 ## Blocked on
 
-- **Owner:** `SUPABASE_SERVICE_ROLE_KEY` (the `sb_secret_…` key) in `services/api/.env`, then the
-  `videos` bucket gets created and uploads are tested end to end.
 
 - **Owner:** a funded mainnet wallet and a market in primary phase, to run a real buy end to end.
   Also a decision on flag 3.
