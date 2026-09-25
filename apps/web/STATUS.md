@@ -1,23 +1,26 @@
 # Frontend status
 
-Branch: `frontend` (user-requested professional branch name).
+Branch: `frontend`.
 
-## Phase 1: Authentication
+## Implemented
 
-- Next.js App Router and TypeScript app scaffolded.
-- Privy configured for Google login.
-- A Solana embedded wallet is created after login when none exists.
-- The real wallet address is sent to `POST /api/v1/users/sync` with a Privy access token.
-- The account view reads mainnet USDC token accounts through `NEXT_PUBLIC_SOLANA_RPC_URL`.
-- `npm run build`: passed on 2026-09-24 with a non-blocking optional Privy/Farcaster module warning.
-- `npm run lint`: passed on 2026-09-24.
-- Manual login gate: blocked. No Privy app ID, Solana RPC URL, or running API base URL is configured here, so a real Google login and synced Solana address cannot be verified.
+- Google sign-in with Privy and an embedded Solana wallet created on login.
+- Bearer-authenticated user sync using the linked Solana address, with retry after `USER_NOT_SYNCED`.
+- Vertical video feed with pagination, post deep links, likes, comments, sharing, and demo fallback when the live feed is empty.
+- Supabase Realtime subscriptions for likes and comments. Writes remain on the backend.
+- Buy flow: quote, build, Privy signing, mainnet RPC broadcast, submit, and verification polling. Backend error codes have user-facing copy, including `MARKET_NOT_IN_PRIMARY`.
+- Account view with mainnet USDC balance and positions.
+- Video composer using the backend-signed upload URL for the public-read `videos` bucket, followed by `POST /posts`.
 
-## Blocked on
+## Configuration
 
-- Configure `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_API_BASE_URL`, and `NEXT_PUBLIC_SOLANA_RPC_URL` in `apps/web/.env.local`, then run the backend and perform the manual login gate.
-- Confirm the Solana network and its USDC mint. The current balance read uses the mainnet USDC mint.
-- The current seed posts have placeholder video URLs; the feed phase will need playable assets or approved demo replacements.
+Set `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SOLANA_RPC_URL`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in ignored `apps/web/.env.local`. The temporary backend tunnel URL belongs only in that environment value.
 
-Phases 2-6 have not started because the Phase 1 manual gate has not passed.
+## Verification
 
+- `npm run build`: passed on 2026-09-25. The Privy package emits a non-blocking optional Farcaster module warning.
+- `npm run lint`: passed on 2026-09-24; rerun after final edits.
+- Public backend `GET /api/v1/feed?limit=1`: HTTP 200 on 2026-09-25, with an empty posts list.
+- Manual Google sign-in, wallet sync, two-session Realtime, and signed video upload still need an interactive check. The user has been asked to sign in at `http://localhost:3000`.
+- No Panta market currently accepts buys. The flow is implemented, but a successful mainnet trade cannot be verified until an opening sale exists.
+- Demo fallback videos are sample assets, not market footage. They are labeled Demo.
