@@ -5,6 +5,7 @@ import { Search, X } from "lucide-react";
 import categories from "../../../../content/categories.json";
 import { ApiError, getMarkets } from "@/lib/api";
 import { errorCopy } from "@/lib/copy";
+import { marketEnded, useMarketClock } from "@/lib/markets";
 import type { MarketSummary } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 
@@ -16,6 +17,7 @@ export function MarketPicker({ session, onSelect, onClose }: {
   const { authenticated, getAccessToken } = session;
   const [markets, setMarkets] = useState<MarketSummary[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
+  const marketNow = useMarketClock();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -51,7 +53,7 @@ export function MarketPicker({ session, onSelect, onClose }: {
   return <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="sheet market-picker-sheet" role="dialog" aria-modal="true" aria-label="Choose a market">
     <div className="sheet-head"><div><span className="eyebrow">New post</span><h2>Choose a market</h2></div><button type="button" className="icon-action" onClick={onClose} aria-label="Close market picker" title="Close"><X size={20} /></button></div>
     <label className="market-search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search markets" autoFocus /></label>
-    <div className="market-picker-list">{groups.map((group) => <section key={group}><h3>{label(group)}</h3>{filtered.filter((market) => (market.category || "other") === group).map((market) => <button type="button" className="market-picker-row" key={market.panta_market_id} onClick={() => onSelect(market)}><strong>{market.question || market.panta_market_id}</strong><span>{market.phase || "Market"}</span></button>)}</section>)}
+    <div className="market-picker-list">{groups.map((group) => <section key={group}><h3>{label(group)}</h3>{filtered.filter((market) => (market.category || "other") === group).map((market) => <button type="button" className="market-picker-row" key={market.panta_market_id} onClick={() => onSelect(market)}><strong>{market.question || market.panta_market_id}</strong><span>{marketEnded(market.end_time, marketNow) ? "Ended" : market.phase || "Market"}</span></button>)}</section>)}
       {!loading && !error && filtered.length === 0 && <p className="empty-note">{query ? "No matching markets loaded." : "No markets available."}</p>}
       {error && <p className="inline-error" role="alert">{error}</p>}
       {loading && <p className="empty-note">Loading markets...</p>}
