@@ -42,11 +42,21 @@ export function FeedExperience({ initialPostId }: { initialPostId?: string }) {
   const [composer, setComposer] = useState(false);
   const [positions, setPositions] = useState(false);
   const [account, setAccount] = useState(false);
+  const walletSetupShown = useRef(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const videos = useRef<Map<string, HTMLVideoElement>>(new Map());
   const activePost = posts.find((post) => post.id === activeId) || posts[0];
   const realtimePostId = activePost?.id;
   const realtimeDemo = activePost?.demo;
+
+  useEffect(() => {
+    if (!session.authenticated) {
+      walletSetupShown.current = false;
+    } else if (session.ready && !session.address && !walletSetupShown.current) {
+      walletSetupShown.current = true;
+      setAccount(true);
+    }
+  }, [session.authenticated, session.ready, session.address]);
 
   const notify = useCallback((message: string) => {
     setToast(message);
@@ -285,7 +295,7 @@ export function FeedExperience({ initialPostId }: { initialPostId?: string }) {
       }} />}
       {composer && <PostComposer posts={posts} session={session} onClose={() => setComposer(false)} onPosted={onPosted} />}
       {positions && <PositionsPanel session={session} onClose={() => setPositions(false)} />}
-      {account && <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccount(false); }}><section className="sheet account-sheet" role="dialog" aria-modal="true" aria-label="Account"><div className="sheet-head"><div><span className="eyebrow">Igloo account</span><h2>Your wallet</h2></div><button type="button" className="icon-action" onClick={() => setAccount(false)} aria-label="Close account" title="Close"><X size={20} /></button></div><p className="wallet-balance">{session.balance === null ? "\u2014" : session.balance.toFixed(2)} <span>USDC</span></p><div className="address-line"><span>{session.address || "Connecting wallet"}</span>{session.address && <button type="button" className="icon-action" onClick={() => { void navigator.clipboard.writeText(session.address || ""); notify("Address copied."); }} aria-label="Copy wallet address" title="Copy"><Copy size={17} /></button>}</div><p className="account-state">{session.synced ? <><Check size={16} />Account connected</> : session.syncError || "Connecting account..."}</p>{session.syncError && <button type="button" className="subtle-button" onClick={() => { void session.syncNow().catch(() => notify(uiCopy("error.generic"))); }}>Retry sync</button>}{session.balanceError && <p className="inline-error">{session.balanceError}</p>}<button type="button" className="signout-button" onClick={() => { void session.logout(); setAccount(false); }}>Sign out</button></section></div>}
+      {account && <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccount(false); }}><section className="sheet account-sheet" role="dialog" aria-modal="true" aria-label="Account"><div className="sheet-head"><div><span className="eyebrow">Igloo account</span><h2>Your wallet</h2></div><button type="button" className="icon-action" onClick={() => setAccount(false)} aria-label="Close account" title="Close"><X size={20} /></button></div><p className="wallet-balance">{session.balance === null ? "\u2014" : session.balance.toFixed(2)} <span>USDC</span></p><div className="address-line"><span>{session.address || "Connecting wallet"}</span>{session.address && <button type="button" className="icon-action" onClick={() => { void navigator.clipboard.writeText(session.address || ""); notify("Address copied."); }} aria-label="Copy wallet address" title="Copy"><Copy size={17} /></button>}</div><p className="account-state">{session.synced ? <><Check size={16} />Account connected</> : session.syncError || (!session.address ? "Create your Solana wallet to continue." : "Connecting account...")}</p>{!session.address && <button type="button" className="subtle-button" disabled={!session.ready || session.walletCreating} onClick={() => { void session.createSolanaWallet(); }}>{session.walletCreating ? "Creating wallet..." : "Create Solana wallet"}</button>}{session.address && session.syncError && <button type="button" className="subtle-button" onClick={() => { void session.syncNow().catch(() => notify(uiCopy("error.generic"))); }}>Retry sync</button>}{session.balanceError && <p className="inline-error">{session.balanceError}</p>}<button type="button" className="signout-button" onClick={() => { void session.logout(); setAccount(false); }}>Sign out</button></section></div>}
     </div>
   );
 }

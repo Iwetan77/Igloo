@@ -15,7 +15,7 @@ export function useSession() {
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceError, setBalanceError] = useState("");
   const syncKey = useRef("");
-  const creating = useRef(false);
+  const [walletCreating, setWalletCreating] = useState(false);
 
   const wallet = wallets.find((entry) => entry.standardWallet.name.toLowerCase().includes("privy")) ?? wallets[0];
   const linkedAddress = user?.linkedAccounts.flatMap((account) =>
@@ -23,17 +23,19 @@ export function useSession() {
   )[0];
   const address = wallet?.address ?? linkedAddress;
 
-  useEffect(() => {
-    if (!ready || !authenticated || !walletsReady || address || creating.current) return;
-    const timer = window.setTimeout(() => {
-      creating.current = true;
-      createWallet().catch(() => {
-        creating.current = false;
-        setSyncError("Could not create your Solana wallet. Please try signing in again.");
-      });
-    }, 4000);
-    return () => window.clearTimeout(timer);
-  }, [ready, authenticated, walletsReady, address, createWallet]);
+  const createSolanaWallet = useCallback(async () => {
+    if (!ready || !authenticated || !walletsReady || address || walletCreating) return;
+    setWalletCreating(true);
+    setSyncError("");
+    try {
+      await createWallet();
+    } catch (error) {
+      console.error("Solana wallet creation failed", error);
+      setSyncError("Could not create your Solana wallet. Please try again.");
+    } finally {
+      setWalletCreating(false);
+    }
+  }, [ready, authenticated, walletsReady, address, walletCreating, createWallet]);
 
   const syncNow = useCallback(async () => {
     if (!user?.id || !address) throw new Error("Wallet is still connecting");
@@ -101,6 +103,8 @@ export function useSession() {
     getAccessToken: getAccessToken,
     wallet,
     address,
+    walletCreating,
+    createSolanaWallet,
     synced,
     syncError,
     balance,

@@ -19,8 +19,9 @@ Set `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SOLANA_
 ## Verification
 
 - `npm run build`: passed on 2026-09-25. The Privy package emits a non-blocking optional Farcaster module warning.
-- `npm run lint`: passed on 2026-09-24; rerun after final edits.
+- `npm run lint`: passed on 2026-09-25.
 - Public backend `GET /api/v1/feed?limit=1`: HTTP 200 on 2026-09-25, with an empty posts list.
-- Manual Google sign-in, wallet sync, two-session Realtime, and signed video upload still need an interactive check. The user has been asked to sign in at `http://localhost:3000`.
+- First live Google sign-in, Solana wallet creation, and backend account sync succeeded on 2026-09-25, confirmed by the user account screen showing a Solana address and Account connected. The Privy creation modal stayed open until dismissed; a redundant fallback wallet creation call has been removed.
+- Two-session Realtime and signed video upload still need interactive checks.
 - No Panta market currently accepts buys. The flow is implemented, but a successful mainnet trade cannot be verified until an opening sale exists.
 - Demo fallback videos are sample assets, not market footage. They are labeled Demo.
