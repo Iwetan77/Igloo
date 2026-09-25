@@ -93,8 +93,11 @@ export function requestAvatarUpload(content_type: string, token: string) {
 export function getUserPosts(id: string, token: string, cursor?: string | null) {
   return apiRequest<FeedPage>("/users/" + encodeURIComponent(id) + "/posts" + (cursor ? "?cursor=" + encodeURIComponent(cursor) : ""), { token });
 }
-export function searchUsers(query: string, token: string) {
+export function searchUsers(query: string, token?: string | null) {
   return apiRequest<{ users: UserProfile[] }>("/users/search?q=" + encodeURIComponent(query), { token });
+}
+export function searchMarkets(query: string, token?: string | null) {
+  return apiRequest<MarketPage>("/markets?limit=20&q=" + encodeURIComponent(query), { token });
 }
 export function setFollow(id: string, following: boolean, token: string) {
   return apiRequest<{ following: boolean; follower_count: number }>("/users/" + encodeURIComponent(id) + "/follow", {
