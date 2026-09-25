@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Bookmark, ChevronRight, Compass, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, UserRound, Volume2, VolumeX, Wallet } from "lucide-react";
+import { Bookmark, ChevronRight, Compass, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, TrendingUp, UserRound, Volume2, VolumeX, Wallet } from "lucide-react";
 import { getFeed, getUserProfile, setFollow, sharePost, toggleLike } from "@/lib/api";
 import { errorCopy, optionalCopy, uiCopy } from "@/lib/copy";
 import { demoPosts } from "@/lib/seed";
@@ -20,6 +20,7 @@ import { PeopleSearch, ProfilePanel } from "@/components/people-panels";
 import { PostComposer } from "@/components/post-composer";
 import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import { WalletSheet } from "@/components/wallet-sheet";
+import { SearchSheet } from "@/components/search-sheet";
 import { PositionsPanel } from "@/components/positions-panel";
 import "@/styles/wallet-chip.css";
 
@@ -68,6 +69,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const [composer, setComposer] = useState<ComposerTarget | null>(null);
   const [marketPicker, setMarketPicker] = useState(false);
   const [peopleSearch, setPeopleSearch] = useState(false);
+  const [search, setSearch] = useState(false);
   const [profileId, setProfileId] = useState("");
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
   const [positions, setPositions] = useState(false);
@@ -275,15 +277,14 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   return <div className={"app-frame" + (tab === "markets" ? " market-mode" : "")}>
     <aside className="left-nav" aria-label="Main navigation"><div className="wordmark"><span className="logo-square" />Igloo</div><nav>
       <button type="button" className={"nav-item" + (tab === "for_you" ? " active" : "")} onClick={() => switchTab("for_you")}><Compass size={20} />For You</button>
-      <button type="button" className={"nav-item" + (tab === "markets" ? " active" : "")} onClick={() => switchTab("markets")}><Search size={20} />Markets</button>
-      <button type="button" className="nav-item" onClick={openPeople}><UserRound size={20} />Find people</button>
+      <button type="button" className={"nav-item" + (tab === "markets" ? " active" : "")} onClick={() => switchTab("markets")}><TrendingUp size={20} />Markets</button>
+      <button type="button" className="nav-item" onClick={() => setSearch(true)}><Search size={20} />Search</button>
       <button type="button" className="nav-item" onClick={() => session.authenticated ? setPositions(true) : session.login()}><Bookmark size={20} />Positions</button>
       <button type="button" className="nav-item" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()}><UserRound size={20} />Profile</button>
       <button type="button" className="nav-item nav-post" onClick={openPicker}><Plus size={20} />Post</button>
     </nav><button type="button" className="left-footer profile-entry" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()}><ProfileAvatar src={me?.avatar_url} name={me?.display_name} size={34} /><span>{session.authenticated ? (me?.username ? "@" + me.username : me?.display_name || "Profile") : "Sign in"}<small>{session.authenticated ? "View profile" : "Join Igloo"}</small></span></button></aside>
 
-    <main className="feed-column"><header className="feed-header"><div className="mobile-wordmark"><span className="logo-square" />Igloo</div><nav className="top-tabs" aria-label="Feed tabs">
-      <button type="button" className={tab === "markets" ? "active" : ""} onClick={() => switchTab("markets")}>Markets</button>
+    <main className="feed-column"><header className="feed-header"><button type="button" className="header-search" onClick={() => setSearch(true)} aria-label="Search markets and people" title="Search"><Search size={18} /></button><nav className="top-tabs" aria-label="Feed tabs">
       <button type="button" className={tab === "following" ? "active" : ""} onClick={() => switchTab("following")}>Following</button>
       <button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")}>For You</button>
     </nav>{session.authenticated ? <button type="button" className="header-wallet" onClick={() => setAccount(true)}><Image src="/brand/usdc-token.svg" alt="" width={32} height={32} className="usdc-token-mark" />{session.balance === null ? <span>Wallet</span> : <><span className="wallet-full">{session.balance.toFixed(2)} USDC</span><span className="wallet-short" aria-hidden="true">{compactUsd(session.balance)}</span></>}</button> : <button type="button" className="header-signin" onClick={session.login}>Sign in</button>}</header>
@@ -300,7 +301,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
       {feedError && posts.length === 0 && <div className="feed-empty"><p className="inline-error" role="alert">{feedError}</p><button type="button" className="subtle-button" onClick={() => { void refresh(initialPostId); }}>Retry</button></div>}
       {loadingMore && <div className="load-indicator">Loading more...</div>}
     </div>}
-    <nav className="mobile-nav" aria-label="Mobile navigation"><button type="button" className={tab === "for_you" || tab === "following" ? "active" : ""} onClick={() => switchTab("for_you")} aria-label="Feed" title="Feed"><Compass size={21} /><span>Feed</span></button><button type="button" className={tab === "markets" ? "active" : ""} onClick={() => switchTab("markets")} aria-label="Markets" title="Markets"><Search size={21} /><span>Markets</span></button><button type="button" className="create-nav" onClick={openPicker} aria-label="Create post" title="Create post"><Plus size={24} /></button><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()} aria-label="Positions" title="Positions"><Bookmark size={21} /><span>Positions</span></button><button type="button" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()} aria-label="Profile" title="Profile"><ProfileAvatar src={me?.avatar_url} name={me?.display_name} size={23} /><span>Profile</span></button></nav>
+    <nav className="mobile-nav" aria-label="Mobile navigation"><button type="button" className={tab === "for_you" || tab === "following" ? "active" : ""} onClick={() => switchTab("for_you")} aria-label="Feed" title="Feed"><Compass size={21} /><span>Feed</span></button><button type="button" className={tab === "markets" ? "active" : ""} onClick={() => switchTab("markets")} aria-label="Markets" title="Markets"><TrendingUp size={21} /><span>Markets</span></button><button type="button" className="create-nav" onClick={openPicker} aria-label="Create post" title="Create post"><Plus size={24} /></button><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()} aria-label="Positions" title="Positions"><Bookmark size={21} /><span>Positions</span></button><button type="button" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()} aria-label="Profile" title="Profile"><ProfileAvatar src={me?.avatar_url} name={me?.display_name} size={23} /><span>Profile</span></button></nav>
     {loading && tab !== "markets" && <div className="feed-loading" role="status">Updating feed...</div>}</main>
 
     <aside className="right-panel"><div className="right-title"><Eye size={14} />Now watching</div>{activePost && tab !== "markets" && <><div className="watch-card"><span className="right-category">{activePost.market.category || "Market"}</span><h2>{question(activePost)}</h2><span className="chance-value">{chance(activePost.market.yes_price)}<small>chance</small></span><ProbabilityBar yes={activePost.market.yes_price} /><div className="right-prices"><button type="button" disabled={marketEnded(activePost.market.end_time, marketNow)} onClick={() => setBuy({ post: activePost, side: "YES" })}><span>Buy Yes</span><strong>{price(activePost.market.yes_price)}</strong></button><button type="button" disabled={marketEnded(activePost.market.end_time, marketNow)} onClick={() => setBuy({ post: activePost, side: "NO" })}><span>Buy No</span><strong>{price(activePost.market.no_price)}</strong></button></div></div>{activePost.caption && <p className="right-caption">{activePost.caption}</p>}</>}<div className="right-bottom"><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()}><Wallet size={17} />View positions</button><button type="button" onClick={openPicker}><Plus size={17} />Post</button></div></aside>
@@ -310,6 +311,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     {comments && <CommentsDrawer post={comments} session={session} onClose={() => setComments(null)} onAdded={() => setPosts((current) => current.map((post) => post.id === comments.id ? { ...post, comment_count: post.comment_count + 1 } : post))} />}
     {marketPicker && <MarketPicker session={session} onClose={() => setMarketPicker(false)} onSelect={(market) => { setMarketPicker(false); setComposer({ market }); }} />}
     {composer && <PostComposer market={composer.market} quotePost={composer.quotePost} session={session} onClose={() => setComposer(null)} onPosted={onPosted} />}
+    {search && <SearchSheet session={session} onClose={() => setSearch(false)} onOpenProfile={(user) => { setSearch(false); if (user.username) window.location.assign("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
     {peopleSearch && <PeopleSearch session={session} onClose={() => setPeopleSearch(false)} onOpenProfile={(user) => { setPeopleSearch(false); if (user.username) window.location.assign("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
     {profileId && <ProfilePanel id={profileId} session={session} onClose={() => setProfileId("")} onOpenPost={openOriginal} onProfile={onProfile} />}
     {positions && <PositionsPanel session={session} onClose={() => setPositions(false)} />}
