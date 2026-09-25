@@ -16,14 +16,16 @@ Progress notes for the `supabase/`, `content/`, and `docs/` work. Branch: `data`
 - `supabase/migrations/0005_social_and_ranking.sql` — `user_interests`, `follows`,
   `post_views`, `markets_cache`, plus ranking indexes; backend-only (RLS on, no
   policies).
+- `supabase/migrations/0006_profiles.sql` — username/bio/avatar on `users`
+  (with constraints), `avatars` storage bucket, and `markets_cache.end_time`.
 - `supabase/seed.sql` — idempotent demo data (demo user marked onboarded with
-  interests, 4 seed posts + 1 quote post, 2 comments, 2 likes). Not run here; the
-  owner runs it in the SQL editor.
+  interests, username `igloo` + bio, 7 seed posts + 2 quote posts, 2 comments,
+  2 likes). Not run here; the owner runs it in the SQL editor.
 - `content/categories.json` — 15 categories (note 1).
 - `content/copy.json` — UI copy, onboarding/tab/profile labels, and backend
   error-code messages (note 3).
-- `content/seed-posts.json` — 4 posts backed by real Panta markets, now with
-  real, playable seed videos (notes 2 and 4).
+- `content/seed-posts.json` — 7 posts backed by real Panta markets, with real,
+  playable seed videos (notes 2 and 4).
 - `README.md` / `docs/DEMO_SCRIPT.md` — setup and walkthrough (note 5).
 
 ## Notes
@@ -37,8 +39,9 @@ stored as `{ "id": <slug>, "label": <Title Case> }`.
 
 ### 2. Seed posts — real Panta market IDs
 
-Replaced the fake `demo-*` IDs with four real markets (fetched with a `pk_live_`
-key):
+Panta currently has only **five genuinely live markets** (the rest are finished
+June–August events whose labels Panta hasn't updated). The seed posts are built
+from these five, with multiple takes and quote posts to reach 9 total posts:
 
 - `GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V` — "Will GTA 6 release on
   November 19th, 2026" (`gaming`).
@@ -49,10 +52,13 @@ key):
   (`crypto`).
 - `C2XGH1Z6YivhXMqRRBhKDHnFZTAoqkRcwBFTEZ7bdUrr` — "Will Witty Cruz top The
   Pantas FPL Leaderboard by end of GW3?" (`sports`).
+- `69A5oC4BXuHC1hG6EVpLZbgSH4GQGVBMgQKwHz3YhbZk` — "Will Bitcoin drop below 58k
+  in 2026?" (`crypto`).
 
-Quirk: Panta's API returns `category: "sports"` for the two crypto markets (a
-catalog mislabel); the seed posts use the semantically correct `crypto`. The feed
-shows Panta's live category regardless — the seed value only affects fallback.
+`seed-posts.json` holds 7 originals (a second take on GTA 6 and on $ANSEM, plus
+the Bitcoin-58k market); `seed.sql` adds 2 quote posts (of GTA 6 and $ANSEM) for
+9 total. Quirk: Panta mislabels several markets' `category` as `"sports"`; the
+seed posts use the semantically correct category.
 
 ### 3. copy.json
 
@@ -88,7 +94,10 @@ The quote post in `seed.sql` reuses the same family: `Big_Buck_Bunny_1080_10s_1M
 - Panta runs on Solana mainnet only — no mock mode, buys spend real USDC.
 - Backend `DATABASE_URL` must use the Supabase transaction pooler (port `6543`,
   `?sslmode=require`); port `5432` times out on TLS.
-- Setup order: `0001` → `0002` → `0003` → `0004` → `0005`, then `seed.sql`.
+- Backend run command is `go run .` (not `go run ./...`), and it reads env vars,
+  so source `.env` first: `set -a && . ./.env && set +a && go run .`.
+- Setup order: `0001` → `0002` → `0003` → `0004` → `0005` → `0006`, then
+  `seed.sql`.
 - Video uploads go through the backend: `POST /api/v1/uploads/video` → upload to
   the returned signed URL → `POST /posts`.
 - Privy needs Solana embedded wallets enabled.

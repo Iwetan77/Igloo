@@ -30,7 +30,8 @@ Create a Supabase project first (hosted or local). Migrations live in
 `supabase/migrations/` and run in order — `0001_init.sql` (schema),
 `0002_rls.sql` (row-level security), `0003_storage.sql` (storage bucket),
 `0004_quote_posts.sql` (quote posts), `0005_social_and_ranking.sql` (social and
-ranking). Then run `supabase/seed.sql` once to load demo data.
+ranking), `0006_profiles.sql` (profiles). Then run `supabase/seed.sql` once to
+load demo data.
 
 ```bash
 # local Supabase stack
@@ -54,19 +55,25 @@ post can quote another post like a quote tweet or stitch.
 `0005` adds onboarding interests, follows, post watch signals, and a Panta
 market cache, plus ranking indexes. These tables are backend-only (RLS on, no
 policies).
+`0006` adds username/bio/avatar to `users` (with validation constraints), an
+`avatars` storage bucket, and `markets_cache.end_time` for hiding finished
+markets.
 
 For a non-empty feed, run `supabase/seed.sql` in the Supabase SQL editor — it
-inserts a demo user (marked onboarded, with a few interests), the four seed
-posts plus one quote post, and a couple of comments and likes (safe to run
-twice).
+inserts a demo user (marked onboarded, with a few interests), seven seed posts
+plus two quote posts, and a couple of comments and likes (safe to run twice).
 
 ## 2. Run the backend (`services/api`)
 
 ```bash
 cd services/api
 cp .env.example .env   # then fill in the values (see .env.example notes)
-go run ./...
+set -a && . ./.env && set +a && go run .
 ```
+
+The backend reads environment variables (not a `.env` file directly), so the
+`set -a && . ./.env && set +a` line exports the `.env` values into the shell
+before starting it. Use `go run .` (not `go run ./...`).
 
 The API listens on its default port (see `services/api/.env.example`) and serves
 `/api/v1/...`.

@@ -26,5 +26,26 @@
     "caption": "Witty Cruz has been on fire since GW1.",
     "category": "sports",
     "market_question": "Will Witty Cruz top The Pantas FPL Leaderboard by end of GW3?"
+  },
+  {
+    "panta_market_id": "69A5oC4BXuHC1hG6EVpLZbgSH4GQGVBMgQKwHz3YhbZk",
+    "video_url": "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4",
+    "caption": "We've been grinding sideways. A drop under $58k changes everything.",
+    "category": "crypto",
+    "market_question": "Will Bitcoin drop below 58k in 2026?"
+  },
+  {
+    "panta_market_id": "BpPmo7wHrh8bi3ea2ohiVy64sxEnSTufx67zTA9ntnfT",
+    "video_url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4",
+    "caption": "Everyone's chasing the $1B cap. I'm fading it.",
+    "category": "crypto",
+    "market_question": "Will $ANSEM reach a $1B market cap by December 31, 2026?"
+  },
+  {
+    "panta_market_id": "GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V",
+    "video_url": "https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4",
+    "caption": "Rockstar's last three games all slipped. Bet on the delay.",
+    "category": "gaming",
+    "market_question": "Will GTA 6 release on November 19th, 2026"
   }
 ]

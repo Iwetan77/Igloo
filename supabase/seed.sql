@@ -1,13 +1,15 @@
 -- Demo seed data for the live feed. Safe to run twice (fixed UUIDs + on conflict do nothing).
--- Run in the Supabase SQL editor after applying the migrations (0001 -> 0002 -> 0003 -> 0004 -> 0005).
+-- Run in the Supabase SQL editor after applying the migrations (0001 -> 0002 -> 0003 -> 0004 -> 0005 -> 0006).
 
-insert into users (id, privy_user_id, wallet_address, display_name, onboarded_at)
+insert into users (id, privy_user_id, wallet_address, display_name, onboarded_at, username, bio)
 values (
   '00000000-0000-0000-0000-000000000001',
   'did:privy:demo-seed',
   'Demo1111111111111111111111111111111111111111',
   'Igloo Demo',
-  now()
+  now(),
+  'igloo',
+  'Sharing takes on the markets that matter.'
 )
 on conflict (privy_user_id) do nothing;
 
@@ -60,6 +62,44 @@ values (
   'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4',
   'Counterpoint: this one actually ships on time.',
   '00000000-0000-0000-0000-000000000011'
+)
+on conflict (id) do nothing;
+
+-- Additional takes on the same markets.
+insert into posts (id, panta_market_id, author_user_id, video_url, caption)
+values
+  (
+    '00000000-0000-0000-0000-000000000016',
+    '69A5oC4BXuHC1hG6EVpLZbgSH4GQGVBMgQKwHz3YhbZk',
+    '00000000-0000-0000-0000-000000000001',
+    'https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4',
+    'We''ve been grinding sideways. A drop under $58k changes everything.'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000017',
+    'BpPmo7wHrh8bi3ea2ohiVy64sxEnSTufx67zTA9ntnfT',
+    '00000000-0000-0000-0000-000000000001',
+    'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4',
+    'Everyone''s chasing the $1B cap. I''m fading it.'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000018',
+    'GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V',
+    '00000000-0000-0000-0000-000000000001',
+    'https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4',
+    'Rockstar''s last three games all slipped. Bet on the delay.'
+  )
+on conflict (id) do nothing;
+
+-- Quote post: the demo user quotes the $ANSEM post.
+insert into posts (id, panta_market_id, author_user_id, video_url, caption, quoted_post_id)
+values (
+  '00000000-0000-0000-0000-000000000019',
+  'BpPmo7wHrh8bi3ea2ohiVy64sxEnSTufx67zTA9ntnfT',
+  '00000000-0000-0000-0000-000000000001',
+  'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+  'That''s a lot of hopium for one coin.',
+  '00000000-0000-0000-0000-000000000012'
 )
 on conflict (id) do nothing;
 
