@@ -19,12 +19,12 @@ Progress notes for the `supabase/`, `content/`, and `docs/` work. Branch: `data`
 - `supabase/migrations/0006_profiles.sql` — username/bio/avatar on `users`
   (with constraints), `avatars` storage bucket, and `markets_cache.end_time`.
 - `supabase/seed.sql` — idempotent demo data (demo user marked onboarded with
-  interests, username `igloo` + bio, 7 seed posts + 2 quote posts, 2 comments,
+  interests, username `igloo` + bio, 8 seed posts + 2 quote posts, 2 comments,
   2 likes). Not run here; the owner runs it in the SQL editor.
 - `content/categories.json` — 15 categories (note 1).
 - `content/copy.json` — UI copy, onboarding/tab/profile labels, and backend
   error-code messages (note 3).
-- `content/seed-posts.json` — 7 posts backed by real Panta markets, with real,
+- `content/seed-posts.json` — 8 posts backed by real Panta markets, with real,
   playable seed videos (notes 2 and 4).
 - `README.md` / `docs/DEMO_SCRIPT.md` — setup and walkthrough (note 5).
 
@@ -55,10 +55,10 @@ from these five, with multiple takes and quote posts to reach 9 total posts:
 - `69A5oC4BXuHC1hG6EVpLZbgSH4GQGVBMgQKwHz3YhbZk` — "Will Bitcoin drop below 58k
   in 2026?" (`crypto`).
 
-`seed-posts.json` holds 7 originals (a second take on GTA 6 and on $ANSEM, plus
-the Bitcoin-58k market); `seed.sql` adds 2 quote posts (of GTA 6 and $ANSEM) for
-9 total. Quirk: Panta mislabels several markets' `category` as `"sports"`; the
-seed posts use the semantically correct category.
+`seed-posts.json` holds 8 originals (second takes on GTA 6, $ANSEM, and
+Bitcoin-58k); `seed.sql` adds 2 quote posts (of GTA 6 and $ANSEM) for 10 total.
+Quirk: Panta mislabels several markets' `category` as `"sports"`; the seed posts
+use the semantically correct category.
 
 ### 3. copy.json
 

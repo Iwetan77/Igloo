@@ -124,7 +124,7 @@ Notes:
 supabase start && supabase db reset
 
 # terminal 2
-cd services/api && go run ./...
+cd services/api && set -a && . ./.env && set +a && go run .
 
 # terminal 3
 cd apps/web && npm run dev

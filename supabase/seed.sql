@@ -88,6 +88,13 @@ values
     '00000000-0000-0000-0000-000000000001',
     'https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4',
     'Rockstar''s last three games all slipped. Bet on the delay.'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000020',
+    '69A5oC4BXuHC1hG6EVpLZbgSH4GQGVBMgQKwHz3YhbZk',
+    '00000000-0000-0000-0000-000000000001',
+    'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',
+    'Bears keep calling for $58k. They''ve been wrong all year.'
   )
 on conflict (id) do nothing;
 

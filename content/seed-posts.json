@@ -47,5 +47,12 @@
     "caption": "Rockstar's last three games all slipped. Bet on the delay.",
     "category": "gaming",
     "market_question": "Will GTA 6 release on November 19th, 2026"
+  },
+  {
+    "panta_market_id": "69A5oC4BXuHC1hG6EVpLZbgSH4GQGVBMgQKwHz3YhbZk",
+    "video_url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+    "caption": "Bears keep calling for $58k. They've been wrong all year.",
+    "category": "crypto",
+    "market_question": "Will Bitcoin drop below 58k in 2026?"
   }
 ]
