@@ -31,6 +31,7 @@ type Post struct {
 	VideoURL      string    `json:"video_url"`
 	Caption       *string   `json:"caption"`
 	AuthorUserID  string    `json:"author_user_id"`
+	QuotedPostID  *string   `json:"quoted_post_id"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
@@ -43,10 +44,21 @@ type Author struct {
 type FeedPost struct {
 	Post
 	Author       Author
+	Quoted       *QuotedPost // nil for originals, or when the quoted post was deleted
 	LikeCount    int
 	CommentCount int
 	ShareCount   int
+	QuoteCount   int
 	LikedByMe    bool
+}
+
+// QuotedPost is the compact view of the post a quote points at.
+type QuotedPost struct {
+	ID        string
+	VideoURL  string
+	Caption   *string
+	CreatedAt time.Time
+	Author    Author
 }
 
 type Comment struct {
@@ -138,15 +150,26 @@ func (s *Store) UserByPrivyID(ctx context.Context, privyUserID string) (User, er
 	return u, err
 }
 
-func (s *Store) CreatePost(ctx context.Context, authorID, marketID, videoURL string, caption *string) (Post, error) {
+// CreatePost inserts a post. quotedPostID is nil for an original post.
+func (s *Store) CreatePost(ctx context.Context, authorID, marketID, videoURL string, caption, quotedPostID *string) (Post, error) {
 	var p Post
 	err := s.db.QueryRow(ctx, `
-		insert into posts (panta_market_id, author_user_id, video_url, caption)
-		values ($1, $2, $3, $4)
-		returning id, panta_market_id, video_url, caption, author_user_id, created_at`,
-		marketID, authorID, videoURL, caption,
-	).Scan(&p.ID, &p.PantaMarketID, &p.VideoURL, &p.Caption, &p.AuthorUserID, &p.CreatedAt)
+		insert into posts (panta_market_id, author_user_id, video_url, caption, quoted_post_id)
+		values ($1, $2, $3, $4, $5)
+		returning id, panta_market_id, video_url, caption, author_user_id, quoted_post_id, created_at`,
+		marketID, authorID, videoURL, caption, quotedPostID,
+	).Scan(&p.ID, &p.PantaMarketID, &p.VideoURL, &p.Caption, &p.AuthorUserID, &p.QuotedPostID, &p.CreatedAt)
 	return p, err
+}
+
+// PostMarket returns the market a post is on, or ErrNotFound.
+func (s *Store) PostMarket(ctx context.Context, postID string) (string, error) {
+	var m string
+	err := s.db.QueryRow(ctx, `select panta_market_id from posts where id = $1`, postID).Scan(&m)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	return m, err
 }
 
 func (s *Store) PostExists(ctx context.Context, postID string) (bool, error) {
@@ -168,15 +191,19 @@ func (s *Store) Feed(ctx context.Context, viewerID string, cursor *Cursor, limit
 		curTime, curID = &cursor.CreatedAt, &cursor.ID
 	}
 	rows, err := s.db.Query(ctx, `
-		select p.id, p.panta_market_id, p.video_url, p.caption, p.author_user_id, p.created_at,
+		select p.id, p.panta_market_id, p.video_url, p.caption, p.author_user_id, p.quoted_post_id, p.created_at,
 		       u.id, u.display_name, u.wallet_address,
+		       q.id, q.video_url, q.caption, q.created_at, qu.id, qu.display_name, qu.wallet_address,
 		       (select count(*) from likes    l where l.post_id = p.id),
 		       (select count(*) from comments c where c.post_id = p.id),
 		       (select count(*) from shares   s where s.post_id = p.id),
+		       (select count(*) from posts   qp where qp.quoted_post_id = p.id),
 		       ($1::uuid is not null and exists(
 		           select 1 from likes l where l.post_id = p.id and l.user_id = $1::uuid))
 		  from posts p
 		  join users u on u.id = p.author_user_id
+		  left join posts q  on q.id  = p.quoted_post_id
+		  left join users qu on qu.id = q.author_user_id
 		 where $2::timestamptz is null
 		    or (p.created_at, p.id) < ($2::timestamptz, $3::uuid)
 		 order by p.created_at desc, p.id desc
@@ -189,10 +216,18 @@ func (s *Store) Feed(ctx context.Context, viewerID string, cursor *Cursor, limit
 	out := []FeedPost{}
 	for rows.Next() {
 		var f FeedPost
-		if err := rows.Scan(&f.ID, &f.PantaMarketID, &f.VideoURL, &f.Caption, &f.AuthorUserID, &f.CreatedAt,
+		var qID, qVideo, qAuthorID, qAuthorWallet *string
+		var qCaption, qAuthorName *string
+		var qCreated *time.Time
+		if err := rows.Scan(&f.ID, &f.PantaMarketID, &f.VideoURL, &f.Caption, &f.AuthorUserID, &f.QuotedPostID, &f.CreatedAt,
 			&f.Author.ID, &f.Author.DisplayName, &f.Author.WalletAddress,
-			&f.LikeCount, &f.CommentCount, &f.ShareCount, &f.LikedByMe); err != nil {
+			&qID, &qVideo, &qCaption, &qCreated, &qAuthorID, &qAuthorName, &qAuthorWallet,
+			&f.LikeCount, &f.CommentCount, &f.ShareCount, &f.QuoteCount, &f.LikedByMe); err != nil {
 			return nil, err
+		}
+		if qID != nil {
+			f.Quoted = &QuotedPost{ID: *qID, VideoURL: *qVideo, Caption: qCaption, CreatedAt: *qCreated,
+				Author: Author{ID: *qAuthorID, DisplayName: qAuthorName, WalletAddress: *qAuthorWallet}}
 		}
 		out = append(out, f)
 	}

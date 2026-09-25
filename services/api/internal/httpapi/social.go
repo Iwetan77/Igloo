@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -90,18 +91,28 @@ type feedAuthor struct {
 	WalletAddress string  `json:"wallet_address"`
 }
 
+type quotedPostOut struct {
+	ID        string        `json:"id"`
+	VideoURL  string        `json:"video_url"`
+	Caption   *string       `json:"caption"`
+	CreatedAt time.Time     `json:"created_at"`
+	Author    commentAuthor `json:"author"`
+}
+
 type feedPost struct {
-	ID            string     `json:"id"`
-	PantaMarketID string     `json:"panta_market_id"`
-	VideoURL      string     `json:"video_url"`
-	Caption       *string    `json:"caption"`
-	CreatedAt     time.Time  `json:"created_at"`
-	Author        feedAuthor `json:"author"`
-	Market        feedMarket `json:"market"`
-	LikeCount     int        `json:"like_count"`
-	CommentCount  int        `json:"comment_count"`
-	ShareCount    int        `json:"share_count"`
-	LikedByMe     bool       `json:"liked_by_me"`
+	ID            string         `json:"id"`
+	PantaMarketID string         `json:"panta_market_id"`
+	VideoURL      string         `json:"video_url"`
+	Caption       *string        `json:"caption"`
+	CreatedAt     time.Time      `json:"created_at"`
+	Author        feedAuthor     `json:"author"`
+	Market        feedMarket     `json:"market"`
+	QuotedPost    *quotedPostOut `json:"quoted_post"`
+	LikeCount     int            `json:"like_count"`
+	CommentCount  int            `json:"comment_count"`
+	ShareCount    int            `json:"share_count"`
+	QuoteCount    int            `json:"quote_count"`
+	LikedByMe     bool           `json:"liked_by_me"`
 }
 
 const (
@@ -162,7 +173,11 @@ func (s *Server) feed(w http.ResponseWriter, r *http.Request) {
 		fp := feedPost{
 			ID: p.ID, PantaMarketID: p.PantaMarketID, VideoURL: p.VideoURL, Caption: p.Caption, CreatedAt: p.CreatedAt,
 			Author:    feedAuthor{ID: p.Author.ID, DisplayName: p.Author.DisplayName, WalletAddress: p.Author.WalletAddress},
-			LikeCount: p.LikeCount, CommentCount: p.CommentCount, ShareCount: p.ShareCount, LikedByMe: p.LikedByMe,
+			LikeCount: p.LikeCount, CommentCount: p.CommentCount, ShareCount: p.ShareCount, QuoteCount: p.QuoteCount, LikedByMe: p.LikedByMe,
+		}
+		if q := p.Quoted; q != nil {
+			fp.QuotedPost = &quotedPostOut{ID: q.ID, VideoURL: q.VideoURL, Caption: q.Caption, CreatedAt: q.CreatedAt,
+				Author: commentAuthor{ID: q.Author.ID, DisplayName: q.Author.DisplayName}}
 		}
 		// A market Panta can't return right now leaves every market field null
 		// rather than dropping the post from the feed.
@@ -247,26 +262,53 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request, u store.User
 		PantaMarketID string  `json:"panta_market_id"`
 		VideoURL      string  `json:"video_url"`
 		Caption       *string `json:"caption"`
+		// Set for a quote post; the quote inherits the original's market.
+		QuotedPostID string `json:"quoted_post_id"`
 	}
 	if !decodeBody(w, r, &in) {
-		return
-	}
-	if in.PantaMarketID == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_BODY", "panta_market_id is required")
 		return
 	}
 	if pu, err := url.Parse(in.VideoURL); err != nil || (pu.Scheme != "http" && pu.Scheme != "https") || pu.Host == "" {
 		writeError(w, http.StatusBadRequest, "INVALID_VIDEO_URL", "video_url must be an http(s) URL")
 		return
 	}
-	if _, err := s.panta.GetMarket(r.Context(), in.PantaMarketID); err != nil {
-		s.pantaError(w, r, err)
-		return
+	var quoted *string
+	if in.QuotedPostID != "" {
+		market := ""
+		var err error
+		if store.IsUUID(in.QuotedPostID) {
+			market, err = s.store.PostMarket(r.Context(), in.QuotedPostID)
+		} else {
+			err = store.ErrNotFound
+		}
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "QUOTED_POST_NOT_FOUND", "")
+			return
+		}
+		if err != nil {
+			s.internal(w, r, err)
+			return
+		}
+		if in.PantaMarketID != "" && in.PantaMarketID != market {
+			writeError(w, http.StatusBadRequest, "QUOTE_MARKET_MISMATCH", "a quote stays on the original post's market")
+			return
+		}
+		// The original's market was checked against Panta when it was posted.
+		in.PantaMarketID, quoted = market, &in.QuotedPostID
+	} else {
+		if in.PantaMarketID == "" {
+			writeError(w, http.StatusBadRequest, "INVALID_BODY", "panta_market_id is required")
+			return
+		}
+		if _, err := s.panta.GetMarket(r.Context(), in.PantaMarketID); err != nil {
+			s.pantaError(w, r, err)
+			return
+		}
 	}
 	if !s.limit(w, "post", u.ID, postLimits) {
 		return
 	}
-	p, err := s.store.CreatePost(r.Context(), u.ID, in.PantaMarketID, in.VideoURL, in.Caption)
+	p, err := s.store.CreatePost(r.Context(), u.ID, in.PantaMarketID, in.VideoURL, in.Caption, quoted)
 	if err != nil {
 		s.internal(w, r, err)
 		return

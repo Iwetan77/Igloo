@@ -64,6 +64,15 @@ upload. This needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; without them 
 apply `supabase/migrations/*.sql` from the repo root. Point `IGLOO_MIGRATIONS_DIR` elsewhere
 if needed, or use `-short` to skip them.
 
+## Quote posts
+
+`POST /posts` with `quoted_post_id` creates a quote of an existing post. The quote always
+stays on the original's market: `panta_market_id` may be omitted (it's copied), and a
+different one is `400 QUOTE_MARKET_MISMATCH`. An unknown original is `404 QUOTED_POST_NOT_FOUND`.
+`/feed` returns `quoted_post` (`{id, video_url, caption, created_at, author{id, display_name}}`,
+or `null`) and `quote_count` on every post. This needs migration `0004_quote_posts.sql`
+(`posts.quoted_post_id`, `on delete set null`). Quotes count toward the post rate limit.
+
 ## Rate limits
 
 Per signed-in user, counted only for valid writes. Over the limit returns

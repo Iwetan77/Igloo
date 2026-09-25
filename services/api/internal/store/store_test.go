@@ -51,6 +51,9 @@ func openTestStore(t *testing.T) *Store {
 		"create publication supabase_realtime",
 		"create role anon nologin",
 		"create role authenticated nologin",
+		`create schema storage`,
+		`create table storage.buckets (id text primary key, name text not null, public boolean,
+			file_size_limit bigint, allowed_mime_types text[])`,
 	} {
 		if _, err := c.Exec(ctx, stmt); err != nil {
 			t.Fatal(err)
@@ -106,7 +109,7 @@ func TestStore(t *testing.T) {
 	// duplicates or gaps, including when timestamps tie.
 	var ids []string
 	for i := 0; i < 5; i++ {
-		p, err := st.CreatePost(ctx, alice.ID, "GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V", "https://example.com/v.mp4", nil)
+		p, err := st.CreatePost(ctx, alice.ID, "GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V", "https://example.com/v.mp4", nil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -196,6 +199,43 @@ func TestStore(t *testing.T) {
 			if err != nil || n != want {
 				t.Errorf("share %d: got %d, %v", want, n, err)
 			}
+		}
+	})
+
+	t.Run("quote posts link to the original and survive its deletion", func(t *testing.T) {
+		orig, err := st.CreatePost(ctx, alice.ID, "BpPmo7wHrh8bi3ea2ohiVy64sxEnSTufx67zTA9ntnfT", "https://example.com/orig.mp4", &name, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if m, err := st.PostMarket(ctx, orig.ID); err != nil || m != orig.PantaMarketID {
+			t.Fatalf("PostMarket: %q %v", m, err)
+		}
+		if _, err := st.PostMarket(ctx, "00000000-0000-0000-0000-000000000000"); err != ErrNotFound {
+			t.Errorf("PostMarket missing: %v", err)
+		}
+		q, err := st.CreatePost(ctx, bob.ID, orig.PantaMarketID, "https://example.com/quote.mp4", nil, &orig.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if q.QuotedPostID == nil || *q.QuotedPostID != orig.ID {
+			t.Fatalf("created quote: %+v", q)
+		}
+		fq := feedPost(t, st, "", q.ID)
+		if fq.Quoted == nil || fq.Quoted.ID != orig.ID || fq.Quoted.VideoURL != "https://example.com/orig.mp4" ||
+			fq.Quoted.Author.ID != alice.ID || fq.Quoted.Caption == nil || *fq.Quoted.Caption != "Ada" {
+			t.Errorf("feed quote: %+v", fq.Quoted)
+		}
+		if n := feedPost(t, st, "", orig.ID).QuoteCount; n != 1 {
+			t.Errorf("original quote_count = %d, want 1", n)
+		}
+		if feedPost(t, st, "", orig.ID).Quoted != nil {
+			t.Error("original post reports a quoted post")
+		}
+		if _, err := st.db.Exec(ctx, `delete from posts where id = $1`, orig.ID); err != nil {
+			t.Fatal(err)
+		}
+		if fq := feedPost(t, st, "", q.ID); fq.Quoted != nil || fq.QuotedPostID != nil {
+			t.Errorf("after original deleted: quoted=%+v id=%v, want both nil", fq.Quoted, fq.QuotedPostID)
 		}
 	})
 
