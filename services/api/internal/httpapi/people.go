@@ -14,10 +14,14 @@ import (
 
 type meOut struct {
 	store.User
+	Username       *string  `json:"username"`
+	Bio            *string  `json:"bio"`
+	AvatarURL      *string  `json:"avatar_url"`
 	Onboarded      bool     `json:"onboarded"`
 	Interests      []string `json:"interests"`
 	FollowerCount  int      `json:"follower_count"`
 	FollowingCount int      `json:"following_count"`
+	LikesReceived  int      `json:"likes_received"`
 }
 
 func (s *Server) me(w http.ResponseWriter, r *http.Request, u store.User) {
@@ -26,7 +30,8 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request, u store.User) {
 		s.internal(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, meOut{m.User, m.Onboarded, m.Interests, m.FollowerCount, m.FollowingCount})
+	writeJSON(w, http.StatusOK, meOut{m.User, m.Username, m.Bio, m.AvatarURL, m.Onboarded, m.Interests,
+		m.FollowerCount, m.FollowingCount, m.LikesReceived})
 }
 
 var categorySlug = regexp.MustCompile(`^[a-z][a-z0-9-]{0,31}$`)
@@ -70,16 +75,21 @@ type profileOut struct {
 	ID             string  `json:"id"`
 	DisplayName    *string `json:"display_name"`
 	WalletAddress  string  `json:"wallet_address"`
+	Username       *string `json:"username"`
+	Bio            *string `json:"bio"`
+	AvatarURL      *string `json:"avatar_url"`
 	FollowerCount  int     `json:"follower_count"`
 	FollowingCount int     `json:"following_count"`
 	PostCount      int     `json:"post_count"`
+	LikesReceived  int     `json:"likes_received"`
 	IsFollowing    bool    `json:"is_following"`
 	FollowsMe      bool    `json:"follows_me"`
 	IsFriend       bool    `json:"is_friend"`
 }
 
 func toProfileOut(p store.Profile) profileOut {
-	return profileOut{p.ID, p.DisplayName, p.WalletAddress, p.FollowerCount, p.FollowingCount, p.PostCount,
+	return profileOut{p.ID, p.DisplayName, p.WalletAddress, p.Username, p.Bio, p.AvatarURL,
+		p.FollowerCount, p.FollowingCount, p.PostCount, p.LikesReceived,
 		p.IsFollowing, p.FollowsMe, p.IsFollowing && p.FollowsMe}
 }
 

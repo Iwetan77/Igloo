@@ -59,6 +59,10 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("GET "+p+"/me", s.requireUser(s.me))
 	mux.HandleFunc("PUT "+p+"/me/interests", s.requireUser(s.setInterests))
+	mux.HandleFunc("PATCH "+p+"/me", s.requireUser(s.updateMe))
+	mux.HandleFunc("GET "+p+"/me/liked", s.requireUser(s.myLiked))
+	mux.HandleFunc("POST "+p+"/uploads/avatar", s.requireUser(s.uploadAvatar))
+	mux.HandleFunc("GET "+p+"/usernames/{username}", s.userByUsername)
 	mux.HandleFunc("GET "+p+"/users/search", s.searchUsers)
 	mux.HandleFunc("GET "+p+"/users/{id}", s.userProfile)
 	mux.HandleFunc("GET "+p+"/users/{id}/posts", s.userPosts)
@@ -228,7 +232,7 @@ func cors(next http.Handler) http.Handler {
 		h := w.Header()
 		h.Set("Access-Control-Allow-Origin", "*")
 		h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-		h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		h.Set("Access-Control-Max-Age", "600")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)

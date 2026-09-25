@@ -6,6 +6,7 @@ package panta
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type Market struct {
@@ -16,6 +17,7 @@ type Market struct {
 	YesPrice *float64 // nil when Panta has no spot price
 	NoPrice  *float64
 	ImageURL string // first catalog image, "" if none
+	EndTime  *time.Time
 }
 
 type QuoteRequest struct {

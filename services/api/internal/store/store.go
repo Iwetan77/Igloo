@@ -39,6 +39,8 @@ type Author struct {
 	ID            string
 	DisplayName   *string
 	WalletAddress string
+	Username      *string
+	AvatarURL     *string
 }
 
 type FeedPost struct {
@@ -186,13 +188,14 @@ type FeedQuery struct {
 	MarketID      string // only posts on this Panta market
 	AuthorID      string // only posts by this user
 	FollowingOnly bool   // only posts by users ViewerID follows
+	LikedBy       string // only posts this user liked
 }
 
 // feedSelect is every column a feed row needs; $1 is the viewer id (or null).
 const feedSelect = `
 		select p.id, p.panta_market_id, p.video_url, p.caption, p.author_user_id, p.quoted_post_id, p.created_at,
-		       u.id, u.display_name, u.wallet_address,
-		       q.id, q.video_url, q.caption, q.created_at, qu.id, qu.display_name, qu.wallet_address,
+		       u.id, u.display_name, u.wallet_address, u.username, u.avatar_url,
+		       q.id, q.video_url, q.caption, q.created_at, qu.id, qu.display_name, qu.wallet_address, qu.username, qu.avatar_url,
 		       (select count(*) from likes    l where l.post_id = p.id),
 		       (select count(*) from comments c where c.post_id = p.id),
 		       (select count(*) from shares   s where s.post_id = p.id),
@@ -224,9 +227,10 @@ func (s *Store) Feed(ctx context.Context, q FeedQuery) ([]FeedPost, error) {
 		   and ($6::uuid is null or p.author_user_id = $6::uuid)
 		   and (not $7::boolean or exists(
 		         select 1 from follows f where f.follower_id = $1::uuid and f.followee_id = p.author_user_id))
+		   and ($8::uuid is null or exists(select 1 from likes lb where lb.post_id = p.id and lb.user_id = $8::uuid))
 		 order by p.created_at desc, p.id desc
 		 limit $4`,
-		nullable(q.ViewerID), curTime, curID, q.Limit, nullable(q.MarketID), nullable(q.AuthorID), q.FollowingOnly)
+		nullable(q.ViewerID), curTime, curID, q.Limit, nullable(q.MarketID), nullable(q.AuthorID), q.FollowingOnly, nullable(q.LikedBy))
 	if err != nil {
 		return nil, err
 	}
@@ -265,17 +269,18 @@ func scanFeed(rows pgx.Rows) ([]FeedPost, error) {
 	for rows.Next() {
 		var f FeedPost
 		var qID, qVideo, qAuthorID, qAuthorWallet *string
-		var qCaption, qAuthorName *string
+		var qCaption, qAuthorName, qAuthorUsername, qAuthorAvatar *string
 		var qCreated *time.Time
 		if err := rows.Scan(&f.ID, &f.PantaMarketID, &f.VideoURL, &f.Caption, &f.AuthorUserID, &f.QuotedPostID, &f.CreatedAt,
-			&f.Author.ID, &f.Author.DisplayName, &f.Author.WalletAddress,
-			&qID, &qVideo, &qCaption, &qCreated, &qAuthorID, &qAuthorName, &qAuthorWallet,
+			&f.Author.ID, &f.Author.DisplayName, &f.Author.WalletAddress, &f.Author.Username, &f.Author.AvatarURL,
+			&qID, &qVideo, &qCaption, &qCreated, &qAuthorID, &qAuthorName, &qAuthorWallet, &qAuthorUsername, &qAuthorAvatar,
 			&f.LikeCount, &f.CommentCount, &f.ShareCount, &f.QuoteCount, &f.LikedByMe); err != nil {
 			return nil, err
 		}
 		if qID != nil {
 			f.Quoted = &QuotedPost{ID: *qID, VideoURL: *qVideo, Caption: qCaption, CreatedAt: *qCreated,
-				Author: Author{ID: *qAuthorID, DisplayName: qAuthorName, WalletAddress: *qAuthorWallet}}
+				Author: Author{ID: *qAuthorID, DisplayName: qAuthorName, WalletAddress: *qAuthorWallet,
+					Username: qAuthorUsername, AvatarURL: qAuthorAvatar}}
 		}
 		out = append(out, f)
 	}
@@ -284,7 +289,7 @@ func scanFeed(rows pgx.Rows) ([]FeedPost, error) {
 
 func (s *Store) ListComments(ctx context.Context, postID string) ([]Comment, error) {
 	rows, err := s.db.Query(ctx, `
-		select c.id, c.body, c.created_at, u.id, u.display_name, u.wallet_address
+		select c.id, c.body, c.created_at, u.id, u.display_name, u.wallet_address, u.username, u.avatar_url
 		  from comments c
 		  join users u on u.id = c.author_user_id
 		 where c.post_id = $1
@@ -296,7 +301,8 @@ func (s *Store) ListComments(ctx context.Context, postID string) ([]Comment, err
 	out := []Comment{}
 	for rows.Next() {
 		var c Comment
-		if err := rows.Scan(&c.ID, &c.Body, &c.CreatedAt, &c.Author.ID, &c.Author.DisplayName, &c.Author.WalletAddress); err != nil {
+		if err := rows.Scan(&c.ID, &c.Body, &c.CreatedAt, &c.Author.ID, &c.Author.DisplayName, &c.Author.WalletAddress,
+			&c.Author.Username, &c.Author.AvatarURL); err != nil {
 			return nil, err
 		}
 		out = append(out, c)
@@ -311,10 +317,11 @@ func (s *Store) CreateComment(ctx context.Context, postID, authorID, body string
 		  insert into comments (post_id, author_user_id, body) values ($1, $2, $3)
 		  returning id, body, created_at, author_user_id
 		)
-		select ins.id, ins.body, ins.created_at, u.id, u.display_name, u.wallet_address
+		select ins.id, ins.body, ins.created_at, u.id, u.display_name, u.wallet_address, u.username, u.avatar_url
 		  from ins join users u on u.id = ins.author_user_id`,
 		postID, authorID, body,
-	).Scan(&c.ID, &c.Body, &c.CreatedAt, &c.Author.ID, &c.Author.DisplayName, &c.Author.WalletAddress)
+	).Scan(&c.ID, &c.Body, &c.CreatedAt, &c.Author.ID, &c.Author.DisplayName, &c.Author.WalletAddress,
+		&c.Author.Username, &c.Author.AvatarURL)
 	return c, err
 }
 

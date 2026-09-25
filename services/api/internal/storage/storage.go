@@ -71,6 +71,11 @@ func (c *Client) SignUpload(ctx context.Context, bucket, path string) (*SignedUp
 		Path:      path,
 		Token:     token,
 		UploadURL: c.baseURL + "/storage/v1" + r.URL,
-		PublicURL: c.baseURL + "/storage/v1/object/public/" + bucket + "/" + path,
+		PublicURL: c.PublicURL(bucket, path),
 	}, nil
+}
+
+// PublicURL is where an object in a public bucket can be read.
+func (c *Client) PublicURL(bucket, path string) string {
+	return c.baseURL + "/storage/v1/object/public/" + bucket + "/" + path
 }

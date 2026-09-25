@@ -97,6 +97,7 @@ func (c *Client) GetMarket(ctx context.Context, marketID string) (*Market, error
 		YesPrice    flexNum  `json:"yesPrice"`
 		NoPrice     flexNum  `json:"noPrice"`
 		Images      []string `json:"images"`
+		EndTime     flexTime `json:"endTime"`
 	}
 	if err := c.do(ctx, http.MethodGet, "/markets/"+url.PathEscape(marketID)+"/", nil, &r); err != nil {
 		return nil, err
@@ -110,7 +111,7 @@ func (c *Client) GetMarket(ctx context.Context, marketID string) (*Market, error
 		img = r.Images[0]
 	}
 	return &Market{ID: r.MarketID, Question: q, Category: r.Category, Phase: r.Phase,
-		YesPrice: r.YesPrice.ptr(), NoPrice: r.NoPrice.ptr(), ImageURL: img}, nil
+		YesPrice: r.YesPrice.ptr(), NoPrice: r.NoPrice.ptr(), ImageURL: img, EndTime: r.EndTime.t}, nil
 }
 
 // ListMarketIDs returns one catalog page of market ids for the given filter
@@ -312,6 +313,27 @@ func (f flexNum) ptr() *float64 {
 	}
 	v := f.v
 	return &v
+}
+
+// flexTime accepts unix seconds (live API) or an RFC 3339 string (sandbox).
+type flexTime struct{ t *time.Time }
+
+func (f *flexTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(strings.TrimSpace(string(b)), `"`)
+	if s == "" || s == "null" {
+		return nil
+	}
+	if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+		t := time.Unix(n, 0).UTC()
+		f.t = &t
+		return nil
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return nil // an unparseable time is treated as unknown, not an error
+	}
+	f.t = &t
+	return nil
 }
 
 // IsCode reports whether err is a Panta error with the given code.

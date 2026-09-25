@@ -109,18 +109,19 @@ func (s *Server) refreshCatalog(ctx context.Context) {
 }
 
 type marketOut struct {
-	PantaMarketID string   `json:"panta_market_id"`
-	Question      *string  `json:"question"`
-	Category      *string  `json:"category"`
-	Phase         *string  `json:"phase"`
-	YesPrice      *float64 `json:"yes_price"`
-	NoPrice       *float64 `json:"no_price"`
-	ImageURL      *string  `json:"image_url"`
-	PostCount     int      `json:"post_count"`
+	PantaMarketID string     `json:"panta_market_id"`
+	Question      *string    `json:"question"`
+	Category      *string    `json:"category"`
+	Phase         *string    `json:"phase"`
+	YesPrice      *float64   `json:"yes_price"`
+	NoPrice       *float64   `json:"no_price"`
+	ImageURL      *string    `json:"image_url"`
+	EndTime       *time.Time `json:"end_time"`
+	PostCount     int        `json:"post_count"`
 }
 
 func toMarketOut(m store.CachedMarket) marketOut {
-	return marketOut{m.ID, m.Question, m.Category, m.Phase, m.YesPrice, m.NoPrice, m.ImageURL, m.PostCount}
+	return marketOut{m.ID, m.Question, m.Category, m.Phase, m.YesPrice, m.NoPrice, m.ImageURL, m.EndTime, m.PostCount}
 }
 
 func (s *Server) listMarkets(w http.ResponseWriter, r *http.Request) {

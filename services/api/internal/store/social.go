@@ -6,30 +6,38 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // ---- profile and interests ----
 
 type Me struct {
 	User
+	Username       *string
+	Bio            *string
+	AvatarURL      *string
 	Onboarded      bool
 	Interests      []string
 	FollowerCount  int
 	FollowingCount int
+	LikesReceived  int
 }
 
 func (s *Store) Me(ctx context.Context, userID string) (Me, error) {
 	var m Me
 	err := s.db.QueryRow(ctx, `
 		select u.id, u.privy_user_id, u.wallet_address, u.display_name, u.created_at,
+		       u.username, u.bio, u.avatar_url,
 		       u.onboarded_at is not null,
 		       coalesce((select array_agg(category order by category) from user_interests
 		                  where user_id = u.id and source = 'onboarding'), '{}'),
 		       (select count(*) from follows where followee_id = u.id),
-		       (select count(*) from follows where follower_id = u.id)
+		       (select count(*) from follows where follower_id = u.id),
+		       (select count(*) from likes l join posts p on p.id = l.post_id where p.author_user_id = u.id)
 		  from users u where u.id = $1`, userID,
 	).Scan(&m.ID, &m.PrivyUserID, &m.WalletAddress, &m.DisplayName, &m.CreatedAt,
-		&m.Onboarded, &m.Interests, &m.FollowerCount, &m.FollowingCount)
+		&m.Username, &m.Bio, &m.AvatarURL,
+		&m.Onboarded, &m.Interests, &m.FollowerCount, &m.FollowingCount, &m.LikesReceived)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return m, ErrNotFound
 	}
@@ -107,43 +115,53 @@ type Profile struct {
 	ID             string
 	DisplayName    *string
 	WalletAddress  string
+	Username       *string
+	Bio            *string
+	AvatarURL      *string
 	FollowerCount  int
 	FollowingCount int
 	PostCount      int
+	LikesReceived  int
 	IsFollowing    bool // viewer follows them
 	FollowsMe      bool // they follow the viewer
 }
 
-func (s *Store) Profile(ctx context.Context, viewerID, userID string) (Profile, error) {
-	var p Profile
-	err := s.db.QueryRow(ctx, `
-		select u.id, u.display_name, u.wallet_address,
-		       (select count(*) from follows where followee_id = u.id),
+// profileSelect reads a Profile; $1 is the viewer id (or null).
+const profileSelect = `
+		select u.id, u.display_name, u.wallet_address, u.username, u.bio, u.avatar_url,
+		       (select count(*) from follows where followee_id = u.id) as followers,
 		       (select count(*) from follows where follower_id = u.id),
 		       (select count(*) from posts where author_user_id = u.id),
+		       (select count(*) from likes l join posts p on p.id = l.post_id where p.author_user_id = u.id),
 		       ($1::uuid is not null and exists(select 1 from follows where follower_id = $1::uuid and followee_id = u.id)),
 		       ($1::uuid is not null and exists(select 1 from follows where follower_id = u.id and followee_id = $1::uuid))
-		  from users u where u.id = $2`, nullable(viewerID), userID,
-	).Scan(&p.ID, &p.DisplayName, &p.WalletAddress, &p.FollowerCount, &p.FollowingCount, &p.PostCount, &p.IsFollowing, &p.FollowsMe)
+		  from users u`
+
+func scanProfile(row pgx.Row) (Profile, error) {
+	var p Profile
+	err := row.Scan(&p.ID, &p.DisplayName, &p.WalletAddress, &p.Username, &p.Bio, &p.AvatarURL,
+		&p.FollowerCount, &p.FollowingCount, &p.PostCount, &p.LikesReceived, &p.IsFollowing, &p.FollowsMe)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return p, ErrNotFound
 	}
 	return p, err
 }
 
-// SearchUsers matches display names containing q, most-followed first.
+func (s *Store) Profile(ctx context.Context, viewerID, userID string) (Profile, error) {
+	return scanProfile(s.db.QueryRow(ctx, profileSelect+` where u.id = $2`, nullable(viewerID), userID))
+}
+
+func (s *Store) ProfileByUsername(ctx context.Context, viewerID, username string) (Profile, error) {
+	return scanProfile(s.db.QueryRow(ctx, profileSelect+` where lower(u.username) = lower($2)`, nullable(viewerID), username))
+}
+
+// SearchUsers matches usernames or display names containing q, most-followed first.
 func (s *Store) SearchUsers(ctx context.Context, viewerID, q string, limit int) ([]Profile, error) {
-	rows, err := s.db.Query(ctx, `
-		select u.id, u.display_name, u.wallet_address,
-		       (select count(*) from follows where followee_id = u.id) as followers,
-		       (select count(*) from follows where follower_id = u.id),
-		       (select count(*) from posts where author_user_id = u.id),
-		       ($1::uuid is not null and exists(select 1 from follows where follower_id = $1::uuid and followee_id = u.id)),
-		       ($1::uuid is not null and exists(select 1 from follows where follower_id = u.id and followee_id = $1::uuid))
-		  from users u
-		 where u.display_name ilike '%' || replace(replace(replace($2, '\', '\\'), '%', '\%'), '_', '\_') || '%'
+	rows, err := s.db.Query(ctx, profileSelect+`
+		 where (u.display_name ilike '%' || replace(replace(replace($2, '\', '\\'), '%', '\%'), '_', '\_') || '%'
+		     or u.username     ilike '%' || replace(replace(replace($2, '\', '\\'), '%', '\%'), '_', '\_') || '%')
 		   and ($1::uuid is null or u.id <> $1::uuid)
-		 order by followers desc, u.display_name
+		 order by followers desc, coalesce(u.username, u.display_name)
 		 limit $3`, nullable(viewerID), q, limit)
 	if err != nil {
 		return nil, err
@@ -151,13 +169,50 @@ func (s *Store) SearchUsers(ctx context.Context, viewerID, q string, limit int) 
 	defer rows.Close()
 	out := []Profile{}
 	for rows.Next() {
-		var p Profile
-		if err := rows.Scan(&p.ID, &p.DisplayName, &p.WalletAddress, &p.FollowerCount, &p.FollowingCount, &p.PostCount, &p.IsFollowing, &p.FollowsMe); err != nil {
+		p, err := scanProfile(rows)
+		if err != nil {
 			return nil, err
 		}
 		out = append(out, p)
 	}
 	return out, rows.Err()
+}
+
+// ErrUsernameTaken is returned by UpdateProfile when another user has the username.
+var ErrUsernameTaken = errors.New("username taken")
+
+// ProfileUpdate holds the fields to change; nil leaves a field as is and a
+// pointer to "" clears it.
+type ProfileUpdate struct {
+	Username, DisplayName, Bio, AvatarURL *string
+}
+
+func (s *Store) UpdateProfile(ctx context.Context, userID string, u ProfileUpdate) error {
+	set := func(v *string) (bool, *string) {
+		if v == nil {
+			return false, nil
+		}
+		if *v == "" {
+			return true, nil
+		}
+		return true, v
+	}
+	cu, username := set(u.Username)
+	cd, display := set(u.DisplayName)
+	cb, bio := set(u.Bio)
+	ca, avatar := set(u.AvatarURL)
+	_, err := s.db.Exec(ctx, `
+		update users set
+		   username     = case when $2 then $3 else username end,
+		   display_name = case when $4 then $5 else display_name end,
+		   bio          = case when $6 then $7 else bio end,
+		   avatar_url   = case when $8 then $9 else avatar_url end
+		 where id = $1`, userID, cu, username, cd, display, cb, bio, ca, avatar)
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return ErrUsernameTaken
+	}
+	return err
 }
 
 func (s *Store) UserExists(ctx context.Context, userID string) (bool, error) {
@@ -196,14 +251,15 @@ type CachedMarket struct {
 	YesPrice  *float64
 	NoPrice   *float64
 	ImageURL  *string
+	EndTime   *time.Time
 	PostCount int
 	UpdatedAt time.Time
 }
 
 func (s *Store) UpsertMarket(ctx context.Context, m CachedMarket) error {
 	_, err := s.db.Exec(ctx, `
-		insert into markets_cache (panta_market_id, question, category, phase, yes_price, no_price, image_url, updated_at)
-		values ($1, $2, $3, $4, $5, $6, $7, now())
+		insert into markets_cache (panta_market_id, question, category, phase, yes_price, no_price, image_url, end_time, updated_at)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, now())
 		on conflict (panta_market_id) do update set
 		   question  = coalesce(excluded.question, markets_cache.question),
 		   category  = coalesce(excluded.category, markets_cache.category),
@@ -211,17 +267,18 @@ func (s *Store) UpsertMarket(ctx context.Context, m CachedMarket) error {
 		   yes_price = coalesce(excluded.yes_price, markets_cache.yes_price),
 		   no_price  = coalesce(excluded.no_price, markets_cache.no_price),
 		   image_url = coalesce(excluded.image_url, markets_cache.image_url),
+		   end_time  = coalesce(excluded.end_time, markets_cache.end_time),
 		   updated_at = now()`,
-		m.ID, m.Question, m.Category, m.Phase, m.YesPrice, m.NoPrice, m.ImageURL)
+		m.ID, m.Question, m.Category, m.Phase, m.YesPrice, m.NoPrice, m.ImageURL, m.EndTime)
 	return err
 }
 
 const marketCols = `mc.panta_market_id, mc.question, mc.category, mc.phase, mc.yes_price::float8, mc.no_price::float8,
-		       mc.image_url, (select count(*) from posts p where p.panta_market_id = mc.panta_market_id), mc.updated_at`
+		       mc.image_url, mc.end_time, (select count(*) from posts p where p.panta_market_id = mc.panta_market_id), mc.updated_at`
 
 func scanMarket(row pgx.Row) (CachedMarket, error) {
 	var m CachedMarket
-	err := row.Scan(&m.ID, &m.Question, &m.Category, &m.Phase, &m.YesPrice, &m.NoPrice, &m.ImageURL, &m.PostCount, &m.UpdatedAt)
+	err := row.Scan(&m.ID, &m.Question, &m.Category, &m.Phase, &m.YesPrice, &m.NoPrice, &m.ImageURL, &m.EndTime, &m.PostCount, &m.UpdatedAt)
 	return m, err
 }
 
@@ -233,14 +290,15 @@ func (s *Store) CachedMarketByID(ctx context.Context, id string) (CachedMarket, 
 	return m, err
 }
 
-// ListMarkets returns open markets (primary or secondary) that have a
-// question, optionally in one category: markets with posts first, then by
+// ListMarkets returns open markets (primary or secondary, not past their
+// end time) that have a question, optionally in one category: markets with posts first, then by
 // most recently refreshed. offset paginates.
 func (s *Store) ListMarkets(ctx context.Context, category string, offset, limit int) ([]CachedMarket, error) {
 	rows, err := s.db.Query(ctx, `
 		select `+marketCols+`
 		  from markets_cache mc
 		 where mc.phase in ('primary', 'secondary')
+		   and (mc.end_time is null or mc.end_time > now())
 		   and coalesce(mc.question, '') <> ''
 		   and ($1::text is null or mc.category = $1::text)
 		 order by (select count(*) from posts p where p.panta_market_id = mc.panta_market_id) desc,

@@ -79,17 +79,20 @@ func (s *Server) syncUser(w http.ResponseWriter, r *http.Request) {
 // ---- feed ----
 
 type feedMarket struct {
-	Question *string  `json:"question"`
-	YesPrice *float64 `json:"yes_price"`
-	NoPrice  *float64 `json:"no_price"`
-	Phase    *string  `json:"phase"`
-	Category *string  `json:"category"`
+	Question *string    `json:"question"`
+	YesPrice *float64   `json:"yes_price"`
+	NoPrice  *float64   `json:"no_price"`
+	Phase    *string    `json:"phase"`
+	Category *string    `json:"category"`
+	EndTime  *time.Time `json:"end_time"`
 }
 
 type feedAuthor struct {
 	ID            string  `json:"id"`
 	DisplayName   *string `json:"display_name"`
 	WalletAddress string  `json:"wallet_address"`
+	Username      *string `json:"username"`
+	AvatarURL     *string `json:"avatar_url"`
 }
 
 type quotedPostOut struct {
@@ -207,12 +210,13 @@ func (s *Server) renderPosts(ctx context.Context, rows []store.FeedPost) []feedP
 	for _, p := range rows {
 		fp := feedPost{
 			ID: p.ID, PantaMarketID: p.PantaMarketID, VideoURL: p.VideoURL, Caption: p.Caption, CreatedAt: p.CreatedAt,
-			Author:    feedAuthor{ID: p.Author.ID, DisplayName: p.Author.DisplayName, WalletAddress: p.Author.WalletAddress},
+			Author: feedAuthor{ID: p.Author.ID, DisplayName: p.Author.DisplayName, WalletAddress: p.Author.WalletAddress,
+				Username: p.Author.Username, AvatarURL: p.Author.AvatarURL},
 			LikeCount: p.LikeCount, CommentCount: p.CommentCount, ShareCount: p.ShareCount, QuoteCount: p.QuoteCount, LikedByMe: p.LikedByMe,
 		}
 		if q := p.Quoted; q != nil {
 			fp.QuotedPost = &quotedPostOut{ID: q.ID, VideoURL: q.VideoURL, Caption: q.Caption, CreatedAt: q.CreatedAt,
-				Author: commentAuthor{ID: q.Author.ID, DisplayName: q.Author.DisplayName}}
+				Author: toCommentAuthor(q.Author)}
 		}
 		// A market with no data leaves every market field null rather than
 		// dropping the post from the feed.
@@ -224,16 +228,24 @@ func (s *Server) renderPosts(ctx context.Context, rows []store.FeedPost) []feedP
 	return posts
 }
 
-// marketCache keeps Panta market detail briefly so a feed page doesn't
-// refetch the same market, and fans out fetches for distinct markets. Every
-// live fetch is written through to markets_cache, and fields Panta leaves
-// empty on a given call fall back to the last value it did return.
+// marketCache serves feed market data without making feed requests wait on
+// Panta. Order of preference:
+//  1. an in-process copy younger than marketMemTTL;
+//  2. the markets_cache row, returned immediately, with a background refresh
+//     from Panta when the row is older than marketStaleAfter;
+//  3. only for a market never seen before, a live Panta fetch (bounded by
+//     marketFetchWait), written through to markets_cache.
+//
+// Panta leaves fields blank on some calls; UpsertMarket never overwrites a
+// known value with a blank one.
 type marketCache struct {
 	panta *panta.Client
 	store *store.Store
 	log   *slog.Logger
-	mu    sync.Mutex
-	items map[string]cachedMarket
+
+	mu         sync.Mutex
+	items      map[string]cachedMarket
+	refreshing map[string]bool
 }
 
 type cachedMarket struct {
@@ -242,98 +254,135 @@ type cachedMarket struct {
 }
 
 const (
-	marketTTL       = 20 * time.Second
-	marketMissTTL   = 5 * time.Second
-	marketFetchWait = 5 * time.Second
+	marketMemTTL     = 10 * time.Second
+	marketStaleAfter = 60 * time.Second
+	marketFetchWait  = 5 * time.Second
 )
 
 func newMarketCache(pc *panta.Client, st *store.Store, log *slog.Logger) *marketCache {
-	return &marketCache{panta: pc, store: st, log: log, items: map[string]cachedMarket{}}
+	return &marketCache{panta: pc, store: st, log: log, items: map[string]cachedMarket{}, refreshing: map[string]bool{}}
+}
+
+func toFeedMarket(cm store.CachedMarket) feedMarket {
+	return feedMarket{Question: cm.Question, YesPrice: cm.YesPrice, NoPrice: cm.NoPrice, Phase: cm.Phase,
+		Category: cm.Category, EndTime: cm.EndTime}
 }
 
 func (c *marketCache) getMany(ctx context.Context, ids []string) map[string]feedMarket {
 	out := map[string]feedMarket{}
-	var missing []string
+	var need []string
 	now := time.Now()
 	c.mu.Lock()
 	for _, id := range ids {
 		if _, seen := out[id]; seen {
 			continue
 		}
+		out[id] = feedMarket{}
 		if it, ok := c.items[id]; ok && now.Before(it.expires) {
 			out[id] = it.m
 			continue
 		}
-		out[id] = feedMarket{}
-		missing = append(missing, id)
+		need = append(need, id)
 	}
 	c.mu.Unlock()
-	if len(missing) == 0 {
+	if len(need) == 0 {
+		return out
+	}
+
+	cached, err := c.store.CachedMarkets(ctx, need)
+	if err != nil {
+		c.log.Warn("markets_cache read", "err", err)
+	}
+	var unknown []string
+	for _, id := range need {
+		cm, ok := cached[id]
+		if !ok {
+			unknown = append(unknown, id)
+			continue
+		}
+		out[id] = toFeedMarket(cm)
+		c.remember(id, out[id])
+		if now.Sub(cm.UpdatedAt) > marketStaleAfter {
+			c.refreshInBackground(id)
+		}
+	}
+	if len(unknown) == 0 {
 		return out
 	}
 
 	fetchCtx, cancel := context.WithTimeout(ctx, marketFetchWait)
 	defer cancel()
-	live := make(map[string]*panta.Market, len(missing))
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	for _, id := range missing {
+	for _, id := range unknown {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			m, err := c.panta.GetMarket(fetchCtx, id)
-			if err != nil {
+			fm, ok := c.fetch(fetchCtx, id)
+			if !ok {
 				return
 			}
-			if err := c.store.UpsertMarket(fetchCtx, cachedFromPanta(m)); err != nil {
-				c.log.Warn("markets_cache upsert", "market", id, "err", err)
-			}
 			mu.Lock()
-			live[id] = m
+			out[id] = fm
 			mu.Unlock()
+			c.remember(id, fm)
 		}()
 	}
 	wg.Wait()
-
-	cached, err := c.store.CachedMarkets(ctx, missing)
-	if err != nil {
-		c.log.Warn("markets_cache read", "err", err)
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	for _, id := range missing {
-		fm := feedMarket{}
-		if cm, ok := cached[id]; ok {
-			fm = feedMarket{Question: cm.Question, YesPrice: cm.YesPrice, NoPrice: cm.NoPrice, Phase: cm.Phase, Category: cm.Category}
-		}
-		ttl := marketMissTTL
-		if m := live[id]; m != nil {
-			ttl = marketTTL
-			// Live values win; the cache only fills what this call left empty.
-			if q := nonEmpty(m.Question); q != nil {
-				fm.Question = q
-			}
-			if m.YesPrice != nil {
-				fm.YesPrice, fm.NoPrice = m.YesPrice, m.NoPrice
-			}
-			if p := nonEmpty(m.Phase); p != nil {
-				fm.Phase = p
-			}
-			if cat := nonEmpty(correctCategory(m)); cat != nil {
-				fm.Category = cat
-			}
-		}
-		c.items[id] = cachedMarket{m: fm, expires: time.Now().Add(ttl)}
-		out[id] = fm
-	}
 	return out
+}
+
+func (c *marketCache) remember(id string, fm feedMarket) {
+	c.mu.Lock()
+	c.items[id] = cachedMarket{m: fm, expires: time.Now().Add(marketMemTTL)}
+	c.mu.Unlock()
+}
+
+// fetch loads one market from Panta, stores it, and returns the merged row.
+func (c *marketCache) fetch(ctx context.Context, id string) (feedMarket, bool) {
+	m, err := c.panta.GetMarket(ctx, id)
+	if err != nil {
+		return feedMarket{}, false
+	}
+	if err := c.store.UpsertMarket(ctx, cachedFromPanta(m)); err != nil {
+		c.log.Warn("markets_cache upsert", "market", id, "err", err)
+	}
+	cm, err := c.store.CachedMarketByID(ctx, id)
+	if err != nil {
+		return feedMarket{}, false
+	}
+	return toFeedMarket(cm), true
+}
+
+// refreshInBackground re-fetches one market without blocking the request;
+// at most one refresh per market runs at a time.
+func (c *marketCache) refreshInBackground(id string) {
+	c.mu.Lock()
+	if c.refreshing[id] {
+		c.mu.Unlock()
+		return
+	}
+	c.refreshing[id] = true
+	c.mu.Unlock()
+	go func() {
+		defer func() {
+			c.mu.Lock()
+			delete(c.refreshing, id)
+			c.mu.Unlock()
+		}()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if fm, ok := c.fetch(ctx, id); ok {
+			c.remember(id, fm)
+		}
+	}()
 }
 
 // cachedFromPanta maps a live market to a markets_cache row; empty strings
 // become nulls so they never overwrite a previously known value.
 func cachedFromPanta(m *panta.Market) store.CachedMarket {
 	return store.CachedMarket{ID: m.ID, Question: nonEmpty(m.Question), Category: nonEmpty(correctCategory(m)),
-		Phase: nonEmpty(m.Phase), YesPrice: m.YesPrice, NoPrice: m.NoPrice, ImageURL: nonEmpty(m.ImageURL)}
+		Phase: nonEmpty(m.Phase), YesPrice: m.YesPrice, NoPrice: m.NoPrice, ImageURL: nonEmpty(m.ImageURL), EndTime: m.EndTime}
 }
 
 // ---- posts ----
@@ -423,6 +472,12 @@ func (s *Server) postID(w http.ResponseWriter, r *http.Request) (string, bool) {
 type commentAuthor struct {
 	ID          string  `json:"id"`
 	DisplayName *string `json:"display_name"`
+	Username    *string `json:"username"`
+	AvatarURL   *string `json:"avatar_url"`
+}
+
+func toCommentAuthor(a store.Author) commentAuthor {
+	return commentAuthor{ID: a.ID, DisplayName: a.DisplayName, Username: a.Username, AvatarURL: a.AvatarURL}
 }
 
 type commentOut struct {
@@ -433,7 +488,7 @@ type commentOut struct {
 }
 
 func toCommentOut(c store.Comment) commentOut {
-	return commentOut{ID: c.ID, Body: c.Body, CreatedAt: c.CreatedAt, Author: commentAuthor{ID: c.Author.ID, DisplayName: c.Author.DisplayName}}
+	return commentOut{ID: c.ID, Body: c.Body, CreatedAt: c.CreatedAt, Author: toCommentAuthor(c.Author)}
 }
 
 func (s *Server) listComments(w http.ResponseWriter, r *http.Request) {
