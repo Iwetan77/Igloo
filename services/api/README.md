@@ -64,6 +64,19 @@ upload. This needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; without them 
 apply `supabase/migrations/*.sql` from the repo root. Point `IGLOO_MIGRATIONS_DIR` elsewhere
 if needed, or use `-short` to skip them.
 
+## Rate limits
+
+Per signed-in user, counted only for valid writes. Over the limit returns
+`429 {"code":"RATE_LIMITED"}` with a `Retry-After` header (seconds).
+
+| Action | Limits |
+|---|---|
+| `POST /posts` | 5 per 10 min, 20 per day |
+| `POST /posts/:id/comments` | 10 per minute, 200 per day |
+| `POST /uploads/video` | 3 per 10 min, 10 per day (≤ 500 MB/day at the 50 MB cap) |
+
+Counters live in memory, so they reset when the service restarts.
+
 ## Errors
 
 Every error is `{ "code": "...", "message": "...", "fields"?: {...} }`. Panta's business

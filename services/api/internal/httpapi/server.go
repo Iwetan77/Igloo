@@ -23,6 +23,7 @@ type Server struct {
 	wallets  auth.WalletChecker
 	storage  *storage.Client // nil when Supabase Storage isn't configured
 	orders   *orderSessions
+	limiter  *rateLimiter
 	markets  *marketCache
 	log      *slog.Logger
 }
@@ -35,6 +36,7 @@ func New(st *store.Store, pc *panta.Client, v auth.Verifier, wc auth.WalletCheck
 		wallets:  wc,
 		storage:  sc,
 		orders:   newOrderSessions(),
+		limiter:  newRateLimiter(),
 		markets:  newMarketCache(pc),
 		log:      log,
 	}

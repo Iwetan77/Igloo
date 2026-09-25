@@ -226,4 +226,3 @@ func TestPantaKeyRejectedIs502(t *testing.T) {
 		t.Errorf("got %d %v", code, out)
 	}
 }
-
