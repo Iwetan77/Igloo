@@ -178,19 +178,18 @@ func (s *Store) PostExists(ctx context.Context, postID string) (bool, error) {
 	return ok, err
 }
 
-// Feed returns up to limit posts after cursor (nil = newest first). viewerID
-// is empty for anonymous callers, in which case LikedByMe is always false.
-func (s *Store) Feed(ctx context.Context, viewerID string, cursor *Cursor, limit int) ([]FeedPost, error) {
-	var viewer *string
-	if viewerID != "" {
-		viewer = &viewerID
-	}
-	var curTime *time.Time
-	var curID *string
-	if cursor != nil {
-		curTime, curID = &cursor.CreatedAt, &cursor.ID
-	}
-	rows, err := s.db.Query(ctx, `
+// FeedQuery selects a chronological (newest-first) page of posts.
+type FeedQuery struct {
+	ViewerID      string // "" for anonymous; drives liked_by_me and FollowingOnly
+	Cursor        *Cursor
+	Limit         int
+	MarketID      string // only posts on this Panta market
+	AuthorID      string // only posts by this user
+	FollowingOnly bool   // only posts by users ViewerID follows
+}
+
+// feedSelect is every column a feed row needs; $1 is the viewer id (or null).
+const feedSelect = `
 		select p.id, p.panta_market_id, p.video_url, p.caption, p.author_user_id, p.quoted_post_id, p.created_at,
 		       u.id, u.display_name, u.wallet_address,
 		       q.id, q.video_url, q.caption, q.created_at, qu.id, qu.display_name, qu.wallet_address,
@@ -203,15 +202,64 @@ func (s *Store) Feed(ctx context.Context, viewerID string, cursor *Cursor, limit
 		  from posts p
 		  join users u on u.id = p.author_user_id
 		  left join posts q  on q.id  = p.quoted_post_id
-		  left join users qu on qu.id = q.author_user_id
-		 where $2::timestamptz is null
-		    or (p.created_at, p.id) < ($2::timestamptz, $3::uuid)
+		  left join users qu on qu.id = q.author_user_id`
+
+func nullable(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+// Feed returns up to q.Limit posts after q.Cursor (nil = newest first).
+func (s *Store) Feed(ctx context.Context, q FeedQuery) ([]FeedPost, error) {
+	var curTime *time.Time
+	var curID *string
+	if q.Cursor != nil {
+		curTime, curID = &q.Cursor.CreatedAt, &q.Cursor.ID
+	}
+	rows, err := s.db.Query(ctx, feedSelect+`
+		 where ($2::timestamptz is null or (p.created_at, p.id) < ($2::timestamptz, $3::uuid))
+		   and ($5::text is null or p.panta_market_id = $5::text)
+		   and ($6::uuid is null or p.author_user_id = $6::uuid)
+		   and (not $7::boolean or exists(
+		         select 1 from follows f where f.follower_id = $1::uuid and f.followee_id = p.author_user_id))
 		 order by p.created_at desc, p.id desc
 		 limit $4`,
-		viewer, curTime, curID, limit)
+		nullable(q.ViewerID), curTime, curID, q.Limit, nullable(q.MarketID), nullable(q.AuthorID), q.FollowingOnly)
 	if err != nil {
 		return nil, err
 	}
+	return scanFeed(rows)
+}
+
+// PostsByID hydrates the given posts, returned in the order of ids.
+func (s *Store) PostsByID(ctx context.Context, viewerID string, ids []string) ([]FeedPost, error) {
+	if len(ids) == 0 {
+		return []FeedPost{}, nil
+	}
+	rows, err := s.db.Query(ctx, feedSelect+` where p.id = any($2::uuid[])`, nullable(viewerID), ids)
+	if err != nil {
+		return nil, err
+	}
+	got, err := scanFeed(rows)
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[string]FeedPost, len(got))
+	for _, p := range got {
+		byID[p.ID] = p
+	}
+	out := make([]FeedPost, 0, len(ids))
+	for _, id := range ids {
+		if p, ok := byID[id]; ok {
+			out = append(out, p)
+		}
+	}
+	return out, nil
+}
+
+func scanFeed(rows pgx.Rows) ([]FeedPost, error) {
 	defer rows.Close()
 	out := []FeedPost{}
 	for rows.Next() {

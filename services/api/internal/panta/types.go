@@ -15,6 +15,7 @@ type Market struct {
 	Phase    string   // primary | secondary | resolved | cancelled
 	YesPrice *float64 // nil when Panta has no spot price
 	NoPrice  *float64
+	ImageURL string // first catalog image, "" if none
 }
 
 type QuoteRequest struct {

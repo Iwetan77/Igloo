@@ -55,9 +55,12 @@ func run(log *slog.Logger) error {
 		log.Warn("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set: POST /uploads/video will return 503")
 	}
 
+	api := httpapi.New(st, panta.New(cfg.PantaBaseURL, cfg.PantaAPIKey), verifier, wallets, sc, log)
+	go api.RunCatalogRefresh(ctx)
+
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpapi.New(st, panta.New(cfg.PantaBaseURL, cfg.PantaAPIKey), verifier, wallets, sc, log).Handler(),
+		Handler:           api.Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	errc := make(chan error, 1)

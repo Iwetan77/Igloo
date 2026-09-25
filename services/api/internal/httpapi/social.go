@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -120,25 +121,15 @@ const (
 	maxFeedLimit     = 50
 )
 
+// feed serves every feed:
+//   - tab=for_you (default): ranked, see forYou
+//   - tab=following: newest posts by people the viewer follows (auth)
+//   - market_id=...: newest posts on one market (any tab)
 func (s *Server) feed(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	limit := defaultFeedLimit
-	if v := q.Get("limit"); v != "" {
-		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
-			writeError(w, http.StatusBadRequest, "INVALID_LIMIT", "limit must be a positive integer")
-			return
-		}
-		limit = min(n, maxFeedLimit)
-	}
-	var cursor *store.Cursor
-	if v := q.Get("cursor"); v != "" {
-		c, err := store.DecodeCursor(v)
-		if err != nil {
-			writeError(w, http.StatusBadRequest, "INVALID_CURSOR", "cursor is malformed")
-			return
-		}
-		cursor = c
+	limit, ok := parseLimit(w, q.Get("limit"))
+	if !ok {
+		return
 	}
 	viewer, signedIn, handled := s.optionalUser(w, r)
 	if handled {
@@ -148,8 +139,49 @@ func (s *Server) feed(w http.ResponseWriter, r *http.Request) {
 	if signedIn {
 		viewerID = viewer.ID
 	}
+	marketID := q.Get("market_id")
+	tab := q.Get("tab")
+	switch {
+	case marketID != "":
+		s.chronoFeed(w, r, store.FeedQuery{ViewerID: viewerID, MarketID: marketID, Limit: limit})
+	case tab == "following":
+		if !signedIn {
+			writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "sign in to see posts from people you follow")
+			return
+		}
+		s.chronoFeed(w, r, store.FeedQuery{ViewerID: viewerID, FollowingOnly: true, Limit: limit})
+	case tab == "" || tab == "for_you":
+		s.forYou(w, r, viewerID, limit)
+	default:
+		writeError(w, http.StatusBadRequest, "INVALID_TAB", "tab must be for_you or following")
+	}
+}
 
-	rows, err := s.store.Feed(r.Context(), viewerID, cursor, limit+1)
+func parseLimit(w http.ResponseWriter, v string) (int, bool) {
+	if v == "" {
+		return defaultFeedLimit, true
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n < 1 {
+		writeError(w, http.StatusBadRequest, "INVALID_LIMIT", "limit must be a positive integer")
+		return 0, false
+	}
+	return min(n, maxFeedLimit), true
+}
+
+// chronoFeed serves a newest-first page for q, reading the cursor param.
+func (s *Server) chronoFeed(w http.ResponseWriter, r *http.Request, q store.FeedQuery) {
+	if v := r.URL.Query().Get("cursor"); v != "" {
+		c, err := store.DecodeCursor(v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "INVALID_CURSOR", "cursor is malformed")
+			return
+		}
+		q.Cursor = c
+	}
+	limit := q.Limit
+	q.Limit = limit + 1
+	rows, err := s.store.Feed(r.Context(), q)
 	if err != nil {
 		s.internal(w, r, err)
 		return
@@ -161,13 +193,16 @@ func (s *Server) feed(w http.ResponseWriter, r *http.Request) {
 		c := store.Cursor{CreatedAt: last.CreatedAt, ID: last.ID}.Encode()
 		next = &c
 	}
+	writeJSON(w, http.StatusOK, map[string]any{"posts": s.renderPosts(r.Context(), rows), "next_cursor": next})
+}
 
+// renderPosts converts store rows to the API shape, attaching market data.
+func (s *Server) renderPosts(ctx context.Context, rows []store.FeedPost) []feedPost {
 	ids := make([]string, 0, len(rows))
 	for _, p := range rows {
 		ids = append(ids, p.PantaMarketID)
 	}
-	markets := s.markets.getMany(r.Context(), ids)
-
+	markets := s.markets.getMany(ctx, ids)
 	posts := make([]feedPost, 0, len(rows))
 	for _, p := range rows {
 		fp := feedPost{
@@ -179,26 +214,30 @@ func (s *Server) feed(w http.ResponseWriter, r *http.Request) {
 			fp.QuotedPost = &quotedPostOut{ID: q.ID, VideoURL: q.VideoURL, Caption: q.Caption, CreatedAt: q.CreatedAt,
 				Author: commentAuthor{ID: q.Author.ID, DisplayName: q.Author.DisplayName}}
 		}
-		// A market Panta can't return right now leaves every market field null
-		// rather than dropping the post from the feed.
-		if m := markets[p.PantaMarketID]; m != nil {
-			fp.Market = feedMarket{Question: nonEmpty(m.Question), YesPrice: m.YesPrice, NoPrice: m.NoPrice, Phase: nonEmpty(m.Phase), Category: nonEmpty(m.Category)}
+		// A market with no data leaves every market field null rather than
+		// dropping the post from the feed.
+		if m, ok := markets[p.PantaMarketID]; ok {
+			fp.Market = m
 		}
 		posts = append(posts, fp)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"posts": posts, "next_cursor": next})
+	return posts
 }
 
 // marketCache keeps Panta market detail briefly so a feed page doesn't
-// refetch the same market, and fans out fetches for distinct markets.
+// refetch the same market, and fans out fetches for distinct markets. Every
+// live fetch is written through to markets_cache, and fields Panta leaves
+// empty on a given call fall back to the last value it did return.
 type marketCache struct {
 	panta *panta.Client
+	store *store.Store
+	log   *slog.Logger
 	mu    sync.Mutex
 	items map[string]cachedMarket
 }
 
 type cachedMarket struct {
-	m       *panta.Market
+	m       feedMarket
 	expires time.Time
 }
 
@@ -208,12 +247,12 @@ const (
 	marketFetchWait = 5 * time.Second
 )
 
-func newMarketCache(pc *panta.Client) *marketCache {
-	return &marketCache{panta: pc, items: map[string]cachedMarket{}}
+func newMarketCache(pc *panta.Client, st *store.Store, log *slog.Logger) *marketCache {
+	return &marketCache{panta: pc, store: st, log: log, items: map[string]cachedMarket{}}
 }
 
-func (c *marketCache) getMany(ctx context.Context, ids []string) map[string]*panta.Market {
-	out := map[string]*panta.Market{}
+func (c *marketCache) getMany(ctx context.Context, ids []string) map[string]feedMarket {
+	out := map[string]feedMarket{}
 	var missing []string
 	now := time.Now()
 	c.mu.Lock()
@@ -225,34 +264,76 @@ func (c *marketCache) getMany(ctx context.Context, ids []string) map[string]*pan
 			out[id] = it.m
 			continue
 		}
-		out[id] = nil
+		out[id] = feedMarket{}
 		missing = append(missing, id)
 	}
 	c.mu.Unlock()
+	if len(missing) == 0 {
+		return out
+	}
 
-	ctx, cancel := context.WithTimeout(ctx, marketFetchWait)
+	fetchCtx, cancel := context.WithTimeout(ctx, marketFetchWait)
 	defer cancel()
+	live := make(map[string]*panta.Market, len(missing))
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	for _, id := range missing {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			m, err := c.panta.GetMarket(ctx, id)
-			ttl := marketTTL
+			m, err := c.panta.GetMarket(fetchCtx, id)
 			if err != nil {
-				m, ttl = nil, marketMissTTL
+				return
 			}
-			c.mu.Lock()
-			c.items[id] = cachedMarket{m: m, expires: time.Now().Add(ttl)}
-			c.mu.Unlock()
+			if err := c.store.UpsertMarket(fetchCtx, cachedFromPanta(m)); err != nil {
+				c.log.Warn("markets_cache upsert", "market", id, "err", err)
+			}
 			mu.Lock()
-			out[id] = m
+			live[id] = m
 			mu.Unlock()
 		}()
 	}
 	wg.Wait()
+
+	cached, err := c.store.CachedMarkets(ctx, missing)
+	if err != nil {
+		c.log.Warn("markets_cache read", "err", err)
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, id := range missing {
+		fm := feedMarket{}
+		if cm, ok := cached[id]; ok {
+			fm = feedMarket{Question: cm.Question, YesPrice: cm.YesPrice, NoPrice: cm.NoPrice, Phase: cm.Phase, Category: cm.Category}
+		}
+		ttl := marketMissTTL
+		if m := live[id]; m != nil {
+			ttl = marketTTL
+			// Live values win; the cache only fills what this call left empty.
+			if q := nonEmpty(m.Question); q != nil {
+				fm.Question = q
+			}
+			if m.YesPrice != nil {
+				fm.YesPrice, fm.NoPrice = m.YesPrice, m.NoPrice
+			}
+			if p := nonEmpty(m.Phase); p != nil {
+				fm.Phase = p
+			}
+			if cat := nonEmpty(m.Category); cat != nil {
+				fm.Category = cat
+			}
+		}
+		c.items[id] = cachedMarket{m: fm, expires: time.Now().Add(ttl)}
+		out[id] = fm
+	}
 	return out
+}
+
+// cachedFromPanta maps a live market to a markets_cache row; empty strings
+// become nulls so they never overwrite a previously known value.
+func cachedFromPanta(m *panta.Market) store.CachedMarket {
+	return store.CachedMarket{ID: m.ID, Question: nonEmpty(m.Question), Category: nonEmpty(m.Category),
+		Phase: nonEmpty(m.Phase), YesPrice: m.YesPrice, NoPrice: m.NoPrice, ImageURL: nonEmpty(m.ImageURL)}
 }
 
 // ---- posts ----
@@ -312,6 +393,9 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request, u store.User
 	if err != nil {
 		s.internal(w, r, err)
 		return
+	}
+	if quoted != nil {
+		s.learn(r, u.ID, *quoted, store.SignalQuote)
 	}
 	writeJSON(w, http.StatusCreated, p)
 }
@@ -395,6 +479,7 @@ func (s *Server) createComment(w http.ResponseWriter, r *http.Request, u store.U
 		s.internal(w, r, err)
 		return
 	}
+	s.learn(r, u.ID, id, store.SignalComment)
 	writeJSON(w, http.StatusCreated, toCommentOut(c))
 }
 
@@ -407,6 +492,9 @@ func (s *Server) likePost(w http.ResponseWriter, r *http.Request, u store.User) 
 	if err != nil {
 		s.internal(w, r, err)
 		return
+	}
+	if liked {
+		s.learn(r, u.ID, id, store.SignalLike)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"liked": liked, "like_count": n})
 }
@@ -421,6 +509,7 @@ func (s *Server) sharePost(w http.ResponseWriter, r *http.Request, u store.User)
 		s.internal(w, r, err)
 		return
 	}
+	s.learn(r, u.ID, id, store.SignalShare)
 	writeJSON(w, http.StatusOK, map[string]any{"share_count": n})
 }
 

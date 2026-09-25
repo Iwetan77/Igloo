@@ -89,13 +89,14 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 
 func (c *Client) GetMarket(ctx context.Context, marketID string) (*Market, error) {
 	var r struct {
-		MarketID    string  `json:"marketId"`
-		Title       string  `json:"title"`
-		Description string  `json:"description"`
-		Category    string  `json:"category"`
-		Phase       string  `json:"phase"`
-		YesPrice    flexNum `json:"yesPrice"`
-		NoPrice     flexNum `json:"noPrice"`
+		MarketID    string   `json:"marketId"`
+		Title       string   `json:"title"`
+		Description string   `json:"description"`
+		Category    string   `json:"category"`
+		Phase       string   `json:"phase"`
+		YesPrice    flexNum  `json:"yesPrice"`
+		NoPrice     flexNum  `json:"noPrice"`
+		Images      []string `json:"images"`
 	}
 	if err := c.do(ctx, http.MethodGet, "/markets/"+url.PathEscape(marketID)+"/", nil, &r); err != nil {
 		return nil, err
@@ -104,7 +105,49 @@ func (c *Client) GetMarket(ctx context.Context, marketID string) (*Market, error
 	if q == "" {
 		q = r.Description
 	}
-	return &Market{ID: r.MarketID, Question: q, Category: r.Category, Phase: r.Phase, YesPrice: r.YesPrice.ptr(), NoPrice: r.NoPrice.ptr()}, nil
+	img := ""
+	if len(r.Images) > 0 {
+		img = r.Images[0]
+	}
+	return &Market{ID: r.MarketID, Question: q, Category: r.Category, Phase: r.Phase,
+		YesPrice: r.YesPrice.ptr(), NoPrice: r.NoPrice.ptr(), ImageURL: img}, nil
+}
+
+// ListMarketIDs returns one catalog page of market ids for the given filter
+// query (e.g. "phase=primary", "category=crypto") and the next cursor.
+// Panta's cursor can loop, so callers should stop when a page adds no new ids.
+func (c *Client) ListMarketIDs(ctx context.Context, filter, cursor string) ([]string, string, error) {
+	q := url.Values{"limit": {"50"}}
+	if filter != "" {
+		f, err := url.ParseQuery(filter)
+		if err != nil {
+			return nil, "", err
+		}
+		for k, v := range f {
+			q[k] = v
+		}
+	}
+	if cursor != "" {
+		q.Set("cursor", cursor)
+	}
+	var r struct {
+		Items []struct {
+			MarketID string `json:"marketId"`
+		} `json:"items"`
+		NextCursor *string `json:"nextCursor"`
+	}
+	if err := c.do(ctx, http.MethodGet, "/markets/?"+q.Encode(), nil, &r); err != nil {
+		return nil, "", err
+	}
+	ids := make([]string, 0, len(r.Items))
+	for _, it := range r.Items {
+		ids = append(ids, it.MarketID)
+	}
+	next := ""
+	if r.NextCursor != nil {
+		next = *r.NextCursor
+	}
+	return ids, next, nil
 }
 
 func (c *Client) QuoteOrder(ctx context.Context, q QuoteRequest) (*Quote, error) {

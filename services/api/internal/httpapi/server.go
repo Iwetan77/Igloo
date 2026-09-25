@@ -37,7 +37,7 @@ func New(st *store.Store, pc *panta.Client, v auth.Verifier, wc auth.WalletCheck
 		storage:  sc,
 		orders:   newOrderSessions(),
 		limiter:  newRateLimiter(),
-		markets:  newMarketCache(pc),
+		markets:  newMarketCache(pc, st, log),
 		log:      log,
 	}
 }
@@ -56,6 +56,17 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST "+p+"/orders/submit", s.submitOrder)
 	mux.HandleFunc("GET "+p+"/orders/verify", s.verifyOrder)
 	mux.HandleFunc("GET "+p+"/positions", s.positions)
+
+	mux.HandleFunc("GET "+p+"/me", s.requireUser(s.me))
+	mux.HandleFunc("PUT "+p+"/me/interests", s.requireUser(s.setInterests))
+	mux.HandleFunc("GET "+p+"/users/search", s.searchUsers)
+	mux.HandleFunc("GET "+p+"/users/{id}", s.userProfile)
+	mux.HandleFunc("GET "+p+"/users/{id}/posts", s.userPosts)
+	mux.HandleFunc("POST "+p+"/users/{id}/follow", s.requireUser(s.follow))
+	mux.HandleFunc("DELETE "+p+"/users/{id}/follow", s.requireUser(s.unfollow))
+	mux.HandleFunc("POST "+p+"/events/view", s.requireUser(s.recordView))
+	mux.HandleFunc("GET "+p+"/markets", s.listMarkets)
+	mux.HandleFunc("GET "+p+"/markets/{id}", s.marketDetail)
 
 	mux.HandleFunc("POST "+p+"/uploads/video", s.requireUser(s.uploadVideo))
 	mux.HandleFunc("POST "+p+"/posts", s.requireUser(s.createPost))
@@ -217,7 +228,7 @@ func cors(next http.Handler) http.Handler {
 		h := w.Header()
 		h.Set("Access-Control-Allow-Origin", "*")
 		h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-		h.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		h.Set("Access-Control-Max-Age", "600")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)

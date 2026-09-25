@@ -124,7 +124,7 @@ func TestStore(t *testing.T) {
 		var cur *Cursor
 		var last *FeedPost
 		for pages := 0; pages < 10; pages++ {
-			rows, err := st.Feed(ctx, "", cur, 2)
+			rows, err := st.Feed(ctx, FeedQuery{Cursor: cur, Limit: 2})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -251,7 +251,7 @@ func TestStore(t *testing.T) {
 
 func feedPost(t *testing.T, st *Store, viewer, id string) FeedPost {
 	t.Helper()
-	rows, err := st.Feed(context.Background(), viewer, nil, 50)
+	rows, err := st.Feed(context.Background(), FeedQuery{ViewerID: viewer, Limit: 50})
 	if err != nil {
 		t.Fatal(err)
 	}
