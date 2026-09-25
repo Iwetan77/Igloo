@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useCreateWallet, useWallets } from "@privy-io/react-auth/solana";
-import { ApiError, getMe, putInterests, syncUser } from "@/lib/api";
+import { ApiError, getMe, patchMe, putInterests, syncUser } from "@/lib/api";
 import type { Me } from "@/lib/types";
 import { getUsdcBalance } from "@/lib/balance";
 
@@ -112,6 +112,17 @@ export function useSession() {
     try { setMe(await getMe(token)); } catch { /* optimistic state remains until next refresh */ }
   }, [authorized]);
 
+  const updateProfile = useCallback(async (input: { username?: string; display_name?: string; bio?: string; avatar_url?: string }) => {
+    const profile = await authorized((token) => patchMe(input, token));
+    setMe(profile);
+    return profile;
+  }, [authorized]);
+
+  const refreshMe = useCallback(async () => {
+    const profile = await authorized((token) => getMe(token));
+    setMe(profile);
+    return profile;
+  }, [authorized]);
   return {
     ready: ready,
     authenticated: authenticated,
@@ -127,6 +138,8 @@ export function useSession() {
     me,
     meError,
     saveInterests,
+    updateProfile,
+    refreshMe,
     syncError,
     balance,
     balanceError,

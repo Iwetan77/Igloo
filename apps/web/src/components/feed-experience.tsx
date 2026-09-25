@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bookmark, Check, Compass, Copy, Heart, MessageCircle, Plus, Quote, Search, Share2, UserRound, Volume2, VolumeX, Wallet, X } from "lucide-react";
+import { Bookmark, Compass, Heart, MessageCircle, Plus, Quote, Search, Share2, UserRound, Volume2, VolumeX, Wallet } from "lucide-react";
 import { getFeed, getUserProfile, setFollow, sharePost, toggleLike } from "@/lib/api";
 import { errorCopy, optionalCopy, uiCopy } from "@/lib/copy";
 import { demoPosts } from "@/lib/seed";
@@ -17,6 +17,8 @@ import { MarketsView } from "@/components/markets-view";
 import { OnboardingPicker } from "@/components/onboarding-picker";
 import { PeopleSearch, ProfilePanel } from "@/components/people-panels";
 import { PostComposer } from "@/components/post-composer";
+import { ProfileAvatar, authorName } from "@/components/profile-avatar";
+import { WalletSheet } from "@/components/wallet-sheet";
 import { PositionsPanel } from "@/components/positions-panel";
 
 function short(value: string): string {
@@ -35,7 +37,7 @@ type BuyTarget = { post: Pick<FeedPost, "panta_market_id" | "market" | "caption"
 export function FeedExperience({ initialPostId, initialMarketId }: { initialPostId?: string; initialMarketId?: string }) {
   const session = useSession();
   const marketNow = useMarketClock();
-  const { authenticated, getAccessToken, authorized, me } = session;
+  const { authenticated, getAccessToken, authorized, me, synced } = session;
   const [tab, setTab] = useState<FeedTab | "markets">(initialMarketId ? "markets" : "for_you");
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [source, setSource] = useState<"live" | "demo">("live");
@@ -89,7 +91,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     setLoading(true);
     setFeedError("");
     try {
-      const token = authenticated ? await getAccessToken() : null;
+      const token = authenticated && synced ? await getAccessToken() : null;
       let page = await getFeed(null, token, { tab });
       const gathered = [...page.posts];
       let pages = 0;
@@ -116,7 +118,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
         setFeedError(errorCopy(cause));
       }
     } finally { if (refreshKey.current === key) setLoading(false); }
-  }, [tab, authenticated, getAccessToken, notify]);
+  }, [tab, authenticated, synced, getAccessToken, notify]);
 
   useEffect(() => { if (tab !== "markets") void refresh(initialPostId); }, [tab, initialPostId, refresh]);
 
@@ -124,7 +126,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     if (!cursor || loadingMore || tab === "markets" || source === "demo") return;
     setLoadingMore(true);
     try {
-      const token = authenticated ? await getAccessToken() : null;
+      const token = authenticated && synced ? await getAccessToken() : null;
       const page = await getFeed(cursor, token, { tab });
       setPosts((current) => {
         const seen = new Set(current.map((post) => post.id));
@@ -198,7 +200,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     const current = profiles[id];
     try {
       const result = await authorized((token) => setFollow(id, !(current?.is_following ?? post.author.is_following ?? false), token));
-      onProfile({ id, display_name: post.author.display_name, follower_count: result.follower_count, following_count: current?.following_count ?? 0, post_count: current?.post_count ?? 0, follows_me: current?.follows_me ?? false, is_following: result.following, is_friend: result.following && Boolean(current?.follows_me) });
+      onProfile({ id, display_name: post.author.display_name, username: post.author.username || null, bio: null, avatar_url: post.author.avatar_url || null, likes_received: 0, follower_count: result.follower_count, following_count: current?.following_count ?? 0, post_count: current?.post_count ?? 0, follows_me: current?.follows_me ?? false, is_following: result.following, is_friend: result.following && Boolean(current?.follows_me) });
     } catch (cause) { notify(errorCopy(cause)); }
   }
   async function share(post: FeedPost) {
@@ -263,8 +265,8 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
       <button type="button" className="nav-item" onClick={openPicker}><Plus size={20} />Post</button>
       <button type="button" className="nav-item" onClick={openPeople}><UserRound size={20} />Find people</button>
       <button type="button" className="nav-item" onClick={() => session.authenticated ? setPositions(true) : session.login()}><Bookmark size={20} />Positions</button>
-      <button type="button" className="nav-item" onClick={() => session.authenticated ? setAccount(true) : session.login()}><Wallet size={20} />Account</button>
-    </nav><div className="left-footer">{session.authenticated ? short(session.address || "Wallet connecting") : "Sign in to join the conversation"}</div></aside>
+      <button type="button" className="nav-item" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()}><UserRound size={20} />Profile</button>
+    </nav><button type="button" className="left-footer profile-entry" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()}><ProfileAvatar src={me?.avatar_url} name={me?.display_name} size={34} /><span>{session.authenticated ? (me?.username ? "@" + me.username : me?.display_name || "Profile") : "Sign in"}</span></button></aside>
 
     <main className="feed-column"><header className="feed-header"><div className="mobile-wordmark"><span className="logo-square" />Igloo</div><nav className="top-tabs" aria-label="Feed tabs">
       <button type="button" className={tab === "markets" ? "active" : ""} onClick={() => switchTab("markets")}>Markets</button>
@@ -276,7 +278,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
       {posts.map((post, index) => <article className="feed-item" id={"post-" + post.id} data-post-id={post.id} key={post.id}>
         {videoErrors[post.id] ? <div className="video-fallback"><span>{post.market.category || "Market"}</span><strong>{question(post)}</strong><small>Video unavailable</small></div> : <video ref={(element) => { if (element) videos.current.set(post.id, element); else videos.current.delete(post.id); }} src={post.video_url} className="post-video" autoPlay={post.id === activeId} loop muted playsInline preload={post.id === activeId || posts[index - 1]?.id === activeId ? "auto" : "metadata"} onPlay={() => watch.onPlay(post.id)} onPause={() => watch.onPause(post.id)} onTimeUpdate={(event) => watch.onTimeUpdate(post.id, event.currentTarget)} onEnded={() => watch.onEnded(post.id)} onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} onError={() => setVideoErrors((current) => ({ ...current, [post.id]: true }))} aria-label={question(post) + " video; tap to toggle sound"} />}
         <div className="video-shade" aria-hidden /><div className="post-topline"><span className="category-tag">{post.market.category || "Market"}</span>{post.demo && <span className="demo-tag">Demo</span>}</div>
-        <div className="post-content"><div className="post-copy"><div className="author-line"><button type="button" className="creator" onClick={() => session.authenticated ? setProfileId(post.author.id) : session.login()}>@{(post.author.display_name || short(post.author.wallet_address || "igloo")).replace(/\s+/g, "").toLowerCase()}</button>{(follower(post)?.is_friend ?? post.author.is_friend) && <span className="friend-badge">Friends</span>}{me?.id !== post.author.id && <button type="button" className="follow-button" onClick={() => { void follow(post); }}>{follower(post)?.is_following ?? post.author.is_following ? "Following" : "Follow"}</button>}</div><h1>{question(post)}</h1>{post.caption && post.caption !== post.market.question && <p>{post.caption}</p>}{post.quoted_post && <button type="button" className="quoted-preview" onClick={() => openOriginal(post.quoted_post!.id)}><video src={post.quoted_post.video_url} muted playsInline preload="metadata" aria-hidden="true" /><span><small>Quoted post</small><strong>{post.quoted_post.author.display_name || "Igloo member"}</strong><em>{post.quoted_post.caption || "View original"}</em></span></button>}</div>
+        <div className="post-content"><div className="post-copy"><div className="author-line"><button type="button" className="creator" onClick={() => session.authenticated ? (post.author.username ? window.location.assign("/u/" + encodeURIComponent(post.author.username)) : setProfileId(post.author.id)) : session.login()}><ProfileAvatar src={post.author.avatar_url} name={post.author.display_name} size={28} />{authorName(post.author)}</button>{(follower(post)?.is_friend ?? post.author.is_friend) && <span className="friend-badge">Friends</span>}{me?.id !== post.author.id && <button type="button" className="follow-button" onClick={() => { void follow(post); }}>{follower(post)?.is_following ?? post.author.is_following ? "Following" : "Follow"}</button>}</div><h1>{question(post)}</h1>{post.caption && post.caption !== post.market.question && <p>{post.caption}</p>}{post.quoted_post && <button type="button" className="quoted-preview" onClick={() => openOriginal(post.quoted_post!.id)}><video src={post.quoted_post.video_url} muted playsInline preload="metadata" aria-hidden="true" /><span><small>Quoted post</small><strong><ProfileAvatar src={post.quoted_post.author.avatar_url} name={post.quoted_post.author.display_name} size={21} />{authorName(post.quoted_post.author)}</strong><em>{post.quoted_post.caption || "View original"}</em></span></button>}</div>
           <div className="action-rail"><button type="button" className={"rail-button" + (post.liked_by_me ? " selected" : "")} onClick={() => { void like(post); }} aria-label="Like" title="Like"><Heart size={25} fill={post.liked_by_me ? "currentColor" : "none"} /><span>{post.like_count}</span></button><button type="button" className="rail-button" onClick={() => setComments(post)} aria-label="Comments" title="Comments"><MessageCircle size={25} /><span>{post.comment_count}</span></button><button type="button" className="rail-button" onClick={() => { void share(post); }} aria-label="Share" title="Share"><Share2 size={24} /><span>{post.share_count}</span></button><button type="button" className="rail-button" onClick={() => openQuote(post)} aria-label="Quote" title="Quote"><Quote size={24} /><span>{post.quote_count ?? 0}</span></button><button type="button" className="rail-button sound-button" onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} aria-label={unmutedId === post.id ? "Mute video" : "Unmute video"} title={unmutedId === post.id ? "Mute" : "Unmute"}>{unmutedId === post.id ? <Volume2 size={23} /> : <VolumeX size={23} />}</button></div>
           <div className="market-strip"><div className="market-heading"><button type="button" onClick={() => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id))}>Trade the market</button><span>{marketEnded(post.market.end_time, marketNow) ? "Ended" : post.market.phase || "Live market"}</span></div><div className="trade-sides"><button type="button" className="trade-yes" disabled={marketEnded(post.market.end_time, marketNow)} onClick={() => setBuy({ post, side: "YES" })}><span>YES</span><strong>{price(post.market.yes_price)}</strong></button><button type="button" className="trade-no" disabled={marketEnded(post.market.end_time, marketNow)} onClick={() => setBuy({ post, side: "NO" })}><span>NO</span><strong>{price(post.market.no_price)}</strong></button></div></div>
         </div></article>)}
@@ -284,7 +286,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
       {feedError && posts.length === 0 && <div className="feed-empty"><p className="inline-error" role="alert">{feedError}</p><button type="button" className="subtle-button" onClick={() => { void refresh(initialPostId); }}>Retry</button></div>}
       {loadingMore && <div className="load-indicator">Loading more...</div>}
     </div>}
-    <nav className="mobile-nav" aria-label="Mobile navigation"><button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")} aria-label="Feed" title="Feed"><Compass size={21} /><span>Feed</span></button><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()} aria-label="Positions" title="Positions"><Bookmark size={21} /><span>Positions</span></button><button type="button" className="create-nav" onClick={openPicker} aria-label="Create post" title="Create post"><Plus size={24} /></button><button type="button" onClick={() => session.authenticated ? setAccount(true) : session.login()} aria-label="Account" title="Account"><UserRound size={21} /><span>Account</span></button></nav>
+    <nav className="mobile-nav" aria-label="Mobile navigation"><button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")} aria-label="Feed" title="Feed"><Compass size={21} /><span>Feed</span></button><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()} aria-label="Positions" title="Positions"><Bookmark size={21} /><span>Positions</span></button><button type="button" className="create-nav" onClick={openPicker} aria-label="Create post" title="Create post"><Plus size={24} /></button><button type="button" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()} aria-label="Profile" title="Profile"><ProfileAvatar src={me?.avatar_url} name={me?.display_name} size={23} /><span>Profile</span></button></nav>
     {loading && tab !== "markets" && <div className="feed-loading" role="status">Updating feed...</div>}</main>
 
     <aside className="right-panel"><div className="right-title">Now watching</div>{activePost && tab !== "markets" && <><span className="right-category">{activePost.market.category || "Market"}</span><h2>{question(activePost)}</h2><div className="right-prices"><div><span>YES</span><strong>{price(activePost.market.yes_price)}</strong></div><div><span>NO</span><strong>{price(activePost.market.no_price)}</strong></div></div><p className="right-caption">{activePost.caption}</p></>}<div className="right-bottom"><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()}><Wallet size={17} />View positions</button><button type="button" onClick={openPicker}><Plus size={17} />Post</button></div></aside>
@@ -294,10 +296,10 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     {comments && <CommentsDrawer post={comments} session={session} onClose={() => setComments(null)} onAdded={() => setPosts((current) => current.map((post) => post.id === comments.id ? { ...post, comment_count: post.comment_count + 1 } : post))} />}
     {marketPicker && <MarketPicker session={session} onClose={() => setMarketPicker(false)} onSelect={(market) => { setMarketPicker(false); setComposer({ market }); }} />}
     {composer && <PostComposer market={composer.market} quotePost={composer.quotePost} session={session} onClose={() => setComposer(null)} onPosted={onPosted} />}
-    {peopleSearch && <PeopleSearch session={session} onClose={() => setPeopleSearch(false)} onOpenProfile={(id) => { setPeopleSearch(false); setProfileId(id); }} />}
+    {peopleSearch && <PeopleSearch session={session} onClose={() => setPeopleSearch(false)} onOpenProfile={(user) => { setPeopleSearch(false); if (user.username) window.location.assign("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
     {profileId && <ProfilePanel id={profileId} session={session} onClose={() => setProfileId("")} onOpenPost={openOriginal} onProfile={onProfile} />}
     {positions && <PositionsPanel session={session} onClose={() => setPositions(false)} />}
-    {session.synced && me?.onboarded === false && <OnboardingPicker session={session} />}
-    {account && <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccount(false); }}><section className="sheet account-sheet" role="dialog" aria-modal="true" aria-label="Account"><div className="sheet-head"><div><span className="eyebrow">Igloo account</span><h2>Your wallet</h2></div><button type="button" className="icon-action" onClick={() => setAccount(false)} aria-label="Close account" title="Close"><X size={20} /></button></div><p className="wallet-balance">{session.balance === null ? "\u2014" : session.balance.toFixed(2)} <span>USDC</span></p><div className="address-line"><span>{session.address || "Connecting wallet"}</span>{session.address && <button type="button" className="icon-action" onClick={() => { void navigator.clipboard.writeText(session.address || ""); notify("Address copied."); }} aria-label="Copy wallet address" title="Copy"><Copy size={17} /></button>}</div><p className="account-state">{session.synced ? <><Check size={16} />Account connected</> : session.syncError || (!session.address ? "Create your Solana wallet to continue." : "Connecting account...")}</p>{!session.address && <button type="button" className="subtle-button" disabled={!session.ready || session.walletCreating} onClick={() => { void session.createSolanaWallet(); }}>{session.walletCreating ? "Creating wallet..." : "Create Solana wallet"}</button>}{session.address && session.syncError && <button type="button" className="subtle-button" onClick={() => { void session.syncNow().catch(() => notify(uiCopy("error.generic"))); }}>Retry sync</button>}{session.meError && <p className="inline-error">{session.meError}</p>}{session.balanceError && <p className="inline-error">{session.balanceError}</p>}<button type="button" className="signout-button" onClick={() => { void session.logout(); setAccount(false); }}>Sign out</button></section></div>}
+    {session.synced && me && (!me.onboarded || ("username" in me && !me.username)) && <OnboardingPicker session={session} />}
+    {account && <WalletSheet session={session} onClose={() => setAccount(false)} notify={notify} />}
   </div>;
 }

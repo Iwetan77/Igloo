@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Search, UserRound, X } from "lucide-react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import { ApiError, getUserPosts, getUserProfile, searchUsers, setFollow } from "@/lib/api";
 import { errorCopy } from "@/lib/copy";
 import type { FeedPost, UserProfile } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
+import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 
 export function ProfilePanel({ id, session, onClose, onOpenPost, onProfile }: {
   id: string;
@@ -50,7 +51,7 @@ export function ProfilePanel({ id, session, onClose, onOpenPost, onProfile }: {
   }
 
   return <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="sheet profile-sheet" role="dialog" aria-modal="true" aria-label="Profile">
-    <div className="sheet-head"><div><span className="eyebrow">Profile</span><h2>{profile?.display_name || "Igloo member"}</h2></div><button type="button" className="icon-action" onClick={onClose} aria-label="Close profile" title="Close"><X size={20} /></button></div>
+    <div className="sheet-head"><div><span className="eyebrow">Profile</span><h2>{profile ? authorName(profile) : "Igloo member"}</h2></div><button type="button" className="icon-action" onClick={onClose} aria-label="Close profile" title="Close"><X size={20} /></button></div>
     {loading && <p className="empty-note">Loading profile...</p>}
     {error && <p className="inline-error" role="alert">{error}</p>}
     {profile && <><div className="profile-stats"><span><strong>{profile.post_count}</strong> posts</span><span><strong>{profile.follower_count}</strong> followers</span><span><strong>{profile.following_count}</strong> following</span></div><div className="profile-actions">{profile.is_friend && <span className="friend-badge">Friends</span>}{session.me?.id !== profile.id && <button type="button" className="subtle-button" disabled={busy} onClick={() => { void toggleFollow(); }}>{profile.is_following ? "Following" : "Follow"}</button>}</div><h3>Videos</h3><div className="profile-posts">{posts.map((post) => <button type="button" key={post.id} onClick={() => onOpenPost(post.id)}><video src={post.video_url} muted playsInline preload="metadata" aria-hidden="true" /><span>{post.caption || post.market.question || "Watch video"}</span></button>)}</div>{posts.length === 0 && <p className="empty-note">No posts yet.</p>}</>}
@@ -60,7 +61,7 @@ export function ProfilePanel({ id, session, onClose, onOpenPost, onProfile }: {
 export function PeopleSearch({ session, onClose, onOpenProfile }: {
   session: Session;
   onClose: () => void;
-  onOpenProfile: (id: string) => void;
+  onOpenProfile: (user: UserProfile) => void;
 }) {
   const authorized = session.authorized;
   const [query, setQuery] = useState("");
@@ -83,12 +84,12 @@ export function PeopleSearch({ session, onClose, onOpenProfile }: {
 
   return <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="sheet people-sheet" role="dialog" aria-modal="true" aria-label="Find people">
     <div className="sheet-head"><div><span className="eyebrow">Community</span><h2>Find people</h2></div><button type="button" className="icon-action" onClick={onClose} aria-label="Close people search" title="Close"><X size={20} /></button></div>
-    <label className="market-search"><Search size={17} /><input value={query} onChange={(event) => { setQuery(event.target.value); if (!event.target.value.trim()) setUsers([]); }} placeholder="Search names" autoFocus /></label>
+    <label className="market-search"><Search size={17} /><input value={query} onChange={(event) => { setQuery(event.target.value); if (!event.target.value.trim()) setUsers([]); }} placeholder="Search people" autoFocus /></label>
     {query.trim().length === 1 && <p className="empty-note">Enter at least two characters.</p>}
     {loading && <p className="empty-note">Searching...</p>}
     {error && <p className="inline-error" role="alert">{error}</p>}
     {!loading && !error && query.trim().length >= 2 && users.length === 0 && <p className="empty-note">No people found.</p>}
-    <div className="people-results">{users.map((user) => <button type="button" key={user.id} onClick={() => onOpenProfile(user.id)}><UserRound size={19} /><span><strong>{user.display_name || "Igloo member"}</strong><small>{user.follower_count ?? 0} followers</small></span>{user.is_friend && <span className="friend-badge">Friends</span>}</button>)}</div>
+    <div className="people-results">{users.map((user) => <button type="button" key={user.id} onClick={() => onOpenProfile(user)}><ProfileAvatar src={user.avatar_url} name={user.display_name} size={32} /><span><strong>{authorName(user)}</strong><small>{user.follower_count ?? 0} followers</small></span>{user.is_friend && <span className="friend-badge">Friends</span>}</button>)}</div>
     <button type="button" className="back-command" onClick={onClose}><ArrowLeft size={16} />Back to feed</button>
   </section></div>;
 }

@@ -20,6 +20,9 @@ const missingCopy: Record<string, string> = {
   RATE_LIMITED: "Too many requests. Please wait a moment and try again.",
   PANTA_UPSTREAM: "The market service is temporarily unavailable.",
   USER_NOT_SYNCED: "Your account is still connecting. Please try again.",
+  USERNAME_TAKEN: "That username is taken. Try another.",
+  INVALID_USERNAME: "Use 3-20 lowercase letters, numbers, underscores, or periods.",
+  INVALID_BIO: "Bio must be 160 characters or fewer.",
 };
 
 export function errorCopy(error: unknown): string {

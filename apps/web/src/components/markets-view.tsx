@@ -6,6 +6,7 @@ import categories from "../../../../content/categories.json";
 import { ApiError, getFeed, getMarket, getMarkets } from "@/lib/api";
 import { errorCopy } from "@/lib/copy";
 import { marketEnded, useMarketClock } from "@/lib/markets";
+import { authorName } from "@/components/profile-avatar";
 import type { FeedPost, MarketSummary, Side } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 
@@ -85,7 +86,7 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
       <div className="market-detail-trades"><button type="button" className="trade-yes" disabled={marketEnded(market.end_time, marketNow)} onClick={() => onBuy(market, "YES")}>YES <strong>{price(market.yes_price)}</strong></button><button type="button" className="trade-no" disabled={marketEnded(market.end_time, marketNow)} onClick={() => onBuy(market, "NO")}>NO <strong>{price(market.no_price)}</strong></button></div>
       <button type="button" className="market-post-command" onClick={() => onPost(market)}><Plus size={17} />Post a video on this market</button>
       <h2 className="market-section-heading">Videos <span>{market.post_count}</span></h2>
-      <div className="market-video-list">{videos.map((post) => <article className="market-video-row" key={post.id}><button type="button" className="market-video-open" onClick={() => onOpenPost(post.id)}><video src={post.video_url} muted playsInline preload="metadata" aria-hidden="true" /><span><strong>{post.caption || post.market.question || "Market video"}</strong><small>{post.author.display_name || "Igloo member"}</small><span><Play size={13} />Watch</span></span></button><button type="button" className="market-video-quote" onClick={() => onQuote(post)} aria-label="Quote video" title="Quote"><Quote size={18} /><span>{post.quote_count ?? 0}</span></button></article>)}</div>
+      <div className="market-video-list">{videos.map((post) => <article className="market-video-row" key={post.id}><button type="button" className="market-video-open" onClick={() => onOpenPost(post.id)}><video src={post.video_url} muted playsInline preload="metadata" aria-hidden="true" /><span><strong>{post.caption || post.market.question || "Market video"}</strong><small>{authorName(post.author)}</small><span><Play size={13} />Watch</span></span></button><button type="button" className="market-video-quote" onClick={() => onQuote(post)} aria-label="Quote video" title="Quote"><Quote size={18} /><span>{post.quote_count ?? 0}</span></button></article>)}</div>
       {!loading && !error && videos.length === 0 && <p className="empty-note">No videos on this market yet.</p>}
       {videoCursor && <button type="button" className="subtle-button" disabled={more} onClick={() => { void loadMore(); }}>Load more videos</button>}
     </>}

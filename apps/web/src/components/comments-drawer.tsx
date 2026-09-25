@@ -5,6 +5,7 @@ import { Send, X } from "lucide-react";
 import { createComment, getComments } from "@/lib/api";
 import { errorCopy, uiCopy } from "@/lib/copy";
 import { getSupabase } from "@/lib/supabase";
+import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import type { Comment, FeedPost } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 
@@ -83,8 +84,8 @@ export function CommentsDrawer({
             comments.length === 0 ? <p className="empty-note">{uiCopy("comments.empty")}</p> :
             comments.map((comment) => (
               <article className="comment" key={comment.id}>
-                <div className="comment-avatar">{(comment.author.display_name || "U").slice(0, 1).toUpperCase()}</div>
-                <div><div className="comment-meta"><strong>{comment.author.display_name || "Igloo user"}</strong><time dateTime={comment.created_at}>{new Date(comment.created_at).toLocaleDateString()}</time></div><p>{comment.body}</p></div>
+                <ProfileAvatar src={comment.author.avatar_url} name={comment.author.display_name} size={34} />
+                <div><div className="comment-meta"><strong>{authorName(comment.author)}</strong><time dateTime={comment.created_at}>{new Date(comment.created_at).toLocaleDateString()}</time></div><p>{comment.body}</p></div>
               </article>
             ))}
         </div>

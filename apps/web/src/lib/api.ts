@@ -20,7 +20,7 @@ const base = configured.endsWith("/api/v1") ? configured : configured + "/api/v1
 
 export async function apiRequest<T>(
   path: string,
-  options: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown; token?: string | null; signal?: AbortSignal; keepalive?: boolean } = {},
+  options: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown; token?: string | null; signal?: AbortSignal; keepalive?: boolean } = {},
 ): Promise<T> {
   const response = await fetch(base + path, {
     method: options.method || "GET",
@@ -76,8 +76,22 @@ export function getMarket(id: string, token?: string | null) {
 export function getUserProfile(id: string, token: string) {
   return apiRequest<UserProfile>("/users/" + encodeURIComponent(id), { token });
 }
-export function getUserPosts(id: string, token: string) {
-  return apiRequest<FeedPage>("/users/" + encodeURIComponent(id) + "/posts", { token });
+export function getUserByUsername(username: string, token: string) {
+  return apiRequest<UserProfile>("/usernames/" + encodeURIComponent(username), { token });
+}
+export function patchMe(input: { username?: string; display_name?: string; bio?: string; avatar_url?: string }, token: string) {
+  return apiRequest<Me>("/me", { method: "PATCH", body: input, token });
+}
+export function getLikedPosts(cursor: string | null, token: string) {
+  return apiRequest<FeedPage>("/me/liked" + (cursor ? "?cursor=" + encodeURIComponent(cursor) : ""), { token });
+}
+export function requestAvatarUpload(content_type: string, token: string) {
+  return apiRequest<{ path: string; token: string; upload_url: string; public_url: string }>(
+    "/uploads/avatar", { method: "POST", body: { content_type }, token },
+  );
+}
+export function getUserPosts(id: string, token: string, cursor?: string | null) {
+  return apiRequest<FeedPage>("/users/" + encodeURIComponent(id) + "/posts" + (cursor ? "?cursor=" + encodeURIComponent(cursor) : ""), { token });
 }
 export function searchUsers(query: string, token: string) {
   return apiRequest<{ users: UserProfile[] }>("/users/search?q=" + encodeURIComponent(query), { token });

@@ -7,12 +7,14 @@ export type Market = {
   category: string | null;
 };
 
+export type Author = { id: string; display_name: string | null; username?: string | null; avatar_url?: string | null; wallet_address?: string; is_following?: boolean; is_friend?: boolean };
+
 export type QuotedPost = {
   id: string;
   video_url: string;
   caption: string | null;
   created_at: string;
-  author: { id: string; display_name: string | null };
+  author: Author;
 };
 
 export type FeedPost = {
@@ -21,7 +23,7 @@ export type FeedPost = {
   video_url: string;
   caption: string | null;
   created_at: string;
-  author: { id: string; display_name: string | null; wallet_address: string; is_following?: boolean; is_friend?: boolean };
+  author: Author;
   market: Market;
   like_count: number;
   comment_count: number;
@@ -45,7 +47,7 @@ export type Comment = {
   id: string;
   body: string;
   created_at: string;
-  author: { id: string; display_name: string | null };
+  author: Author;
 };
 export type Position = {
   panta_market_id: string;
@@ -70,6 +72,10 @@ export type MarketPage = { markets: MarketSummary[]; next_cursor: string | null 
 export type Me = {
   id: string;
   display_name: string | null;
+  username: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  likes_received: number;
   wallet_address: string;
   onboarded: boolean;
   interests: string[];
@@ -79,6 +85,10 @@ export type Me = {
 export type UserProfile = {
   id: string;
   display_name: string | null;
+  username: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  likes_received: number;
   follower_count: number;
   following_count: number;
   post_count: number;

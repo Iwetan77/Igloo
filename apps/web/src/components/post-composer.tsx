@@ -5,6 +5,7 @@ import { Camera, Upload, X } from "lucide-react";
 import { createPost, requestVideoUpload } from "@/lib/api";
 import { errorCopy } from "@/lib/copy";
 import { getSupabase, VIDEO_BUCKET } from "@/lib/supabase";
+import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import type { FeedPost, MarketSummary } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 
@@ -108,7 +109,7 @@ export function PostComposer({
       <section className="sheet composer-sheet" role="dialog" aria-modal="true" aria-label={quotePost ? "Quote post" : "Create post"}>
         <div className="sheet-head"><div><span className="eyebrow">{quotePost ? "Quote" : "New post"}</span><h2>{quotePost ? "Quote this post" : "Post a video"}</h2></div><button type="button" className="icon-action" onClick={onClose} disabled={busy} aria-label="Close post composer" title="Close"><X size={20} /></button></div>
         <form onSubmit={publish}>
-          {quotePost && <div className="quote-source"><video src={quotePost.video_url} muted playsInline preload="auto" aria-hidden="true" /><div><span>Original post</span><strong>{quotePost.author.display_name || "Igloo member"}</strong><p>{quotePost.market.question || quotePost.caption || "Market post"}</p>{quotePost.caption && quotePost.caption !== quotePost.market.question && <small>{quotePost.caption}</small>}</div></div>}
+          {quotePost && <div className="quote-source"><video src={quotePost.video_url} muted playsInline preload="auto" aria-hidden="true" /><div><span>Original post</span><strong><ProfileAvatar src={quotePost.author.avatar_url} name={quotePost.author.display_name} size={22} />{authorName(quotePost.author)}</strong><p>{quotePost.market.question || quotePost.caption || "Market post"}</p>{quotePost.caption && quotePost.caption !== quotePost.market.question && <small>{quotePost.caption}</small>}</div></div>}
           <div className="upload-area">
             {preview ? <video src={preview} muted playsInline controls className="preview-video" /> : <div className="upload-placeholder"><Upload size={30} /><span>Choose a video, up to 60 seconds</span></div>}
             <div className="upload-actions">
