@@ -151,6 +151,17 @@ only. Verified against the live project:
 
 The test object was deleted. Not verified: the `/uploads/video` route with a real Privy token.
 
+## Running instance (2026-09-25)
+
+- Runs on the owner's machine against the live Supabase project, live Panta (the owner's
+  `pk_live_` key), the owner's Privy app and Helius mainnet RPC, with `AUTH_MODE=privy`.
+- It's exposed publicly through a Cloudflare quick tunnel (`cloudflared tunnel --url
+  http://localhost:8080`). The `*.trycloudflare.com` URL changes whenever the tunnel restarts,
+  and everything stops when this machine does.
+- Hosting: Fly.io now charges after a 2-hour / 7-day trial, Koyeb has closed to new projects,
+  and Render requires a card. Next candidate: Hugging Face Spaces (Docker). First check that it
+  can reach Supabase on port 6543.
+
 ## Blocked on
 
 
