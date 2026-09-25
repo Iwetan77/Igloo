@@ -18,6 +18,9 @@ Progress notes for the `supabase/`, `content/`, and `docs/` work. Branch: `data`
   policies).
 - `supabase/migrations/0006_profiles.sql` — username/bio/avatar on `users`
   (with constraints), `avatars` storage bucket, and `markets_cache.end_time`.
+- `supabase/migrations/0007_serverless_state.sql` — `order_sessions` (in-progress
+  buys) and `rate_events` (shared rate-limit events) for Vercel serverless;
+  backend-only (RLS on, no policies).
 - `supabase/seed.sql` — idempotent demo data (demo user marked onboarded with
   interests, username `igloo` + bio, 8 seed posts + 2 quote posts, 2 comments,
   2 likes). Not run here; the owner runs it in the SQL editor.
@@ -96,8 +99,11 @@ The quote post in `seed.sql` reuses the same family: `Big_Buck_Bunny_1080_10s_1M
   `?sslmode=require`); port `5432` times out on TLS.
 - Backend run command is `go run .` (not `go run ./...`), and it reads env vars,
   so source `.env` first: `set -a && . ./.env && set +a && go run .`.
-- Setup order: `0001` → `0002` → `0003` → `0004` → `0005` → `0006`, then
-  `seed.sql`.
+- Setup order: `0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007`,
+  then `seed.sql`.
+- Added a "Deploying to Vercel" section to the README (backend and frontend
+  project setup, Privy allowed origins, and the `IGLOO_API_URL`/`CRON_SECRET`
+  repository secrets for the 30-minute market refresh workflow).
 - Video uploads go through the backend: `POST /api/v1/uploads/video` → upload to
   the returned signed URL → `POST /posts`.
 - Privy needs Solana embedded wallets enabled.

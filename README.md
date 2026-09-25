@@ -30,8 +30,8 @@ Create a Supabase project first (hosted or local). Migrations live in
 `supabase/migrations/` and run in order — `0001_init.sql` (schema),
 `0002_rls.sql` (row-level security), `0003_storage.sql` (storage bucket),
 `0004_quote_posts.sql` (quote posts), `0005_social_and_ranking.sql` (social and
-ranking), `0006_profiles.sql` (profiles). Then run `supabase/seed.sql` once to
-load demo data.
+ranking), `0006_profiles.sql` (profiles), `0007_serverless_state.sql`
+(serverless state). Then run `supabase/seed.sql` once to load demo data.
 
 ```bash
 # local Supabase stack
@@ -58,6 +58,9 @@ policies).
 `0006` adds username/bio/avatar to `users` (with validation constraints), an
 `avatars` storage bucket, and `markets_cache.end_time` for hiding finished
 markets.
+`0007` adds `order_sessions` (in-progress buys) and `rate_events` (shared
+rate-limit events) so serverless instances can share state. Backend-only (RLS
+on, no policies).
 
 For a non-empty feed, run `supabase/seed.sql` in the Supabase SQL editor — it
 inserts a demo user (marked onboarded, with a few interests), seven seed posts
@@ -132,3 +135,14 @@ cd apps/web && npm run dev
 
 If the live feed is empty or Panta is unreachable, the backend can fall back to
 `content/seed-posts.json` for local demo data.
+
+## 6. Deploying to Vercel
+
+- **backend:** a Vercel project with Root Directory `services/api` and preset
+  **Other**. See `services/api/README.md` for its environment variables and
+  `CRON_SECRET`.
+- **frontend:** a Vercel project with Root Directory `apps/web` and preset
+  **Next.js**.
+- **after deploying:** add the frontend's Vercel URL to Privy's allowed origins,
+  and add the `IGLOO_API_URL` and `CRON_SECRET` GitHub repository secrets (for
+  the 30-minute market refresh workflow).
