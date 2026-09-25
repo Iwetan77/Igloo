@@ -64,6 +64,45 @@ upload. This needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; without them 
 apply `supabase/migrations/*.sql` from the repo root. Point `IGLOO_MIGRATIONS_DIR` elsewhere
 if needed, or use `-short` to skip them.
 
+## Feeds, markets and people
+
+Needs migration `0005_social_and_ranking.sql` (`user_interests`, `follows`, `post_views`,
+`markets_cache`, `users.onboarded_at`).
+
+| Route | Notes |
+|---|---|
+| `GET /me` (auth) | `{...user, onboarded, interests[], follower_count, following_count}` |
+| `PUT /me/interests` (auth) | `{categories:[slugs]}` (1–20), marks the user onboarded, returns `/me` |
+| `GET /feed?tab=for_you` (default) | Ranked; the cursor pins the session so pages don't reshuffle |
+| `GET /feed?tab=following` (auth) | Newest posts by people you follow |
+| `GET /feed?market_id=` | Newest posts on one market |
+| `GET /markets?category=&cursor=` | Open markets that have a question, markets with posts first |
+| `GET /markets/:id` | One market (cached, refreshed from Panta when older than a minute) |
+| `GET /users/:id`, `GET /users/:id/posts` | Profile with `is_following`, `follows_me`, `is_friend` (mutual) |
+| `GET /users/search?q=` | Display-name search, 2–64 chars |
+| `POST` / `DELETE /users/:id/follow` (auth) | `{following, follower_count}`; 30/min |
+| `POST /events/view` (auth) | `{post_id, watch_ms, completed}` → 204; 300/min |
+
+**Markets catalog.** Panta's listing loops and leaves titles blank, so a background job
+(at startup, then every 15 min) unions several filtered listings plus every posted market, fetches
+each market's detail (0.7 s apart to stay under Panta's rate limit), and upserts `markets_cache`.
+Blank fields from Panta never overwrite known values. Markets whose question names a coin
+(Bitcoin, ETH, `$TICKER`, …) are filed under `crypto`, because Panta labels some of them `sports`.
+
+**For You ranking** (`internal/rank`). This looks at up to 500 posts from the last 30 days,
+excluding the viewer's own. Each post is scored on:
+- interest match: onboarding picks plus learned weights, from views ≥ 3 s, completions, likes, comments, shares and quotes, capped at 5 per category
+- following, and friends on top of that
+- likes from people you follow
+- log-damped engagement
+- freshness (36 h half-life)
+- how contested the market is (near 50/50)
+- per-session jitter
+- penalties for already seen and already finished posts
+
+The list is then arranged so the same author or market doesn't repeat back to back, and every
+10th slot goes to an out-of-interest post. Weights live in `rank.Default`.
+
 ## Quote posts
 
 `POST /posts` with `quoted_post_id` creates a quote of an existing post. The quote always
