@@ -66,13 +66,22 @@ if needed, or use `-short` to skip them.
 
 ## Feeds, markets and people
 
-Needs migration `0005_social_and_ranking.sql` (`user_interests`, `follows`, `post_views`,
-`markets_cache`, `users.onboarded_at`).
+Needs migrations `0005_social_and_ranking.sql` (`user_interests`, `follows`, `post_views`,
+`markets_cache`, `users.onboarded_at`) and `0006_profiles.sql` (`users.username/bio/avatar_url`,
+the `avatars` bucket, `markets_cache.end_time`). Profiles and authors include `username`,
+`avatar_url` and `likes_received`; markets include `end_time`, and the Markets tab hides ended ones.
+
+Feed market data is served from `markets_cache`; rows older than 60 s refresh from Panta in the
+background, so only a never-seen market makes a request wait on Panta.
 
 | Route | Notes |
 |---|---|
 | `GET /me` (auth) | `{...user, onboarded, interests[], follower_count, following_count}` |
 | `PUT /me/interests` (auth) | `{categories:[slugs]}` (1–20), marks the user onboarded, returns `/me` |
+| `PATCH /me` (auth) | `{username?, display_name?, bio?, avatar_url?}`; `""` clears (not username). Usernames are lowercased, 3–20 of `a-z0-9_.` → `400 INVALID_USERNAME` / `409 USERNAME_TAKEN`; bio ≤ 160; `avatar_url` must be the caller's own upload from `/uploads/avatar` |
+| `POST /uploads/avatar` (auth) | `{content_type: image/jpeg|png|webp}` → signed upload into the public `avatars` bucket (2 MB) |
+| `GET /usernames/:username` | Profile by username (case-insensitive) |
+| `GET /me/liked` (auth) | Feed-shaped posts the caller liked; private to the caller |
 | `GET /feed?tab=for_you` (default) | Ranked; the cursor pins the session so pages don't reshuffle |
 | `GET /feed?tab=following` (auth) | Newest posts by people you follow |
 | `GET /feed?market_id=` | Newest posts on one market |
