@@ -606,8 +606,8 @@ textarea { resize: vertical; }
 .username-entry:focus-within { border-color: rgba(125, 211, 252, 0.7); }
 .username-entry input { min-width: 0; width: 100%; border: 0; outline: none; background: transparent; color: var(--text); }
 
-/* People + profile sheets */
-.profile-sheet, .people-sheet { width: min(100%, 540px); }
+/* Profile sheet */
+.profile-sheet { width: min(100%, 540px); }
 .profile-stats { display: flex; gap: 22px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .profile-stats span { display: grid; gap: 4px; }
 .profile-stats strong { color: var(--text); font-size: 18px; font-weight: 700; }
@@ -617,11 +617,6 @@ textarea { resize: vertical; }
 .profile-posts button { display: flex; gap: 8px; align-items: center; min-width: 0; padding: 0; text-align: left; color: var(--text); background: var(--surface-3); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; }
 .profile-posts video { flex: none; width: 56px; height: 66px; object-fit: cover; }
 .profile-posts span { font-size: 12px; line-height: 1.3; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-.people-results { display: grid; margin: 12px 0; max-height: 55dvh; overflow-y: auto; }
-.people-results button { display: flex; align-items: center; gap: 11px; padding: 12px 6px; color: var(--text); text-align: left; border: 0; border-bottom: 1px solid var(--line); background: transparent; border-radius: var(--r-sm); }
-.people-results button:hover { background: rgba(148, 163, 184, 0.06); }
-.people-results button > span:nth-child(2) { display: grid; gap: 3px; flex: 1; }
-.people-results small { color: var(--muted); }
 
 .profile-avatar {
   flex: none; display: inline-grid; place-items: center; overflow: hidden; border-radius: 50%;

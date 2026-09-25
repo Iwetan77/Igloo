@@ -1,36 +1,6 @@
-.people-sheet, .profile-sheet {
+.profile-sheet {
   width: min(100%, 540px);
   animation-duration: var(--t);
-}
-.people-sheet .market-search {
-  height: 50px;
-  border-radius: var(--r-xs);
-}
-.people-sheet .people-results {
-  margin: 12px 0 18px;
-  max-height: min(55dvh, 460px);
-}
-.people-sheet .people-results button {
-  min-height: 64px;
-  gap: 12px;
-  padding: 10px 8px;
-  border-radius: var(--r-xs);
-  transition: background var(--t-fast) var(--ease);
-}
-.people-sheet .people-results button > span:nth-child(2) {
-  min-width: 0;
-}
-.people-sheet .people-results strong,
-.people-sheet .people-results small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.people-sheet .people-results .friend-badge {
-  flex: none;
-}
-.people-sheet .back-command {
-  min-height: 42px;
 }
 .profile-sheet .profile-stats {
   justify-content: space-between;

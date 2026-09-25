@@ -16,7 +16,7 @@ import { CommentsDrawer } from "@/components/comments-drawer";
 import { MarketPicker } from "@/components/market-picker";
 import { MarketsView } from "@/components/markets-view";
 import { OnboardingPicker } from "@/components/onboarding-picker";
-import { PeopleSearch, ProfilePanel } from "@/components/people-panels";
+import { ProfilePanel } from "@/components/people-panels";
 import { PostComposer } from "@/components/post-composer";
 import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import { WalletSheet } from "@/components/wallet-sheet";
@@ -68,7 +68,6 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const [comments, setComments] = useState<FeedPost | null>(null);
   const [composer, setComposer] = useState<ComposerTarget | null>(null);
   const [marketPicker, setMarketPicker] = useState(false);
-  const [peopleSearch, setPeopleSearch] = useState(false);
   const [search, setSearch] = useState(false);
   const [profileId, setProfileId] = useState("");
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
@@ -250,10 +249,6 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     if (posts.some((post) => post.id === id) && tab !== "markets") document.getElementById("post-" + id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     else window.location.assign("/post/" + encodeURIComponent(id));
   }
-  function openPeople() {
-    if (!session.authenticated) { session.login(); return; }
-    setPeopleSearch(true);
-  }
   function onPosted(id: string) {
     setComposer(null);
     window.location.assign("/post/" + encodeURIComponent(id));
@@ -297,7 +292,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
           <div className="action-rail"><button type="button" className={"rail-button" + (post.liked_by_me ? " selected" : "")} onClick={() => { void like(post); }} aria-label="Like" title="Like"><Heart size={25} fill={post.liked_by_me ? "currentColor" : "none"} /><span>{post.like_count}</span></button><button type="button" className="rail-button" onClick={() => setComments(post)} aria-label="Comments" title="Comments"><MessageCircle size={25} /><span>{post.comment_count}</span></button><button type="button" className="rail-button" onClick={() => { void share(post); }} aria-label="Share" title="Share"><Share2 size={24} /><span>{post.share_count}</span></button><button type="button" className="rail-button" onClick={() => openQuote(post)} aria-label="Quote" title="Quote"><Quote size={24} /><span>{post.quote_count ?? 0}</span></button><button type="button" className="rail-button sound-button" onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} aria-label={unmutedId === post.id ? "Mute video" : "Unmute video"} title={unmutedId === post.id ? "Mute" : "Unmute"}>{unmutedId === post.id ? <Volume2 size={23} /> : <VolumeX size={23} />}</button></div>
           <div className="market-strip"><div className="market-heading"><button type="button" onClick={() => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id))}>View market<ChevronRight size={14} /></button><span className={"status-pill" + (marketEnded(post.market.end_time, marketNow) ? " ended" : "")}>{marketEnded(post.market.end_time, marketNow) ? "Ended" : "Live"}</span></div><div className="chance-row"><span className="chance-value">{chance(post.market.yes_price)}<small>chance</small></span><em>YES</em></div><ProbabilityBar yes={post.market.yes_price} /><div className="trade-sides"><button type="button" className="trade-yes" disabled={marketEnded(post.market.end_time, marketNow)} onClick={() => setBuy({ post, side: "YES" })}><span>YES</span><strong>{price(post.market.yes_price)}</strong></button><button type="button" className="trade-no" disabled={marketEnded(post.market.end_time, marketNow)} onClick={() => setBuy({ post, side: "NO" })}><span>NO</span><strong>{price(post.market.no_price)}</strong></button></div></div>
         </div></article>)}
-      {!loading && !feedError && posts.length === 0 && <div className="feed-empty"><strong>{tab === "following" ? "Your following feed is quiet." : "No videos yet."}</strong><p>{tab === "following" ? optionalCopy("following.empty", "Follow people to see their videos here.") : "Check back for new market videos."}</p>{tab === "following" && <button type="button" className="subtle-button" onClick={openPeople}><Search size={16} />Find people</button>}</div>}
+      {!loading && !feedError && posts.length === 0 && <div className="feed-empty"><strong>{tab === "following" ? "Your following feed is quiet." : "No videos yet."}</strong><p>{tab === "following" ? optionalCopy("following.empty", "Follow people to see their videos here.") : "Check back for new market videos."}</p>{tab === "following" && <button type="button" className="subtle-button" onClick={() => setSearch(true)}><Search size={16} />Find people</button>}</div>}
       {feedError && posts.length === 0 && <div className="feed-empty"><p className="inline-error" role="alert">{feedError}</p><button type="button" className="subtle-button" onClick={() => { void refresh(initialPostId); }}>Retry</button></div>}
       {loadingMore && <div className="load-indicator">Loading more...</div>}
     </div>}
@@ -312,7 +307,6 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     {marketPicker && <MarketPicker session={session} onClose={() => setMarketPicker(false)} onSelect={(market) => { setMarketPicker(false); setComposer({ market }); }} />}
     {composer && <PostComposer market={composer.market} quotePost={composer.quotePost} session={session} onClose={() => setComposer(null)} onPosted={onPosted} />}
     {search && <SearchSheet session={session} onClose={() => setSearch(false)} onOpenProfile={(user) => { setSearch(false); if (user.username) window.location.assign("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
-    {peopleSearch && <PeopleSearch session={session} onClose={() => setPeopleSearch(false)} onOpenProfile={(user) => { setPeopleSearch(false); if (user.username) window.location.assign("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
     {profileId && <ProfilePanel id={profileId} session={session} onClose={() => setProfileId("")} onOpenPost={openOriginal} onProfile={onProfile} />}
     {positions && <PositionsPanel session={session} onClose={() => setPositions(false)} />}
     {session.synced && me && (!me.onboarded || ("username" in me && !me.username)) && <OnboardingPicker session={session} />}
