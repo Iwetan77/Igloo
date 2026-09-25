@@ -37,7 +37,11 @@ func run(log *slog.Logger) error {
 	}
 	defer st.Close()
 
-	go api.RunCatalogRefresh(ctx)
+	// On Vercel (which sets VERCEL=1) instances freeze between requests and
+	// many may run at once, so the scheduled refresh route does this instead.
+	if os.Getenv("VERCEL") == "" {
+		go api.RunCatalogRefresh(ctx)
+	}
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

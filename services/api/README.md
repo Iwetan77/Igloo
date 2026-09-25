@@ -22,7 +22,9 @@ allows 60 s per request, and schedules a daily catalog refresh.
 1. Apply migrations through `0007_serverless_state.sql` (order sessions and rate limits live in
    Postgres, because each request may hit a different instance).
 2. Vercel → **Add New Project** → import `Iwetan77/Igloo` → **Root Directory:** `services/api`.
-   Framework preset: **Other**. No build command is needed.
+   Framework preset: **Other** (the stable `/api` Go functions). Don't pick the beta "Go" preset;
+   if it gets picked anyway, `main.go` detects `VERCEL=1` and skips its in-process refresh loop.
+   No build command is needed.
 3. Environment variables: `PANTA_API_KEY`, `PANTA_BASE_URL`, `PANTA_MODE=live`, `DATABASE_URL`
    (transaction pooler, port 6543, `?sslmode=require`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
    `SOLANA_RPC_URL`, `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `AUTH_MODE=privy`, and `CRON_SECRET`
