@@ -1,0 +1,65 @@
+-- Demo seed data for the live feed. Safe to run twice (fixed UUIDs + on conflict do nothing).
+-- Run in the Supabase SQL editor after applying the migrations (0001 -> 0002 -> 0003).
+
+insert into users (id, privy_user_id, wallet_address, display_name)
+values (
+  '00000000-0000-0000-0000-000000000001',
+  'did:privy:demo-seed',
+  'Demo1111111111111111111111111111111111111111',
+  'Igloo Demo'
+)
+on conflict (privy_user_id) do nothing;
+
+insert into posts (id, panta_market_id, author_user_id, video_url, caption)
+values
+  (
+    '00000000-0000-0000-0000-000000000011',
+    'GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V',
+    '00000000-0000-0000-0000-000000000001',
+    'https://download.blender.org/durian/trailer/sintel_trailer-480p.mp4',
+    'Rockstar says November 19th is locked in. I''m not so sure.'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000012',
+    'BpPmo7wHrh8bi3ea2ohiVy64sxEnSTufx67zTA9ntnfT',
+    '00000000-0000-0000-0000-000000000001',
+    'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+    'The run has been wild, but a $1B cap is a big ask.'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000013',
+    '1Nm7PCxoHUwGk1J9NoSfy26TQZkitwDf6mamFTZDn1r',
+    '00000000-0000-0000-0000-000000000001',
+    'https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4',
+    'Last time it broke $81k it didn''t hold for long.'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000014',
+    'C2XGH1Z6YivhXMqRRBhKDHnFZTAoqkRcwBFTEZ7bdUrr',
+    '00000000-0000-0000-0000-000000000001',
+    'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',
+    'Witty Cruz has been on fire since GW1.'
+  )
+on conflict (id) do nothing;
+
+insert into comments (id, post_id, author_user_id, body)
+values
+  (
+    '00000000-0000-0000-0000-000000000021',
+    '00000000-0000-0000-0000-000000000011',
+    '00000000-0000-0000-0000-000000000001',
+    'No way Rockstar hits that date.'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000022',
+    '00000000-0000-0000-0000-000000000013',
+    '00000000-0000-0000-0000-000000000001',
+    'It always breaks $81k and sells off.'
+  )
+on conflict (id) do nothing;
+
+insert into likes (post_id, user_id)
+values
+  ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000001')
+on conflict (post_id, user_id) do nothing;

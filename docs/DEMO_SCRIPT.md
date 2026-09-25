@@ -2,11 +2,16 @@
 
 A literal walkthrough for driving the live demo. Follow one line at a time.
 
+## Before you start
+
+- Point the app at the current backend URL (`NEXT_PUBLIC_API_BASE_URL`). In dev the backend runs behind a temporary Cloudflare tunnel, and its URL can change.
+- Sign-in uses a Privy **embedded Solana wallet** — no external wallet app is needed.
+
 ## Sign in
 
 1. Open the app's localhost URL in a fresh browser tab.
 2. Tap **Sign in**.
-3. Complete the Privy wallet flow in the popup (create/connect a wallet).
+3. Complete the Privy flow in the popup — it creates/connects an embedded Solana wallet.
 4. Confirm you land back on the app, signed in, with the feed visible.
 
 ## Scroll the feed
@@ -39,5 +44,5 @@ A literal walkthrough for driving the live demo. Follow one line at a time.
 18. Tap the **+** (create) button in the bottom bar.
 19. Pick or record a short video.
 20. Add a caption.
-21. Tap **Post**.
+21. Tap **Post** — the video uploads through the backend (signed URL), then the post is created.
 22. Confirm the new post appears at the top of the feed.

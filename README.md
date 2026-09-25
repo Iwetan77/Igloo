@@ -12,6 +12,7 @@ script and status notes.
 - Go 1.22+
 - Supabase CLI (`supabase`) — for applying migrations and running a local stack
 - A Supabase project (hosted or local) — for Postgres + Realtime
+- A Privy app with **Solana embedded wallets enabled** — for sign-in and trading
 
 ## Repo layout
 
@@ -26,8 +27,9 @@ docs/          README-adjacent docs and demo script
 ## 1. Create the Supabase project and apply migrations
 
 Create a Supabase project first (hosted or local). Migrations live in
-`supabase/migrations/` and run in order — `0001_init.sql` (schema), then
-`0002_rls.sql` (row-level security).
+`supabase/migrations/` and run in order — `0001_init.sql` (schema),
+`0002_rls.sql` (row-level security), `0003_storage.sql` (storage bucket). Then
+run `supabase/seed.sql` once to load demo data.
 
 ```bash
 # local Supabase stack
@@ -44,6 +46,12 @@ supabase db push
 `0002` enables row-level security on those tables and allows public reads on
 `comments` and `likes` (the backend connects as the database owner and bypasses
 RLS — this only locks down the browser's anon key).
+`0003` creates the `videos` storage bucket. Uploads go through backend-signed
+URLs, so no `storage.objects` policies are added on purpose.
+
+For a non-empty feed, run `supabase/seed.sql` in the Supabase SQL editor — it
+inserts a demo user, the four seed posts, and a couple of comments and likes
+(safe to run twice).
 
 ## 2. Run the backend (`services/api`)
 
@@ -56,6 +64,10 @@ go run ./...
 The API listens on its default port (see `services/api/.env.example`) and serves
 `/api/v1/...`.
 
+Video uploads go through the backend: `POST /api/v1/uploads/video` returns a
+signed URL, the client uploads the file to that URL, then calls `POST /posts`
+with the resulting `video_url`.
+
 ## 3. Run the frontend (`apps/web`)
 
 ```bash
@@ -67,6 +79,9 @@ npm run dev
 
 Open the printed localhost URL. The frontend calls the backend at
 `NEXT_PUBLIC_API_BASE_URL` — point it at the running `services/api` instance.
+In dev the backend is often exposed through a temporary Cloudflare tunnel whose
+URL can change, so update `NEXT_PUBLIC_API_BASE_URL` to whatever the current
+tunnel URL is.
 
 ## 4. Environment variables
 
