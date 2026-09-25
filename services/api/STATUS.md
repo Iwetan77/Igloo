@@ -127,11 +127,10 @@ GET  /feed?limit=1 (token)  -> newest post with author, live market
        like/comment/share counts, liked_by_me:true, next_cursor
 GET  /feed?limit=1&cursor=… -> the older post, next_cursor:null
 ```
-**Not verified:** real Privy tokens. I have no Privy app, so `PrivyVerifier` (ES256 against
-`https://auth.privy.io/api/v1/apps/<id>/jwks.json`, `iss=privy.io`, `aud=<app id>`) has never
-seen a real token. The first frontend login is its first test. It hasn't run against Supabase
-itself either, only vanilla Postgres 18 with the same migration. The connection uses pgx's
-simple protocol so it works through Supabase's pooler.
+**Verified live (2026-09-25):** a real Google login through the frontend sent a Privy access
+token. `POST /users/sync` returned 200 twice (01:44 and 02:15 WAT). The ES256 token check
+against Privy's JWKS passed, and Privy's server API confirmed that the Solana wallet `GavB7i…` is
+linked to that user. The user row is in the live Supabase `users` table.
 
 ### Phase 4
 ```
@@ -161,6 +160,12 @@ The test object was deleted. Not verified: the `/uploads/video` route with a rea
 - Hosting: Fly.io now charges after a 2-hour / 7-day trial, Koyeb has closed to new projects,
   and Render requires a card. Next candidate: Hugging Face Spaces (Docker). First check that it
   can reach Supabase on port 6543.
+
+## Quote posts (live 2026-09-25)
+
+Migration `0004_quote_posts.sql` and `seed.sql` were applied to the live project: 5 demo posts,
+one of them a quote of the GTA 6 post. The public feed returns `quoted_post` and `quote_count`
+as documented in the README.
 
 ## Blocked on
 
