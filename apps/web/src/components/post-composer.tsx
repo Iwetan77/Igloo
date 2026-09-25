@@ -8,6 +8,7 @@ import { getSupabase, VIDEO_BUCKET } from "@/lib/supabase";
 import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import type { FeedPost, MarketSummary } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
+import "@/styles/composer.css";
 
 async function durationOf(file: File): Promise<number> {
   return new Promise((resolve, reject) => {

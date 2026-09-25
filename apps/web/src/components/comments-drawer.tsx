@@ -8,6 +8,7 @@ import { getSupabase } from "@/lib/supabase";
 import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import type { Comment, FeedPost } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
+import "@/styles/comments.css";
 
 export function CommentsDrawer({
   post, session, onClose, onAdded,

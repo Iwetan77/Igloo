@@ -7,6 +7,7 @@ import { errorCopy } from "@/lib/copy";
 import type { FeedPost, UserProfile } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 import { ProfileAvatar, authorName } from "@/components/profile-avatar";
+import "@/styles/people.css";
 
 export function ProfilePanel({ id, session, onClose, onOpenPost, onProfile }: {
   id: string;
@@ -33,7 +34,7 @@ export function ProfilePanel({ id, session, onClose, onOpenPost, onProfile }: {
       setProfile(user);
       setPosts(page.posts);
       onProfile(user);
-    }).catch((cause) => { if (!cancelled) setError(cause instanceof ApiError && cause.status === 404 ? "Profiles is coming online. Try again shortly." : errorCopy(cause)); })
+    }).catch((cause) => { if (!cancelled) setError(cause instanceof ApiError && cause.status === 404 ? "Profiles are coming online. Try again shortly." : errorCopy(cause)); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [id, authorized, onProfile]);
@@ -84,7 +85,7 @@ export function PeopleSearch({ session, onClose, onOpenProfile }: {
 
   return <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="sheet people-sheet" role="dialog" aria-modal="true" aria-label="Find people">
     <div className="sheet-head"><div><span className="eyebrow">Community</span><h2>Find people</h2></div><button type="button" className="icon-action" onClick={onClose} aria-label="Close people search" title="Close"><X size={20} /></button></div>
-    <label className="market-search"><Search size={17} /><input value={query} onChange={(event) => { setQuery(event.target.value); if (!event.target.value.trim()) setUsers([]); }} placeholder="Search people" autoFocus /></label>
+    <label className="market-search"><Search size={17} /><input value={query} onChange={(event) => { setQuery(event.target.value); if (event.target.value.trim().length < 2) setUsers([]); }} placeholder="Search people" autoFocus /></label>
     {query.trim().length === 1 && <p className="empty-note">Enter at least two characters.</p>}
     {loading && <p className="empty-note">Searching...</p>}
     {error && <p className="inline-error" role="alert">{error}</p>}
