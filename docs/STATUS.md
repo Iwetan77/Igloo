@@ -11,8 +11,10 @@ Progress notes for the `supabase/`, `content/`, and `docs/` work. Branch: `data`
   public-read policies on `comments` and `likes`.
 - `supabase/migrations/0003_storage.sql` — `videos` storage bucket (idempotent),
   no `storage.objects` policies.
-- `supabase/seed.sql` — idempotent demo data (demo user, 4 seed posts, 2
-  comments, 2 likes). Not run here; the owner runs it in the SQL editor.
+- `supabase/migrations/0004_quote_posts.sql` — `posts.quoted_post_id` (null =
+  original) plus an index; quote/stitch posts, `on delete set null`.
+- `supabase/seed.sql` — idempotent demo data (demo user, 4 seed posts + 1 quote
+  post, 2 comments, 2 likes). Not run here; the owner runs it in the SQL editor.
 - `content/categories.json` — 15 categories (note 1).
 - `content/copy.json` — UI copy plus backend error-code messages (note 3).
 - `content/seed-posts.json` — 4 posts backed by real Panta markets, now with
@@ -66,12 +68,15 @@ a short, openly licensed MP4 (verified HTTP 200, `video/*`):
 | Bitcoin | `https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4` | Sintel, © Blender Foundation, CC BY 3.0 — https://durian.blender.org/ |
 | FPL | `https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4` | Big Buck Bunny, © Blender Foundation, CC BY 3.0 — https://peach.blender.org/ |
 
+The quote post in `seed.sql` reuses the same family: `Big_Buck_Bunny_1080_10s_1MB.mp4`
+(Big Buck Bunny, © Blender Foundation, CC BY 3.0).
+
 ### 5. README / demo script corrections
 
 - Panta runs on Solana mainnet only — no mock mode, buys spend real USDC.
 - Backend `DATABASE_URL` must use the Supabase transaction pooler (port `6543`,
   `?sslmode=require`); port `5432` times out on TLS.
-- Setup order: `0001` → `0002` → `0003`, then `seed.sql`.
+- Setup order: `0001` → `0002` → `0003` → `0004`, then `seed.sql`.
 - Video uploads go through the backend: `POST /api/v1/uploads/video` → upload to
   the returned signed URL → `POST /posts`.
 - Privy needs Solana embedded wallets enabled.

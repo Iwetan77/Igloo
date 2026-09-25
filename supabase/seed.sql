@@ -1,5 +1,5 @@
 -- Demo seed data for the live feed. Safe to run twice (fixed UUIDs + on conflict do nothing).
--- Run in the Supabase SQL editor after applying the migrations (0001 -> 0002 -> 0003).
+-- Run in the Supabase SQL editor after applying the migrations (0001 -> 0002 -> 0003 -> 0004).
 
 insert into users (id, privy_user_id, wallet_address, display_name)
 values (
@@ -40,6 +40,18 @@ values
     'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',
     'Witty Cruz has been on fire since GW1.'
   )
+on conflict (id) do nothing;
+
+-- Quote post: the demo user quotes the GTA 6 post (same market, its own video and caption).
+insert into posts (id, panta_market_id, author_user_id, video_url, caption, quoted_post_id)
+values (
+  '00000000-0000-0000-0000-000000000015',
+  'GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V',
+  '00000000-0000-0000-0000-000000000001',
+  'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4',
+  'Counterpoint: this one actually ships on time.',
+  '00000000-0000-0000-0000-000000000011'
+)
 on conflict (id) do nothing;
 
 insert into comments (id, post_id, author_user_id, body)

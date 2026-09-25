@@ -28,8 +28,9 @@ docs/          README-adjacent docs and demo script
 
 Create a Supabase project first (hosted or local). Migrations live in
 `supabase/migrations/` and run in order — `0001_init.sql` (schema),
-`0002_rls.sql` (row-level security), `0003_storage.sql` (storage bucket). Then
-run `supabase/seed.sql` once to load demo data.
+`0002_rls.sql` (row-level security), `0003_storage.sql` (storage bucket),
+`0004_quote_posts.sql` (quote posts). Then run `supabase/seed.sql` once to load
+demo data.
 
 ```bash
 # local Supabase stack
@@ -48,10 +49,12 @@ supabase db push
 RLS — this only locks down the browser's anon key).
 `0003` creates the `videos` storage bucket. Uploads go through backend-signed
 URLs, so no `storage.objects` policies are added on purpose.
+`0004` adds `posts.quoted_post_id` (null = original post) with an index, so a
+post can quote another post like a quote tweet or stitch.
 
 For a non-empty feed, run `supabase/seed.sql` in the Supabase SQL editor — it
-inserts a demo user, the four seed posts, and a couple of comments and likes
-(safe to run twice).
+inserts a demo user, the four seed posts plus one quote post, and a couple of
+comments and likes (safe to run twice).
 
 ## 2. Run the backend (`services/api`)
 
