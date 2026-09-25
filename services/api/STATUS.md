@@ -150,42 +150,31 @@ only. Verified against the live project:
 
 The test object was deleted. Not verified: the `/uploads/video` route with a real Privy token.
 
-## Running instance (2026-09-25)
+## Hosting (2026-09-25)
 
-- Runs on the owner's machine against the live Supabase project, live Panta (the owner's
-  `pk_live_` key), the owner's Privy app and Helius mainnet RPC, with `AUTH_MODE=privy`.
-- It's exposed publicly through a Cloudflare quick tunnel (`cloudflared tunnel --url
-  http://localhost:8080`). The `*.trycloudflare.com` URL changes whenever the tunnel restarts,
-  and everything stops when this machine does.
-- Hosting: Fly.io now charges after a 2-hour / 7-day trial, Koyeb has closed to new projects,
-  and Render requires a card. Next candidate: Hugging Face Spaces (Docker). First check that it
-  can reach Supabase on port 6543.
+Both apps run on Vercel's free Hobby plan (non-commercial), deployed from `main`. Pushes to other
+branches are skipped by an ignored-build-step command.
 
-## Quote posts (live 2026-09-25)
+| App | URL | Vercel project |
+|---|---|---|
+| Frontend | https://igloo-predictions.vercel.app | `igloo-web` (root `apps/web`, Next.js) |
+| API | https://igloo-api-gules.vercel.app | `igloo-api` (root `services/api`, preset Other, region `fra1`) |
 
-Migration `0004_quote_posts.sql` and `seed.sql` were applied to the live project: 5 demo posts,
-one of them a quote of the GTA 6 post. The public feed returns `quoted_post` and `quote_count`
-as documented in the README.
-
-## Feeds, markets, people and profiles (live 2026-09-25)
-
-Migrations `0005` and `0006` were applied to the live project, and the backend was switched
-over (`d0fb318`). The following are live on the public URL:
-- `/me` and interests, profile edit, avatar uploads, and `/usernames/:username`
-- follows and user search
-- For You ranking and the following and market feeds
-- `/markets` backed by the catalog refresher, and `/events/view`
-
-Checked through the tunnel: feed 200 with `@igloo` authors, username lookup and search, and
-401 on the following tab, `/me` and `PATCH /me` without a valid token. Verified locally on a
-throwaway database against live Panta (see git history for traces): onboarding, follow and
-friend, search, the following, market and liked feeds, view events, profile validation
-(409 duplicate username, 400 on bad username, bio or avatar), stable For You pages with no
-back-to-back author and market repeats, finished markets hidden, and feed market data served from
-cache (2.3 s on the first fetch of an unknown market, 0.003 s after).
-
-**Not verified live yet:** any of the new signed-in routes with a real Privy token. The frontend
-doesn't call them yet.
+- The API is one Go function (`api/index.go` → package `serverless`, built with `internal/app`).
+  Vercel's Go builder recompiles `api/` under its own module path, which can't import
+  `internal/`, hence the public `serverless` package.
+- Order sessions and rate limits live in Postgres (migration `0007`). Tested with 20 concurrent
+  requests against a limit of 3: exactly 3 were allowed, and 8 got through without the advisory lock.
+- The catalog refreshes through `GET /api/v1/internal/refresh-catalog` (bearer `CRON_SECRET`, 50 s
+  budget, about 50 markets per call). It's called by `.github/workflows/refresh-catalog.yml` every
+  30 minutes (repo secrets `IGLOO_API_URL`, `CRON_SECRET`) and by Vercel Cron daily. A manual run
+  succeeded, refreshing 38 markets.
+- Verified live: `/healthz` and feed 200 from `fra1`, 401 on auth routes without a valid token.
+  Feed latency is about 0.3 s on a reused connection (it was 2–3.4 s through the old tunnel).
+- The Helius key used by the browser is restricted to `igloo-predictions.vercel.app` (Helius RPC
+  Access Control Rules). Helius doesn't accept `localhost`, so local development needs its own key.
+- The old setup (API on the owner's machine behind a Cloudflare quick tunnel) is retired once
+  live login is confirmed.
 
 ## Blocked on
 
