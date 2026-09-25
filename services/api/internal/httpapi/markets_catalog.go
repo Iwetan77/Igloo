@@ -98,7 +98,7 @@ func (s *Server) refreshCatalog(ctx context.Context) {
 			failed++
 			continue
 		}
-		if err := s.store.UpsertMarket(ctx, cachedFromPanta(m)); err != nil {
+		if err := upsertFromPanta(ctx, s.store, m); err != nil {
 			s.log.Warn("catalog upsert", "market", id, "err", err)
 			failed++
 			continue
@@ -178,7 +178,7 @@ func (s *Server) marketDetail(w http.ResponseWriter, r *http.Request) {
 		m, perr := s.panta.GetMarket(r.Context(), id)
 		switch {
 		case perr == nil:
-			if err := s.store.UpsertMarket(r.Context(), cachedFromPanta(m)); err != nil {
+			if err := upsertFromPanta(r.Context(), s.store, m); err != nil {
 				s.internal(w, r, err)
 				return
 			}
