@@ -1,0 +1,20 @@
+.header-wallet .usdc-token-mark {
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+
+@media (max-width: 420px) {
+  .feed-header:has(.header-wallet) .mobile-wordmark {
+    visibility: hidden;
+  }
+
+  .feed-header:has(.header-wallet) .top-tabs button {
+    padding-inline: 8px;
+  }
+
+  .feed-header .header-wallet {
+    gap: 5px;
+    padding-inline: 6px;
+  }
+}

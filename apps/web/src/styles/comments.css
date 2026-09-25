@@ -1,0 +1,59 @@
+.comments-sheet {
+  width: min(100%, 540px);
+  height: min(80dvh, 700px);
+  overflow: hidden;
+  animation-duration: var(--t);
+}
+.comments-sheet .sheet-head {
+  flex: none;
+  padding-bottom: 14px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--line);
+}
+.comments-sheet .comment-list {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-3) transparent;
+}
+.comments-sheet .comment {
+  align-items: flex-start;
+  padding: 16px 2px;
+  border-top: 0;
+  border-bottom: 1px solid var(--line);
+}
+.comments-sheet .comment > div:last-child {
+  min-width: 0;
+  flex: 1;
+}
+.comments-sheet .comment-meta {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+}
+.comments-sheet .comment-meta strong {
+  overflow-wrap: anywhere;
+}
+.comments-sheet .comment p {
+  color: var(--text);
+  line-height: 1.55;
+}
+.comments-sheet .comment-form {
+  flex: none;
+  padding-top: 14px;
+  background: var(--surface);
+}
+.comments-sheet .comment-entry {
+  height: 48px;
+}
+.comments-sheet .comment-entry input {
+  border-radius: var(--r-xs);
+}
+.comments-sheet .send-button {
+  flex-basis: 48px;
+  border-radius: var(--r-xs);
+}
+@media (max-width: 520px) {
+  .comments-sheet {
+    height: 82dvh;
+  }
+}

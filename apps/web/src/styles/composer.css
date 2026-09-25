@@ -1,0 +1,74 @@
+.composer-sheet {
+  width: min(100%, 540px);
+  animation-duration: var(--t);
+}
+.composer-sheet .quote-source {
+  gap: 13px;
+  min-height: 110px;
+  padding: 10px;
+  margin-bottom: 18px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+}
+.composer-sheet .quote-source video {
+  width: 76px;
+  height: 90px;
+  border-radius: var(--r-xs);
+}
+.composer-sheet .quote-source strong {
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+.composer-sheet .upload-area {
+  min-height: 224px;
+  border-radius: var(--r-xs);
+  background: var(--bg-2);
+}
+.composer-sheet .upload-placeholder {
+  gap: 14px;
+  padding: 38px 20px 18px;
+}
+.composer-sheet .upload-placeholder svg {
+  color: var(--ice);
+}
+.composer-sheet .upload-actions {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px 16px;
+}
+.composer-sheet .upload-actions button {
+  min-width: 120px;
+  min-height: 44px;
+  border-radius: var(--r-xs);
+}
+.composer-sheet .preview-video {
+  min-height: 170px;
+  max-height: min(34dvh, 300px);
+  background: #000;
+}
+.composer-sheet .composer-market {
+  margin-top: 16px;
+  border-radius: var(--r-xs);
+}
+.composer-sheet .text-field {
+  min-height: 98px;
+  padding: 14px;
+  border-radius: var(--r-xs);
+  line-height: 1.5;
+}
+.composer-sheet .solid-action {
+  min-height: 50px;
+}
+@media (max-width: 520px) {
+  .composer-sheet {
+    max-height: 92dvh;
+  }
+  .composer-sheet .upload-area {
+    min-height: 185px;
+  }
+  .composer-sheet .upload-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+}

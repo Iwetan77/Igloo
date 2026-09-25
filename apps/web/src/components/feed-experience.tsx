@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Bookmark, ChevronRight, Compass, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, UserRound, Volume2, VolumeX, Wallet } from "lucide-react";
 import { getFeed, getUserProfile, setFollow, sharePost, toggleLike } from "@/lib/api";
 import { errorCopy, optionalCopy, uiCopy } from "@/lib/copy";
@@ -20,6 +21,7 @@ import { PostComposer } from "@/components/post-composer";
 import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import { WalletSheet } from "@/components/wallet-sheet";
 import { PositionsPanel } from "@/components/positions-panel";
+import "@/styles/wallet-chip.css";
 
 function short(value: string): string {
   return value.length > 18 ? value.slice(0, 8) + "..." + value.slice(-5) : value;
@@ -278,7 +280,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
       <button type="button" className={tab === "markets" ? "active" : ""} onClick={() => switchTab("markets")}>Markets</button>
       <button type="button" className={tab === "following" ? "active" : ""} onClick={() => switchTab("following")}>Following</button>
       <button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")}>For You</button>
-    </nav>{session.authenticated ? <button type="button" className="header-wallet" onClick={() => setAccount(true)}><Wallet size={16} />{session.balance === null ? "Wallet" : session.balance.toFixed(2) + " USDC"}</button> : <button type="button" className="header-signin" onClick={session.login}>Sign in</button>}</header>
+    </nav>{session.authenticated ? <button type="button" className="header-wallet" onClick={() => setAccount(true)}><Image src="/brand/usdc-token.svg" alt="" width={32} height={32} className="usdc-token-mark" />{session.balance === null ? "Wallet" : session.balance.toFixed(2) + " USDC"}</button> : <button type="button" className="header-signin" onClick={session.login}>Sign in</button>}</header>
 
     {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => window.location.assign("/?tab=markets")} /> : <div className="feed-scroll" ref={feedRef} onScroll={(event) => { const element = event.currentTarget; if (element.scrollTop + element.clientHeight >= element.scrollHeight - element.clientHeight * 1.5) void loadMore(); }}>
       {posts.map((post, index) => <article className="feed-item" id={"post-" + post.id} data-post-id={post.id} key={post.id}>

@@ -13,6 +13,7 @@ import { OnboardingPicker } from "@/components/onboarding-picker";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { WalletSheet } from "@/components/wallet-sheet";
 import { ThumbnailGrid } from "@/components/thumbnail-grid";
+import "@/styles/profile.css";
 
 type ProfileTab = "videos" | "liked";
 export function ProfileExperience({ own = false }: { own?: boolean }) {
@@ -120,8 +121,8 @@ export function ProfileExperience({ own = false }: { own?: boolean }) {
     finally { setBusy(false); }
   }
 
-  if (!session.authenticated) return <main className="profile-page"><header className="profile-toolbar"><Link href="/"><ArrowLeft size={19} />Feed</Link><span>Igloo</span></header><div className="profile-empty"><h1>{own ? "Your profile" : "@" + username}</h1><button className="solid-action" onClick={session.login}>Sign in</button></div></main>;
-  return <main className="profile-page"><header className="profile-toolbar"><Link href="/"><ArrowLeft size={19} />Feed</Link><span><span className="logo-square" />Igloo</span>{isOwn && <button type="button" className="icon-action" onClick={() => setWallet(true)} aria-label="Wallet" title="Wallet"><Wallet size={19} /></button>}</header>
+  if (!session.authenticated) return <main className="profile-page profile-design"><header className="profile-toolbar"><Link href="/"><ArrowLeft size={19} />Feed</Link><span>Igloo</span></header><div className="profile-empty"><h1>{own ? "Your profile" : "@" + username}</h1><button className="solid-action" onClick={session.login}>Sign in</button></div></main>;
+  return <main className="profile-page profile-design"><header className="profile-toolbar"><Link href="/"><ArrowLeft size={19} />Feed</Link><span><span className="logo-square" />Igloo</span>{isOwn && <button type="button" className="icon-action" onClick={() => setWallet(true)} aria-label="Wallet" title="Wallet"><Wallet size={19} /></button>}</header>
     {loading && !profile && <p className="profile-empty">Loading profile...</p>}
     {error && <p className="inline-error profile-error" role="alert">{error}</p>}
     {profile && <><section className="profile-hero"><ProfileAvatar src={profile.avatar_url} name={profile.display_name} size={88} /><div className="profile-identity"><h1>{profile.username ? "@" + profile.username : profile.display_name || "Igloo member"}</h1>{profile.username && <p className="profile-display">{profile.display_name}</p>}{profile.bio && <p className="profile-bio">{profile.bio}</p>}</div>
