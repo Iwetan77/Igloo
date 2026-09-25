@@ -344,7 +344,7 @@ func (c *marketCache) fetch(ctx context.Context, id string) (feedMarket, bool) {
 	if err != nil {
 		return feedMarket{}, false
 	}
-	if err := c.store.UpsertMarket(ctx, cachedFromPanta(m)); err != nil {
+	if err := upsertFromPanta(ctx, c.store, m); err != nil {
 		c.log.Warn("markets_cache upsert", "market", id, "err", err)
 	}
 	cm, err := c.store.CachedMarketByID(ctx, id)

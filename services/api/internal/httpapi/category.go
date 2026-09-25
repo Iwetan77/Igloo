@@ -1,9 +1,11 @@
 package httpapi
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/Iwetan77/Igloo/services/api/internal/panta"
+	"github.com/Iwetan77/Igloo/services/api/internal/store"
 )
 
 // Panta files some plainly crypto markets under "sports" (e.g. "Will $ANSEM
@@ -17,4 +19,21 @@ func correctCategory(m *panta.Market) string {
 		return "crypto"
 	}
 	return m.Category
+}
+
+// upsertFromPanta writes a live market to markets_cache. Panta sometimes
+// returns a blank question; the crypto correction then falls back to the last
+// question it did return, so a blank response can't flip a corrected
+// category back to Panta's label.
+func upsertFromPanta(ctx context.Context, st *store.Store, m *panta.Market) error {
+	if m.Question == "" {
+		if cm, err := st.CachedMarketByID(ctx, m.ID); err == nil && cm.Question != nil {
+			withQ := *m
+			withQ.Question = *cm.Question
+			row := cachedFromPanta(&withQ)
+			row.Question = nil // don't write the borrowed question back as new data
+			return st.UpsertMarket(ctx, row)
+		}
+	}
+	return st.UpsertMarket(ctx, cachedFromPanta(m))
 }
