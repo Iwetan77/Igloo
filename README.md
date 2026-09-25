@@ -29,8 +29,8 @@ docs/          README-adjacent docs and demo script
 Create a Supabase project first (hosted or local). Migrations live in
 `supabase/migrations/` and run in order — `0001_init.sql` (schema),
 `0002_rls.sql` (row-level security), `0003_storage.sql` (storage bucket),
-`0004_quote_posts.sql` (quote posts). Then run `supabase/seed.sql` once to load
-demo data.
+`0004_quote_posts.sql` (quote posts), `0005_social_and_ranking.sql` (social and
+ranking). Then run `supabase/seed.sql` once to load demo data.
 
 ```bash
 # local Supabase stack
@@ -51,10 +51,14 @@ RLS — this only locks down the browser's anon key).
 URLs, so no `storage.objects` policies are added on purpose.
 `0004` adds `posts.quoted_post_id` (null = original post) with an index, so a
 post can quote another post like a quote tweet or stitch.
+`0005` adds onboarding interests, follows, post watch signals, and a Panta
+market cache, plus ranking indexes. These tables are backend-only (RLS on, no
+policies).
 
 For a non-empty feed, run `supabase/seed.sql` in the Supabase SQL editor — it
-inserts a demo user, the four seed posts plus one quote post, and a couple of
-comments and likes (safe to run twice).
+inserts a demo user (marked onboarded, with a few interests), the four seed
+posts plus one quote post, and a couple of comments and likes (safe to run
+twice).
 
 ## 2. Run the backend (`services/api`)
 

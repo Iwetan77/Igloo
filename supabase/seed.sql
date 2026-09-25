@@ -1,14 +1,23 @@
 -- Demo seed data for the live feed. Safe to run twice (fixed UUIDs + on conflict do nothing).
--- Run in the Supabase SQL editor after applying the migrations (0001 -> 0002 -> 0003 -> 0004).
+-- Run in the Supabase SQL editor after applying the migrations (0001 -> 0002 -> 0003 -> 0004 -> 0005).
 
-insert into users (id, privy_user_id, wallet_address, display_name)
+insert into users (id, privy_user_id, wallet_address, display_name, onboarded_at)
 values (
   '00000000-0000-0000-0000-000000000001',
   'did:privy:demo-seed',
   'Demo1111111111111111111111111111111111111111',
-  'Igloo Demo'
+  'Igloo Demo',
+  now()
 )
 on conflict (privy_user_id) do nothing;
+
+-- Onboarding interests for the demo user.
+insert into user_interests (user_id, category, weight, source)
+values
+  ('00000000-0000-0000-0000-000000000001', 'crypto', 1, 'onboarding'),
+  ('00000000-0000-0000-0000-000000000001', 'gaming', 1, 'onboarding'),
+  ('00000000-0000-0000-0000-000000000001', 'sports', 1, 'onboarding')
+on conflict (user_id, category) do nothing;
 
 insert into posts (id, panta_market_id, author_user_id, video_url, caption)
 values

@@ -13,10 +13,15 @@ Progress notes for the `supabase/`, `content/`, and `docs/` work. Branch: `data`
   no `storage.objects` policies.
 - `supabase/migrations/0004_quote_posts.sql` — `posts.quoted_post_id` (null =
   original) plus an index; quote/stitch posts, `on delete set null`.
-- `supabase/seed.sql` — idempotent demo data (demo user, 4 seed posts + 1 quote
-  post, 2 comments, 2 likes). Not run here; the owner runs it in the SQL editor.
+- `supabase/migrations/0005_social_and_ranking.sql` — `user_interests`, `follows`,
+  `post_views`, `markets_cache`, plus ranking indexes; backend-only (RLS on, no
+  policies).
+- `supabase/seed.sql` — idempotent demo data (demo user marked onboarded with
+  interests, 4 seed posts + 1 quote post, 2 comments, 2 likes). Not run here; the
+  owner runs it in the SQL editor.
 - `content/categories.json` — 15 categories (note 1).
-- `content/copy.json` — UI copy plus backend error-code messages (note 3).
+- `content/copy.json` — UI copy, onboarding/tab/profile labels, and backend
+  error-code messages (note 3).
 - `content/seed-posts.json` — 4 posts backed by real Panta markets, now with
   real, playable seed videos (notes 2 and 4).
 - `README.md` / `docs/DEMO_SCRIPT.md` — setup and walkthrough (note 5).
@@ -49,12 +54,19 @@ Quirk: Panta's API returns `category: "sports"` for the two crypto markets (a
 catalog mislabel); the seed posts use the semantically correct `crypto`. The feed
 shows Panta's live category regardless — the seed value only affects fallback.
 
-### 3. copy.json — backend error codes
+### 3. copy.json
 
-Added `error.*` messages so the frontend can map backend codes to copy:
+Added the backend error-code messages so the frontend can map codes to copy:
 `MARKET_NOT_IN_PRIMARY`, `AMOUNT_TOO_SMALL`, `QUOTE_EXPIRED`, `QUOTE_STALE`,
 `WALLET_NOT_LINKED`, `USER_NOT_SYNCED`, `RATE_LIMITED`, and `UPSTREAM` (covers
-`PANTA_*` / `PRIVY_UNAVAILABLE` / `STORAGE_UNAVAILABLE`). Existing keys unchanged.
+`PANTA_*` / `PRIVY_UNAVAILABLE` / `STORAGE_UNAVAILABLE`).
+
+Also added onboarding copy (`onboarding.title`, `onboarding.subtitle`,
+`onboarding.pick_minimum`, `onboarding.continue`), tab names (`tab.for_you`,
+`tab.following`, `tab.markets`), empty states (`following.empty`,
+`market.posts.empty`), and profile labels (`profile.followers`,
+`profile.following`, `profile.friends`, `profile.follow`, `profile.unfollow`).
+Existing keys unchanged.
 
 ### 4. Seed videos — real, playable, openly licensed
 
@@ -76,7 +88,7 @@ The quote post in `seed.sql` reuses the same family: `Big_Buck_Bunny_1080_10s_1M
 - Panta runs on Solana mainnet only — no mock mode, buys spend real USDC.
 - Backend `DATABASE_URL` must use the Supabase transaction pooler (port `6543`,
   `?sslmode=require`); port `5432` times out on TLS.
-- Setup order: `0001` → `0002` → `0003` → `0004`, then `seed.sql`.
+- Setup order: `0001` → `0002` → `0003` → `0004` → `0005`, then `seed.sql`.
 - Video uploads go through the backend: `POST /api/v1/uploads/video` → upload to
   the returned signed URL → `POST /posts`.
 - Privy needs Solana embedded wallets enabled.

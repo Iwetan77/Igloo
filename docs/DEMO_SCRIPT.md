@@ -4,7 +4,7 @@ A literal walkthrough for driving the live demo. Follow one line at a time.
 
 ## Before you start
 
-- Migrations are applied in order (`0001 → 0002 → 0003 → 0004`), then `seed.sql`.
+- Migrations are applied in order (`0001 → 0002 → 0003 → 0004 → 0005`), then `seed.sql`.
 - Point the app at the current backend URL (`NEXT_PUBLIC_API_BASE_URL`). In dev the backend runs behind a temporary Cloudflare tunnel, and its URL can change.
 - Sign-in uses a Privy **embedded Solana wallet** — no external wallet app is needed.
 
