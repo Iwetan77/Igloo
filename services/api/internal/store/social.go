@@ -358,3 +358,21 @@ func (s *Store) CachedMarkets(ctx context.Context, ids []string) (map[string]Cac
 	}
 	return out, rows.Err()
 }
+
+// StaleMarketIDs lists cached market ids, least recently refreshed first.
+func (s *Store) StaleMarketIDs(ctx context.Context) ([]string, error) {
+	rows, err := s.db.Query(ctx, `select panta_market_id from markets_cache order by updated_at asc`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out = append(out, id)
+	}
+	return out, rows.Err()
+}

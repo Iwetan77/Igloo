@@ -13,24 +13,35 @@ go run .
 
 `GET /healthz` returns `{"status":"ok"}` once the database is reachable.
 
-## Deploy (Koyeb free instance)
+## Deploy (Vercel, free)
 
-1. Koyeb → **Create Web Service** → **GitHub** → repo `Iwetan77/Igloo`, branch `main` (or `backend`).
-2. Builder: **Dockerfile**. Set the work directory to `services/api` and the Dockerfile path to `Dockerfile`.
-3. Instance: **Free**, region **Frankfurt**, which sits next to the Supabase `eu-central-1` database.
-4. Port: `8080`, protocol HTTP, public path `/`. Health check: HTTP `/healthz`.
-5. Environment variables (copy the values from your local `.env`; mark the secrets as Koyeb secrets):
-   `PANTA_API_KEY`, `PANTA_BASE_URL`, `PANTA_MODE=live`, `DATABASE_URL`, `SUPABASE_URL`,
-   `SUPABASE_SERVICE_ROLE_KEY`, `SOLANA_RPC_URL`, `PRIVY_APP_ID`, `PRIVY_APP_SECRET`,
-   `AUTH_MODE=privy`, `PORT=8080`.
-6. Deploy. The frontend's `NEXT_PUBLIC_API_BASE_URL` becomes `https://<service>.koyeb.app/api/v1`.
+The API runs as one Vercel Go function (`api/index.go`) that serves every route; `vercel.json`
+rewrites all paths to it, pins the region to `fra1` (Frankfurt, next to the Supabase database),
+allows 60 s per request, and schedules a daily catalog refresh.
 
-Free instances sleep after an hour without traffic; the first request after that takes a few
-seconds. Buy sessions live in memory, so keep a single instance (the free tier only allows one).
+1. Apply migrations through `0007_serverless_state.sql` (order sessions and rate limits live in
+   Postgres, because each request may hit a different instance).
+2. Vercel → **Add New Project** → import `Iwetan77/Igloo` → **Root Directory:** `services/api`.
+   Framework preset: **Other**. No build command is needed.
+3. Environment variables: `PANTA_API_KEY`, `PANTA_BASE_URL`, `PANTA_MODE=live`, `DATABASE_URL`
+   (transaction pooler, port 6543, `?sslmode=require`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `SOLANA_RPC_URL`, `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `AUTH_MODE=privy`, and `CRON_SECRET`
+   (a long random string).
+4. Deploy, then open `https://<project>.vercel.app/healthz`.
+5. For refreshes every 30 minutes, add the repository secrets `IGLOO_API_URL`
+   (`https://<project>.vercel.app`) and `CRON_SECRET`. The workflow in
+   `.github/workflows/refresh-catalog.yml` runs from the default branch.
+
+Each refresh call discovers markets for up to 40% of a 50 s budget, then refreshes the stalest
+market details, 3 at a time under Panta's rate limit (about 50 markets per call).
+
+`main.go` still runs the same API as a long-lived server (`go run .` or the Dockerfile); it
+refreshes the catalog in-process every 15 minutes.
 
 ## Layout
 
-- `main.go` wires config, store, Panta client, auth and the HTTP server.
+- `main.go` runs the API as a long-lived server; `api/index.go` is the Vercel function. Both
+  build it with `internal/app`.
 - `internal/config` loads and validates the environment.
 - `internal/panta` is the typed Panta client. `CompileUnsignedTx` turns Panta's
   instruction lists into an unsigned v0 transaction for the wallet to sign.
@@ -46,7 +57,7 @@ seconds. Buy sessions live in memory, so keep a single instance (the free tier o
 3. `POST /orders/submit` with the broadcast signature.
 4. Poll `GET /orders/verify?signature=` until `confirmed` or `failed`.
 
-The quote → order mapping lives in process memory, so run a single instance.
+Quote sessions live in Postgres (`order_sessions`), so any instance can serve any step.
 
 ## Video uploads
 
@@ -132,7 +143,9 @@ Per signed-in user, counted only for valid writes. Over the limit returns
 | `POST /posts/:id/comments` | 10 per minute, 200 per day |
 | `POST /uploads/video` | 3 per 10 min, 10 per day (≤ 500 MB/day at the 50 MB cap) |
 
-Counters live in memory, so they reset when the service restarts.
+Counters live in Postgres (`rate_events`), shared by every instance; concurrent requests for one
+user are serialised with an advisory lock, so two instances can't both let the limit-breaking
+request through. If the limiter's database call fails, requests are allowed (fail open).
 
 ## Errors
 
