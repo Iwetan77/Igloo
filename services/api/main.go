@@ -11,12 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Iwetan77/Igloo/services/api/internal/auth"
+	"github.com/Iwetan77/Igloo/services/api/internal/app"
 	"github.com/Iwetan77/Igloo/services/api/internal/config"
-	"github.com/Iwetan77/Igloo/services/api/internal/httpapi"
-	"github.com/Iwetan77/Igloo/services/api/internal/panta"
-	"github.com/Iwetan77/Igloo/services/api/internal/storage"
-	"github.com/Iwetan77/Igloo/services/api/internal/store"
 )
 
 func main() {
@@ -35,28 +31,17 @@ func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	st, err := store.Open(ctx, cfg.DatabaseURL)
+	api, st, err := app.Build(ctx, cfg, log)
 	if err != nil {
 		return err
 	}
 	defer st.Close()
 
-	var verifier auth.Verifier = auth.NewPrivyVerifier(cfg.PrivyAppID)
-	var wallets auth.WalletChecker = auth.NewPrivyWallets(cfg.PrivyAppID, cfg.PrivyAppSecret)
-	if cfg.AuthMode == "dev" {
-		log.Warn("AUTH_MODE=dev: accepting unsigned dev:<privy_user_id> tokens and any wallet; never use in production")
-		verifier, wallets = auth.DevVerifier{}, auth.AnyWallet{}
+	// On Vercel (which sets VERCEL=1) instances freeze between requests and
+	// many may run at once, so the scheduled refresh route does this instead.
+	if os.Getenv("VERCEL") == "" {
+		go api.RunCatalogRefresh(ctx)
 	}
-
-	var sc *storage.Client
-	if cfg.SupabaseURL != "" && cfg.SupabaseServiceRoleKey != "" {
-		sc = storage.New(cfg.SupabaseURL, cfg.SupabaseServiceRoleKey)
-	} else {
-		log.Warn("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set: POST /uploads/video will return 503")
-	}
-
-	api := httpapi.New(st, panta.New(cfg.PantaBaseURL, cfg.PantaAPIKey), verifier, wallets, sc, log)
-	go api.RunCatalogRefresh(ctx)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

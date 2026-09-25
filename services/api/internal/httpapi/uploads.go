@@ -34,7 +34,7 @@ func (s *Server) uploadVideo(w http.ResponseWriter, r *http.Request, u store.Use
 		writeError(w, http.StatusBadRequest, "UNSUPPORTED_MEDIA_TYPE", "content_type must be video/mp4, video/webm or video/quicktime")
 		return
 	}
-	if !s.limit(w, "upload", u.ID, uploadLimits) {
+	if !s.limit(w, r, "upload", u.ID, uploadLimits) {
 		return
 	}
 	b := make([]byte, 16)

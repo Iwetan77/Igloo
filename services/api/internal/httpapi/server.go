@@ -22,21 +22,36 @@ type Server struct {
 	verifier auth.Verifier
 	wallets  auth.WalletChecker
 	storage  *storage.Client // nil when Supabase Storage isn't configured
-	orders   *orderSessions
-	limiter  *rateLimiter
+	orders   sessionStore
+	limiter  limiter
 	markets  *marketCache
 	log      *slog.Logger
+
+	// cronSecret authorises the scheduled catalog refresh route ("" disables it).
+	cronSecret string
+}
+
+// WithCronSecret enables GET /api/v1/internal/refresh-catalog for callers
+// presenting this bearer token.
+func (s *Server) WithCronSecret(secret string) *Server {
+	s.cronSecret = secret
+	return s
 }
 
 func New(st *store.Store, pc *panta.Client, v auth.Verifier, wc auth.WalletChecker, sc *storage.Client, log *slog.Logger) *Server {
+	var orders sessionStore = newMemSessions()
+	var lim limiter = newRateLimiter()
+	if st != nil {
+		orders, lim = dbSessions{st}, dbLimiter{st}
+	}
 	return &Server{
 		store:    st,
 		panta:    pc,
 		verifier: v,
 		wallets:  wc,
 		storage:  sc,
-		orders:   newOrderSessions(),
-		limiter:  newRateLimiter(),
+		orders:   orders,
+		limiter:  lim,
 		markets:  newMarketCache(pc, st, log),
 		log:      log,
 	}
@@ -69,6 +84,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST "+p+"/users/{id}/follow", s.requireUser(s.follow))
 	mux.HandleFunc("DELETE "+p+"/users/{id}/follow", s.requireUser(s.unfollow))
 	mux.HandleFunc("POST "+p+"/events/view", s.requireUser(s.recordView))
+	mux.HandleFunc("GET "+p+"/internal/refresh-catalog", s.refreshCatalogRoute)
 	mux.HandleFunc("GET "+p+"/markets", s.listMarkets)
 	mux.HandleFunc("GET "+p+"/markets/{id}", s.marketDetail)
 

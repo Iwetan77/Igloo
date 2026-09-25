@@ -29,6 +29,10 @@ type Config struct {
 	// AuthMode is "privy" (default) or "dev". In dev mode a bearer token of the
 	// form "dev:<privy_user_id>" is accepted so the API can be exercised with curl.
 	AuthMode string
+
+	// CronSecret authorises the scheduled catalog refresh route; empty
+	// disables the route.
+	CronSecret string
 }
 
 func Load() (Config, error) {
@@ -44,6 +48,7 @@ func Load() (Config, error) {
 		PrivyAppID:             os.Getenv("PRIVY_APP_ID"),
 		PrivyAppSecret:         os.Getenv("PRIVY_APP_SECRET"),
 		AuthMode:               strings.ToLower(env("AUTH_MODE", "privy")),
+		CronSecret:             os.Getenv("CRON_SECRET"),
 	}
 	if c.PantaMode != "live" {
 		return c, fmt.Errorf("PANTA_MODE=%q is not supported: only live (Solana mainnet) is implemented", c.PantaMode)

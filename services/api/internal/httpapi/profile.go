@@ -71,7 +71,7 @@ func (s *Server) updateMe(w http.ResponseWriter, r *http.Request, u store.User) 
 		}
 		upd.AvatarURL = &a
 	}
-	if !s.limit(w, "profile", u.ID, profileLimits) {
+	if !s.limit(w, r, "profile", u.ID, profileLimits) {
 		return
 	}
 	switch err := s.store.UpdateProfile(r.Context(), u.ID, upd); {
@@ -105,7 +105,7 @@ func (s *Server) uploadAvatar(w http.ResponseWriter, r *http.Request, u store.Us
 		writeError(w, http.StatusBadRequest, "UNSUPPORTED_MEDIA_TYPE", "content_type must be image/jpeg, image/png or image/webp")
 		return
 	}
-	if !s.limit(w, "avatar", u.ID, avatarLimits) {
+	if !s.limit(w, r, "avatar", u.ID, avatarLimits) {
 		return
 	}
 	b := make([]byte, 12)
