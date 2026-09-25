@@ -193,7 +193,7 @@ func (s *Server) setFollow(w http.ResponseWriter, r *http.Request, u store.User,
 		writeError(w, http.StatusNotFound, "USER_NOT_FOUND", "")
 		return
 	}
-	if !s.limit(w, "follow", u.ID, followLimits) {
+	if !s.limit(w, r, "follow", u.ID, followLimits) {
 		return
 	}
 	n, err := s.store.SetFollow(r.Context(), u.ID, id, on)
@@ -235,7 +235,7 @@ func (s *Server) recordView(w http.ResponseWriter, r *http.Request, u store.User
 		writeError(w, http.StatusNotFound, "POST_NOT_FOUND", "")
 		return
 	}
-	if !s.limit(w, "view", u.ID, viewLimits) {
+	if !s.limit(w, r, "view", u.ID, viewLimits) {
 		return
 	}
 	watch := time.Duration(in.WatchMS) * time.Millisecond

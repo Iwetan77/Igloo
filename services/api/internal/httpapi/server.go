@@ -22,21 +22,26 @@ type Server struct {
 	verifier auth.Verifier
 	wallets  auth.WalletChecker
 	storage  *storage.Client // nil when Supabase Storage isn't configured
-	orders   *orderSessions
-	limiter  *rateLimiter
+	orders   sessionStore
+	limiter  limiter
 	markets  *marketCache
 	log      *slog.Logger
 }
 
 func New(st *store.Store, pc *panta.Client, v auth.Verifier, wc auth.WalletChecker, sc *storage.Client, log *slog.Logger) *Server {
+	var orders sessionStore = newMemSessions()
+	var lim limiter = newRateLimiter()
+	if st != nil {
+		orders, lim = dbSessions{st}, dbLimiter{st}
+	}
 	return &Server{
 		store:    st,
 		panta:    pc,
 		verifier: v,
 		wallets:  wc,
 		storage:  sc,
-		orders:   newOrderSessions(),
-		limiter:  newRateLimiter(),
+		orders:   orders,
+		limiter:  lim,
 		markets:  newMarketCache(pc, st, log),
 		log:      log,
 	}

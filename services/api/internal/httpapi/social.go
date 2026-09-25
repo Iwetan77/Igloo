@@ -435,7 +435,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request, u store.User
 			return
 		}
 	}
-	if !s.limit(w, "post", u.ID, postLimits) {
+	if !s.limit(w, r, "post", u.ID, postLimits) {
 		return
 	}
 	p, err := s.store.CreatePost(r.Context(), u.ID, in.PantaMarketID, in.VideoURL, in.Caption, quoted)
@@ -526,7 +526,7 @@ func (s *Server) createComment(w http.ResponseWriter, r *http.Request, u store.U
 		writeError(w, http.StatusBadRequest, "INVALID_BODY", "body must be 1-2000 characters")
 		return
 	}
-	if !s.limit(w, "comment", u.ID, commentLimits) {
+	if !s.limit(w, r, "comment", u.ID, commentLimits) {
 		return
 	}
 	c, err := s.store.CreateComment(r.Context(), id, u.ID, body)

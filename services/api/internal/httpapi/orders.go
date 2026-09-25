@@ -1,7 +1,9 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -9,94 +11,125 @@ import (
 	"time"
 
 	"github.com/Iwetan77/Igloo/services/api/internal/panta"
+	"github.com/Iwetan77/Igloo/services/api/internal/store"
 )
 
 // orderSession remembers what Panta needs across the buy flow but the
-// API's request bodies don't carry: the buyer wallet (needed by build)
-// and Panta's orderId (needed by submit/verify, keyed by quote or signature).
-// In-process only: a restart mid-buy loses the session and the client must
-// requote. The service is meant to run as a single instance.
+// API's request bodies don't carry: the buyer wallet (needed by build) and
+// Panta's orderId (needed by submit/verify, keyed by quote or signature).
 type orderSession struct {
 	quoteID   string
 	wallet    string
 	marketID  string
 	orderID   string
 	signature string
+}
+
+// sessionStore holds order sessions. The server uses the Postgres-backed
+// one (dbSessions) so quote, build, submit and verify can land on different
+// serverless instances; memSessions serves tests and database-less setups.
+type sessionStore interface {
+	put(ctx context.Context, s orderSession) error
+	get(ctx context.Context, quoteID string) (orderSession, bool, error)
+	setOrder(ctx context.Context, quoteID, orderID string) error
+	setSignature(ctx context.Context, quoteID, sig string) error
+	bySig(ctx context.Context, sig string) (orderSession, bool, error)
+}
+
+type dbSessions struct{ st *store.Store }
+
+func fromStore(o store.OrderSession) orderSession {
+	return orderSession{quoteID: o.QuoteID, wallet: o.Wallet, marketID: o.MarketID, orderID: o.OrderID, signature: o.Signature}
+}
+
+func (d dbSessions) put(ctx context.Context, s orderSession) error {
+	return d.st.PutOrderSession(ctx, s.quoteID, s.wallet, s.marketID)
+}
+func (d dbSessions) get(ctx context.Context, quoteID string) (orderSession, bool, error) {
+	o, err := d.st.OrderSessionByQuote(ctx, quoteID)
+	if errors.Is(err, store.ErrNotFound) {
+		return orderSession{}, false, nil
+	}
+	return fromStore(o), err == nil, err
+}
+func (d dbSessions) setOrder(ctx context.Context, quoteID, orderID string) error {
+	return d.st.SetOrderSessionOrder(ctx, quoteID, orderID)
+}
+func (d dbSessions) setSignature(ctx context.Context, quoteID, sig string) error {
+	return d.st.SetOrderSessionSignature(ctx, quoteID, sig)
+}
+func (d dbSessions) bySig(ctx context.Context, sig string) (orderSession, bool, error) {
+	o, err := d.st.OrderSessionBySignature(ctx, sig)
+	if errors.Is(err, store.ErrNotFound) {
+		return orderSession{}, false, nil
+	}
+	return fromStore(o), err == nil, err
+}
+
+// memSessions is the in-process session store (single instance only).
+type memSessions struct {
+	mu          sync.Mutex
+	byQuote     map[string]*memSession
+	bySignature map[string]*memSession
+}
+
+type memSession struct {
+	orderSession
 	createdAt time.Time
 }
 
-type orderSessions struct {
-	mu          sync.Mutex
-	byQuote     map[string]*orderSession
-	bySignature map[string]*orderSession
+func newMemSessions() *memSessions {
+	return &memSessions{byQuote: map[string]*memSession{}, bySignature: map[string]*memSession{}}
 }
 
-const orderSessionTTL = 30 * time.Minute
-
-func newOrderSessions() *orderSessions {
-	o := &orderSessions{byQuote: map[string]*orderSession{}, bySignature: map[string]*orderSession{}}
-	go func() {
-		for range time.Tick(time.Minute) {
-			o.evict()
-		}
-	}()
-	return o
+func (o *memSessions) live(s *memSession) bool {
+	return time.Since(s.createdAt) < store.OrderSessionTTL
 }
 
-func (o *orderSessions) evict() {
+func (o *memSessions) put(_ context.Context, s orderSession) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	cutoff := time.Now().Add(-orderSessionTTL)
-	for k, s := range o.byQuote {
-		if s.createdAt.Before(cutoff) {
-			delete(o.byQuote, k)
-			delete(o.bySignature, s.signature)
-		}
-	}
+	o.byQuote[s.quoteID] = &memSession{orderSession: s, createdAt: time.Now()}
+	return nil
 }
 
-func (o *orderSessions) put(s *orderSession) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	o.byQuote[s.quoteID] = s
-}
-
-// get returns a copy so callers can read fields without holding the lock.
-func (o *orderSessions) get(quoteID string) (orderSession, bool) {
+func (o *memSessions) get(_ context.Context, quoteID string) (orderSession, bool, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	s, ok := o.byQuote[quoteID]
-	if !ok {
-		return orderSession{}, false
+	if !ok || !o.live(s) {
+		return orderSession{}, false, nil
 	}
-	return *s, true
+	return s.orderSession, true, nil
 }
 
-func (o *orderSessions) setOrder(quoteID, orderID string) {
+func (o *memSessions) setOrder(_ context.Context, quoteID, orderID string) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if s, ok := o.byQuote[quoteID]; ok {
 		s.orderID = orderID
 	}
+	return nil
 }
 
-func (o *orderSessions) setSignature(quoteID, sig string) {
+func (o *memSessions) setSignature(_ context.Context, quoteID, sig string) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if s, ok := o.byQuote[quoteID]; ok {
 		s.signature = sig
 		o.bySignature[sig] = s
 	}
+	return nil
 }
 
-func (o *orderSessions) bySig(sig string) (orderSession, bool) {
+func (o *memSessions) bySig(_ context.Context, sig string) (orderSession, bool, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	s, ok := o.bySignature[sig]
-	if !ok {
-		return orderSession{}, false
+	if !ok || !o.live(s) {
+		return orderSession{}, false, nil
 	}
-	return *s, true
+	return s.orderSession, true, nil
 }
 
 // ---- handlers ----
@@ -159,7 +192,10 @@ func (s *Server) quoteOrder(w http.ResponseWriter, r *http.Request) {
 		s.pantaError(w, r, err)
 		return
 	}
-	s.orders.put(&orderSession{quoteID: q.QuoteID, wallet: wallet, marketID: in.PantaMarketID, createdAt: time.Now()})
+	if err := s.orders.put(r.Context(), orderSession{quoteID: q.QuoteID, wallet: wallet, marketID: in.PantaMarketID}); err != nil {
+		s.internal(w, r, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"quote_id":         q.QuoteID,
 		"fee_usdc":         q.FeeUSDC,
@@ -175,7 +211,11 @@ func (s *Server) buildOrder(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	sess, ok := s.orders.get(in.QuoteID)
+	sess, ok, err := s.orders.get(r.Context(), in.QuoteID)
+	if err != nil {
+		s.internal(w, r, err)
+		return
+	}
 	if !ok {
 		writeError(w, http.StatusBadRequest, "QUOTE_EXPIRED", "unknown or expired quote_id; request a new quote")
 		return
@@ -191,7 +231,10 @@ func (s *Server) buildOrder(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadGateway, "PANTA_BAD_BUILD", "could not assemble a transaction from the upstream build")
 		return
 	}
-	s.orders.setOrder(sess.quoteID, b.OrderID)
+	if err := s.orders.setOrder(r.Context(), sess.quoteID, b.OrderID); err != nil {
+		s.internal(w, r, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"unsigned_tx_base64": tx})
 }
 
@@ -207,7 +250,11 @@ func (s *Server) submitOrder(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "SIGNATURE_REQUIRED", "signature is required")
 		return
 	}
-	sess, ok := s.orders.get(in.QuoteID)
+	sess, ok, err := s.orders.get(r.Context(), in.QuoteID)
+	if err != nil {
+		s.internal(w, r, err)
+		return
+	}
 	if !ok {
 		writeError(w, http.StatusBadRequest, "QUOTE_EXPIRED", "unknown or expired quote_id")
 		return
@@ -220,7 +267,10 @@ func (s *Server) submitOrder(w http.ResponseWriter, r *http.Request) {
 		s.pantaError(w, r, err)
 		return
 	}
-	s.orders.setSignature(sess.quoteID, in.Signature)
+	if err := s.orders.setSignature(r.Context(), sess.quoteID, in.Signature); err != nil {
+		s.internal(w, r, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "pending"})
 }
 
@@ -230,7 +280,12 @@ func (s *Server) verifyOrder(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "SIGNATURE_REQUIRED", "signature query parameter is required")
 		return
 	}
-	if sess, ok := s.orders.bySig(sig); ok {
+	sess, ok, err := s.orders.bySig(r.Context(), sig)
+	if err != nil {
+		s.internal(w, r, err)
+		return
+	}
+	if ok {
 		st, err := s.panta.VerifyOrder(r.Context(), sess.orderID, sig)
 		if err != nil {
 			s.pantaError(w, r, err)
