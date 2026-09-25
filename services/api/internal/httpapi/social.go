@@ -319,7 +319,7 @@ func (c *marketCache) getMany(ctx context.Context, ids []string) map[string]feed
 			if p := nonEmpty(m.Phase); p != nil {
 				fm.Phase = p
 			}
-			if cat := nonEmpty(m.Category); cat != nil {
+			if cat := nonEmpty(correctCategory(m)); cat != nil {
 				fm.Category = cat
 			}
 		}
@@ -332,7 +332,7 @@ func (c *marketCache) getMany(ctx context.Context, ids []string) map[string]feed
 // cachedFromPanta maps a live market to a markets_cache row; empty strings
 // become nulls so they never overwrite a previously known value.
 func cachedFromPanta(m *panta.Market) store.CachedMarket {
-	return store.CachedMarket{ID: m.ID, Question: nonEmpty(m.Question), Category: nonEmpty(m.Category),
+	return store.CachedMarket{ID: m.ID, Question: nonEmpty(m.Question), Category: nonEmpty(correctCategory(m)),
 		Phase: nonEmpty(m.Phase), YesPrice: m.YesPrice, NoPrice: m.NoPrice, ImageURL: nonEmpty(m.ImageURL)}
 }
 

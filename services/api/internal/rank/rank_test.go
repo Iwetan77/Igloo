@@ -103,3 +103,20 @@ func TestOrderDeterministic(t *testing.T) {
 		}
 	}
 }
+
+// When nothing differs in both author and market, prefer a post that
+// differs in one of them over an exact repeat.
+func TestOrderPartialDiversity(t *testing.T) {
+	w := Default
+	w.Jitter = 0
+	cands := []Candidate{
+		{PostID: "demo-gta-1", AuthorID: "demo", MarketID: "gta", Likes: 9},
+		{PostID: "demo-gta-2", AuthorID: "demo", MarketID: "gta", Likes: 8},
+		{PostID: "ben-gta", AuthorID: "ben", MarketID: "gta", Likes: 1},
+		{PostID: "demo-btc", AuthorID: "demo", MarketID: "btc", Likes: 1},
+	}
+	o := w.Order(cands)
+	if o[0] != "demo-gta-1" || o[1] == "demo-gta-2" {
+		t.Errorf("exact repeat chosen while a partial alternative existed: %v", o)
+	}
+}

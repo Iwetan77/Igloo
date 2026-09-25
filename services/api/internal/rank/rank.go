@@ -126,11 +126,22 @@ func (w Weights) Order(cands []Candidate) []string {
 		if pick < 0 {
 			pick = 0
 			if prev != nil {
+				// Best post that differs from the previous one in both author
+				// and market; failing that, in at least one; failing that, the best.
+				partial := -1
 				for i := range pool {
-					if pool[i].AuthorID != prev.AuthorID && pool[i].MarketID != prev.MarketID {
+					newAuthor, newMarket := pool[i].AuthorID != prev.AuthorID, pool[i].MarketID != prev.MarketID
+					if newAuthor && newMarket {
+						partial = -2
 						pick = i
 						break
 					}
+					if partial == -1 && (newAuthor || newMarket) {
+						partial = i
+					}
+				}
+				if partial >= 0 {
+					pick = partial
 				}
 			}
 		}
