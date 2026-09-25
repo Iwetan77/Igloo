@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -242,6 +243,11 @@ func (s *Server) listMarkets(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	search := strings.TrimSpace(q.Get("q"))
+	if len(search) > 100 {
+		writeError(w, http.StatusBadRequest, "INVALID_QUERY", "q is at most 100 characters")
+		return
+	}
 	offset := 0
 	if v := q.Get("cursor"); v != "" {
 		b, err := base64.RawURLEncoding.DecodeString(v)
@@ -252,7 +258,7 @@ func (s *Server) listMarkets(w http.ResponseWriter, r *http.Request) {
 		}
 		offset = n
 	}
-	ms, err := s.store.ListMarkets(r.Context(), category, offset, limit+1)
+	ms, err := s.store.ListMarkets(r.Context(), category, search, offset, limit+1)
 	if err != nil {
 		s.internal(w, r, err)
 		return

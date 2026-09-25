@@ -83,7 +83,7 @@ func TestProfilesAndEndedMarkets(t *testing.T) {
 		st.UpsertMarket(ctx, CachedMarket{ID: "unknown-end", Question: str("No end?"), Category: str("sports"), Phase: str("primary")})
 		// A later refresh without an end time must not erase the known one.
 		st.UpsertMarket(ctx, CachedMarket{ID: "ended", Phase: str("primary")})
-		ms, err := st.ListMarkets(ctx, "sports", 0, 50)
+		ms, err := st.ListMarkets(ctx, "sports", "", 0, 50)
 		if err != nil {
 			t.Fatal(err)
 		}
