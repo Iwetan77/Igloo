@@ -13,6 +13,21 @@ go run .
 
 `GET /healthz` returns `{"status":"ok"}` once the database is reachable.
 
+## Deploy (Koyeb free instance)
+
+1. Koyeb → **Create Web Service** → **GitHub** → repo `Iwetan77/Igloo`, branch `main` (or `backend`).
+2. Builder: **Dockerfile**. Set the work directory to `services/api` and the Dockerfile path to `Dockerfile`.
+3. Instance: **Free**, region **Frankfurt**, which sits next to the Supabase `eu-central-1` database.
+4. Port: `8080`, protocol HTTP, public path `/`. Health check: HTTP `/healthz`.
+5. Environment variables (copy the values from your local `.env`; mark the secrets as Koyeb secrets):
+   `PANTA_API_KEY`, `PANTA_BASE_URL`, `PANTA_MODE=live`, `DATABASE_URL`, `SUPABASE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `SOLANA_RPC_URL`, `PRIVY_APP_ID`, `PRIVY_APP_SECRET`,
+   `AUTH_MODE=privy`, `PORT=8080`.
+6. Deploy. The frontend's `NEXT_PUBLIC_API_BASE_URL` becomes `https://<service>.koyeb.app/api/v1`.
+
+Free instances sleep after an hour without traffic; the first request after that takes a few
+seconds. Buy sessions live in memory, so keep a single instance (the free tier only allows one).
+
 ## Layout
 
 - `main.go` wires config, store, Panta client, auth and the HTTP server.
