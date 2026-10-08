@@ -1,24 +1,77 @@
-/* First-run setup: an ink intro slab with big copy, the form on paper below. */
+/* First-run setup: a fixed step header, an ink intro slab with big copy, the form on paper below. */
 .onboarding { --canvas: var(--bg); position: fixed; z-index: 80; inset: 0; overflow-y: auto; background: var(--bg); animation: fade-in var(--t) var(--ease); }
-.onboarding-panel { width: min(100%, 460px); min-height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; padding: calc(12px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom)); }
-.onboarding-intro { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 26px; padding: 18px 20px 26px; }
-.onboarding-intro .wordmark { margin-bottom: 26px; }
-.onboarding-intro h1 { margin: 6px 0 0; font-size: 38px; line-height: 1.02; letter-spacing: -0.035em; }
+.onboarding-shell { width: min(100%, 460px); min-height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; padding: calc(10px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom)); }
+.onboarding-panel { flex: 1; display: flex; flex-direction: column; }
+
+/* Header: back, the step tag over a row of progress bars. */
+.onboarding-top { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 8px; min-height: 52px; padding: 0 4px 10px; }
+.onboarding-top-spacer { width: 34px; }
+.onboarding-step { display: grid; justify-items: center; gap: 8px; }
+.onboarding-step .tag { animation: fade-in 320ms var(--ease-out); }
+.onboarding-progress { display: flex; align-items: center; gap: 4px; }
+.onboarding-progress span { width: 14px; height: 4px; border-radius: var(--r-pill); background: var(--surface-3); transition: width 460ms var(--ease-glide), background 300ms var(--ease-glide); }
+.onboarding-progress span.done { background: var(--ink); }
+.onboarding-progress span.active { width: 34px; background: var(--lav-deep); }
+
+.onboarding-intro { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 22px; padding: 64px 22px 24px; }
+.onboarding-intro h1 { margin: 0; font-size: 36px; line-height: 1.02; letter-spacing: -0.035em; }
 .onboarding-lede { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .onboarding-panel > .field, .onboarding-panel > .interest-chips, .onboarding-panel > .label, .onboarding-panel > .inline-error, .onboarding-avatar { margin-inline: 8px; }
-.onboarding-avatar { position: relative; align-self: center; margin-bottom: 24px; cursor: pointer; }
+.onboarding-avatar { position: relative; align-self: center; margin-bottom: 22px; cursor: pointer; }
 .username-status { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
 .username-status.available { color: var(--lav-deep); }
 .username-status.taken, .username-status.invalid { color: var(--danger); }
-.interest-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-.interest-chips .chip { min-height: 40px; padding: 0 16px; font-size: 14px; }
+.interest-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.interest-chips .chip { min-height: 42px; padding: 0 16px; font-size: 14px; }
+.interest-chips .chip svg { animation: heart-pop 360ms var(--ease-pop); }
+.onboarding-count { margin-bottom: 18px; }
 .onboarding-cta { margin-top: auto; }
-.onboarding-panel .field + .field { margin-bottom: 26px; }
+.onboarding-panel .field + .field { margin-bottom: 24px; }
+.onboarding-stack { display: grid; gap: 4px; }
 
-.onboarding-welcome { min-height: calc(100dvh - 24px); margin: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px 22px calc(26px + env(safe-area-inset-bottom)); }
-.onboarding-welcome .wordmark { margin-bottom: auto; }
-.welcome-mark { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: var(--lav); color: var(--ink); animation: rise-in 500ms var(--ease); }
-.onboarding-welcome h1 { margin: 0; font-size: 46px; line-height: 1; letter-spacing: -0.04em; }
-.onboarding-welcome p { margin: 0 0 18px; color: var(--muted); }
-.welcome-foot { margin-top: auto; }
-.welcome-foot::before { background: var(--lav) !important; }
+/* Wallet: the account on a small ink slab, then the backup warning. */
+.onboarding-wallet { display: grid; gap: 10px; margin: 0 0 20px; }
+.onboarding-account { display: flex; align-items: center; gap: 14px; padding: 14px 14px 14px 16px; border-radius: var(--r-lg); }
+.onboarding-account-icon { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--lav); color: var(--ink); }
+.onboarding-address { font-family: var(--mono); font-size: 17px; letter-spacing: -0.01em; }
+.onboarding-backup > div { display: grid; gap: 2px; }
+.onboarding-export { justify-self: start; margin-top: 12px; }
+.onboarding-check { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--warn-line); color: var(--text); font-size: 13px; cursor: pointer; }
+.onboarding-check input { position: absolute; opacity: 0; pointer-events: none; }
+.onboarding-box { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 7px; border: 1.5px solid var(--warn); color: transparent; transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
+.onboarding-check input:checked + .onboarding-box { background: var(--ink); border-color: var(--ink); color: var(--lav); animation: heart-pop 360ms var(--ease-pop); }
+.onboarding-check input:focus-visible + .onboarding-box { box-shadow: 0 0 0 4px var(--yes-soft); }
+.onboarding-note { margin: 0 8px; }
+
+/* Link X */
+.onboarding-x { display: grid; justify-items: center; gap: 14px; margin: 6px 8px 20px; }
+.onboarding-x-mark { display: grid; place-items: center; width: 84px; height: 84px; margin-bottom: 6px; border-radius: 50%; background: var(--ink); color: #eceee8; animation: mark-pop 640ms var(--ease-pop) 120ms backwards; }
+.onboarding-x-handle { width: 100%; }
+.onboarding-x-value { flex: 1; color: var(--text); font-size: 15px; }
+.onboarding-x .field-hint { text-align: center; }
+@keyframes mark-pop { from { transform: scale(0.6); opacity: 0; } }
+
+/* Follow */
+.onboarding-people { margin: 0 0 18px; }
+.onboarding-people .row { animation: page-in 480ms var(--ease-out) backwards; }
+.onboarding-people .row:nth-child(2) { animation-delay: 60ms; }
+.onboarding-people .row:nth-child(3) { animation-delay: 120ms; }
+.onboarding-people .row:nth-child(4) { animation-delay: 180ms; }
+.onboarding-people .row:nth-child(5) { animation-delay: 240ms; }
+.onboarding-people .row:nth-child(6) { animation-delay: 300ms; }
+.onboarding-people .empty-note { display: flex; align-items: center; gap: 8px; }
+.follow-toggle { min-width: 96px; justify-content: center; }
+.follow-toggle.on { background: var(--lav); border-color: var(--lav); color: var(--ink); }
+
+/* Welcome: one centred ink slab with a lavender check. */
+.onboarding-welcome { width: calc(100% - 24px); min-height: calc(100dvh - 24px); margin: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 22px 22px calc(26px + env(safe-area-inset-bottom)); border: 0; color: var(--text); text-align: center; animation: slab-in 600ms var(--ease-out); }
+.welcome-mark { display: grid; place-items: center; width: 104px; height: 104px; margin-bottom: 18px; border-radius: 28px; background: var(--lav); color: var(--ink); box-shadow: 0 0 0 10px rgba(203, 198, 251, 0.12); animation: mark-pop 700ms var(--ease-pop) 120ms backwards; }
+.welcome-mark svg { stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw-check 520ms var(--ease-out) 520ms forwards; }
+.onboarding-welcome h1 { margin: 0; font-size: 40px; line-height: 1; letter-spacing: -0.04em; animation: page-in 600ms var(--ease-out) 260ms backwards; }
+.onboarding-welcome p { margin: 0; color: var(--muted); animation: page-in 600ms var(--ease-out) 340ms backwards; }
+.welcome-foot { position: absolute; bottom: calc(26px + env(safe-area-inset-bottom)); animation: fade-in 600ms var(--ease-out) 700ms backwards; }
+.welcome-foot::before { background: var(--lav) !important; animation: dot-pulse 1.2s var(--ease-glide) infinite; }
+@keyframes draw-check { to { stroke-dashoffset: 0; } }
+@keyframes dot-pulse { 50% { opacity: 0.3; } }
+
+@media (prefers-reduced-motion: reduce) { .welcome-mark svg { stroke-dashoffset: 0; animation: none; } }

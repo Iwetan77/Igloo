@@ -17,6 +17,7 @@ import { BuySheet } from "@/components/buy-sheet";
 import { CommentsDrawer } from "@/components/comments-drawer";
 import { MarketPicker } from "@/components/market-picker";
 import { MarketsView } from "@/components/markets-view";
+import { IntroFlow } from "@/components/intro-flow";
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import { ProfilePanel } from "@/components/people-panels";
 import { PostComposer } from "@/components/post-composer";
@@ -347,6 +348,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     {search && <SearchSheet session={session} onClose={() => setSearch(false)} onOpenProfile={(user) => { setSearch(false); if (user.username) window.location.assign("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
     {profileId && <ProfilePanel id={profileId} session={session} onClose={() => setProfileId("")} onOpenPost={openOriginal} onProfile={onProfile} />}
     {session.synced && me && <OnboardingFlow session={session} />}
+    <IntroFlow session={session} />
     {account && <WalletSheet session={session} onClose={() => setAccount(false)} notify={notify} />}
   </AppShell>;
 }
