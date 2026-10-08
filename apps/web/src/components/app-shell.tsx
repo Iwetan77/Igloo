@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { BriefcaseBusiness, ChartSpline, House, Plus, Search, Settings, UserRound } from "lucide-react";
+import { BriefcaseBusiness, ChartSpline, House, Moon, Plus, Search, Settings, Sun, UserRound } from "lucide-react";
+import { useThemeSwitch } from "@/lib/theme";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import type { Session } from "@/lib/use-session";
 
@@ -30,6 +31,7 @@ export function AppShell({ active, session, children, className = "", ...handler
   const post = handlers.onPost ?? (() => session.authenticated ? go("/?compose=1") : session.login());
   const me = session.me;
   const icon = { size: 19, strokeWidth: 1.5 };
+  const theme = useThemeSwitch();
 
   return <div className={"shell " + className}>
     <aside className="side-nav" aria-label="Main navigation">
@@ -43,6 +45,7 @@ export function AppShell({ active, session, children, className = "", ...handler
         <button type="button" className={"side-link" + (active === "settings" ? " active" : "")} onClick={signedIn("/settings")}><Settings {...icon} />Settings</button>
         <button type="button" className="btn btn-primary side-post" onClick={post} aria-label="Post a take"><Plus size={16} />Post a take</button>
         <div className="side-foot">
+          <button type="button" className="side-link side-theme" role="switch" aria-checked={theme.dark} aria-label="Dark mode" onClick={(event) => theme.toggle(event.currentTarget)}>{theme.dark ? <Moon {...icon} /> : <Sun {...icon} />}<span>Dark mode</span><span className={"switch" + (theme.dark ? " on" : "")} aria-hidden="true" /></button>
           <button type="button" className="side-me" onClick={signedIn("/profile")}>
             <ProfileAvatar src={me?.avatar_url} name={me?.display_name} size={34} />
             <span><small>{session.authenticated ? "Signed in" : "Guest"}</small><b>{session.authenticated ? (me?.username ? "@" + me.username : me?.display_name || "Profile") : "Sign in"}</b></span>

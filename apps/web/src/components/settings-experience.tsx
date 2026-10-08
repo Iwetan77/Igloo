@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ChevronDown, ChevronRight, CircleHelp, Info, LogOut, UserRound, Wallet } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, CircleHelp, Info, LogOut, Moon, UserRound, Wallet } from "lucide-react";
 import { useSession } from "@/lib/use-session";
 import { AppShell } from "@/components/app-shell";
 import { useDirection } from "@/lib/motion";
+import { useThemeSwitch } from "@/lib/theme";
 import { WalletSheet } from "@/components/wallet-sheet";
 import { EmptyState } from "@/components/ui";
 import "@/styles/settings.css";
@@ -26,6 +27,7 @@ export function SettingsExperience() {
   const [open, setOpen] = useState(0);
   const [wallet, setWallet] = useState(false);
   const [toast, setToast] = useState("");
+  const theme = useThemeSwitch();
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(""), 3000); };
   const back = (title: string) => <header className="screen-head"><button type="button" className="icon-btn" onClick={() => setView("home")} aria-label="Back to settings"><ArrowLeft size={18} strokeWidth={1.5} /></button><h1 className="grow">{title}</h1></header>;
   const icon = { size: 18, strokeWidth: 1.5 };
@@ -51,6 +53,7 @@ export function SettingsExperience() {
         <div className="settings-group">
           <a className="settings-row" href="/profile?edit=1"><UserRound {...icon} /><span>Account</span><small className="label">Name, handle, bio</small><ChevronRight size={17} strokeWidth={1.5} /></a>
           <button type="button" className="settings-row" onClick={() => setWallet(true)}><Wallet {...icon} /><span>Wallet</span><small className="label">Balance, deposit</small><ChevronRight size={17} strokeWidth={1.5} /></button>
+          <button type="button" className="settings-row" role="switch" aria-checked={theme.dark} onClick={(event) => theme.toggle(event.currentTarget.querySelector(".switch") as HTMLElement)}><Moon {...icon} /><span>Dark mode</span><span className={"switch" + (theme.dark ? " on" : "")} aria-hidden="true" /></button>
           <button type="button" className="settings-row" onClick={() => setView("support")}><CircleHelp {...icon} /><span>Support</span><small className="label">FAQ</small><ChevronRight size={17} strokeWidth={1.5} /></button>
           <button type="button" className="settings-row" onClick={() => setView("about")}><Info {...icon} /><span>About</span><ChevronRight size={17} strokeWidth={1.5} /></button>
         </div>

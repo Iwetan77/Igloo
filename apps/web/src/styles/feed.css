@@ -59,7 +59,7 @@
 .mcf-meter { flex: 1; min-width: 0; }
 .mcf-trade, .watch-trade { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .mcf-trade .btn { min-height: 44px; padding: 0 16px; }
-.mcf-trade .btn-no { background: var(--bg-2); border-color: var(--bg-2); color: var(--ink); }
+.mcf-trade .btn-no { background: #f4f3ef; border-color: #f4f3ef; color: #06191c; }
 .mcf-trade .btn-no:hover:not(:disabled) { background: #fff; }
 
 .feed-empty { min-height: 100%; display: grid; place-items: center; background: var(--bg-2); }

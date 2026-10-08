@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { themeBootScript } from "@/lib/theme-boot";
 
 const sans = Geist({
   subsets: ["latin"],
@@ -28,7 +29,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={sans.variable + " " + mono.variable}>
+    <html lang="en" className={sans.variable + " " + mono.variable} suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeBootScript }} /></head>
       <body><Providers>{children}</Providers></body>
     </html>
   );
