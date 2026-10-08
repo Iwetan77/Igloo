@@ -8,7 +8,7 @@ import { categories, categoryFor } from "@/lib/categories";
 import { errorCopy, uiCopy } from "@/lib/copy";
 import { usd } from "@/lib/format";
 import { signAndBroadcast } from "@/lib/trade";
-import { withTransition } from "@/lib/motion";
+import { useDirection } from "@/lib/motion";
 import { useSession } from "@/lib/use-session";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/ui";
@@ -26,7 +26,7 @@ function defaultEnd() {
 export function CreateMarketExperience() {
   const session = useSession();
   const [step, setStep] = useState<Step>("form");
-  const goStep = (next: Step) => withTransition(() => setStep(next));
+  const stepDirection = useDirection(["form", "cost", "review", "live"].indexOf(step));
   const [question, setQuestion] = useState("");
   const [category, setCategory] = useState("crypto");
   const [rules, setRules] = useState("");
@@ -70,7 +70,7 @@ export function CreateMarketExperience() {
         title: question.trim(),
       }, token));
       setQuote(result);
-      goStep("cost");
+      setStep("cost");
     } catch (cause) { setError(errorCopy(cause)); }
     finally { setBusy(""); }
   }
@@ -78,7 +78,7 @@ export function CreateMarketExperience() {
   async function create() {
     if (!quote || busy) return;
     if (!session.wallet) { setError("Your Solana wallet is still connecting."); return; }
-    if (Date.now() >= Date.parse(quote.expires_at)) { setQuote(null); goStep("form"); setError("That fee quote expired. Get a fresh one to continue."); return; }
+    if (Date.now() >= Date.parse(quote.expires_at)) { setQuote(null); setStep("form"); setError("That fee quote expired. Get a fresh one to continue."); return; }
     setError("");
     const stage = { current: "build" as "build" | "sign" | "broadcast" | "register" };
     try {
@@ -91,7 +91,7 @@ export function CreateMarketExperience() {
       setBusy("register");
       const registered = await session.authorized((token) => registerMarket(quote.create_id, signature, token));
       setMarketId(registered.panta_market_id || built.expected_panta_market_id);
-      goStep("live");
+      setStep("live");
     } catch (cause) {
       setError(cause instanceof ApiError ? errorCopy(cause) : stage.current === "sign" ? uiCopy("buy.error.rejected") : stage.current === "broadcast" ? uiCopy("buy.error.broadcast") : errorCopy(cause));
     } finally { setBusy(""); }
@@ -108,7 +108,7 @@ export function CreateMarketExperience() {
   const head = (title: string, back?: () => void) => <header className="screen-head">{back && <button type="button" className="icon-btn" onClick={back} aria-label="Back" disabled={Boolean(busy)}><ArrowLeft size={18} strokeWidth={1.5} /></button>}<h1 className="grow">{title}</h1>{step !== "live" && <span className="tag">{["form", "cost", "review"].indexOf(step) + 1} / 3</span>}</header>;
 
   return <AppShell active="markets" session={session}>
-    <main className="screen create-market">
+    <main className="screen create-market"><div className={"step-body " + stepDirection} key={step}>
       {!session.authenticated ? <>
         {head("New market", () => window.location.assign("/?tab=markets"))}
         <EmptyState icon={<CalendarDays size={26} strokeWidth={1.4} />} title="Sign in to create a market" action={<button type="button" className="btn btn-primary" onClick={session.login}>Sign in</button>}>Markets you create are listed for everyone to trade.</EmptyState>
@@ -122,13 +122,13 @@ export function CreateMarketExperience() {
         {(error || (formError && question)) && <p className="inline-error" role="alert">{error || formError}</p>}
         <div className="screen-foot"><button type="button" className="btn btn-primary btn-lg btn-block" disabled={Boolean(formError) || Boolean(busy)} onClick={() => { void getQuote(); }}>{busy === "quote" ? <><LoaderCircle size={17} className="spin" />Getting fee quote</> : "Next"}</button></div>
       </> : step === "cost" && quote ? <>
-        {head("Review cost", () => goStep("form"))}
+        {head("Review cost", () => setStep("form"))}
         <section className="card card-pad cost-card"><span className="label">Market cost breakdown</span><div className="kv"><span>Creation fee</span><strong>${usd(quote.fee_usdc)}</strong></div><div className="kv cost-total"><span>Total</span><strong className="display">${usd(quote.fee_usdc)}</strong></div></section>
         <div className="kv balance-line"><span>Wallet balance</span><strong>{session.balance === null ? "—" : usd(session.balance) + " USDC"}{session.balance !== null && !insufficient && <Check size={15} className="ok-check" />}</strong></div>
         {insufficient && <div className="notice warn"><TriangleAlert size={18} strokeWidth={1.5} /><span><strong>Insufficient balance</strong>Add at least ${usd(quote.fee_usdc - (session.balance ?? 0))} USDC to cover the creation fee. Deposit from your wallet in Profile.</span></div>}
-        <div className="screen-foot"><button type="button" className="btn btn-primary btn-lg btn-block" disabled={insufficient} onClick={() => goStep("review")}>Continue</button></div>
+        <div className="screen-foot"><button type="button" className="btn btn-primary btn-lg btn-block" disabled={insufficient} onClick={() => setStep("review")}>Continue</button></div>
       </> : step === "review" && quote ? <>
-        {head("Confirm & create", () => goStep("cost"))}
+        {head("Confirm & create", () => setStep("cost"))}
         <section className="card card-pad review-card">
           <div><span className="label">Question</span><p className="review-question">{question.trim()}</p></div>
           <div><span className="label">Category</span><span className="tag">{categoryFor(category).label}</span></div>
@@ -147,6 +147,6 @@ export function CreateMarketExperience() {
         {copied && <span className="label">Link copied</span>}
         <div className="screen-foot live-actions"><a className="btn btn-primary btn-lg btn-block" href={"/market/" + encodeURIComponent(marketId)}>View market</a><Link className="btn btn-quiet btn-block" href="/?tab=markets">Done</Link></div>
       </div>}
-    </main>
+    </div></main>
   </AppShell>;
 }

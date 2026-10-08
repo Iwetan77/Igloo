@@ -9,6 +9,7 @@ import { marketEnded } from "@/lib/markets";
 import { dollarPerShareIllustration } from "@/lib/payout";
 import { shares, usd } from "@/lib/format";
 import { SlideConfirm } from "@/components/slide-confirm";
+import { useDirection } from "@/lib/motion";
 import { Money } from "@/components/ui";
 import type { FeedPost, Quote, Side } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
@@ -131,6 +132,8 @@ export function BuySheet({ post, side, session, onClose, onConfirmed }: {
   const busy = busySteps.includes(step);
   const question = post.market.question?.trim() || post.caption || "Market " + post.panta_market_id.slice(0, 8);
   const sideClass = side === "YES" ? "yes" : "no";
+  const stepKey = step === "quoting" ? "amount" : ["building", "signing", "broadcasting", "verifying"].includes(step) ? "progress" : step;
+  const stepDirection = useDirection(["amount", "quoted", "review", "progress", "pending", "confirmed", "failed"].indexOf(stepKey));
   const clock = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`;
 
   const close = <button className="icon-btn sm" type="button" onClick={onClose} disabled={busy} aria-label="Close" title="Close"><X size={17} strokeWidth={1.5} /></button>;
@@ -178,6 +181,6 @@ export function BuySheet({ post, side, session, onClose, onConfirmed }: {
   }
 
   return <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
-    <section className={"sheet buy-sheet side-" + sideClass} role="dialog" aria-modal="true" aria-label={"Buy " + side}><div className="step-body" key={step === "quoting" ? "amount" : ["building", "signing", "broadcasting", "verifying"].includes(step) ? "progress" : step}>{body}</div></section>
+    <section className={"sheet buy-sheet side-" + sideClass} role="dialog" aria-modal="true" aria-label={"Buy " + side}><div className={"step-body " + stepDirection} key={stepKey}>{body}</div></section>
   </div>;
 }

@@ -12,7 +12,7 @@ import { useSession } from "@/lib/use-session";
 import type { Session } from "@/lib/use-session";
 import { AppShell } from "@/components/app-shell";
 import { CountUp } from "@/components/count-up";
-import { withTransition } from "@/lib/motion";
+import { useDirection, useIndicator } from "@/lib/motion";
 import { EmptyState, Money, SideTag, TickMeter } from "@/components/ui";
 import "@/styles/portfolio.css";
 
@@ -28,6 +28,8 @@ export function PortfolioExperience() {
   const { address, getAccessToken, authenticated } = session;
   const [rows, setRows] = useState<Row[]>([]);
   const [tab, setTab] = useState<"open" | "resolved">("open");
+  const tabs = useIndicator<HTMLDivElement>(tab + (authenticated ? ":in" : ""));
+  const tabDirection = useDirection(tab === "open" ? 0 : 1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [detail, setDetail] = useState<Row | null>(null);
@@ -68,19 +70,19 @@ export function PortfolioExperience() {
       <header className="screen-head"><h1 className="page-title">Portfolio</h1>{authenticated && <button type="button" className="icon-btn" onClick={() => { void refresh(); }} disabled={loading} aria-label="Refresh positions"><RefreshCw size={17} strokeWidth={1.5} className={loading ? "spin" : ""} /></button>}</header>
       {!authenticated ? <EmptyState icon={<BriefcaseBusiness size={26} strokeWidth={1.4} />} title="Your positions live here" action={<button type="button" className="btn btn-primary" onClick={session.login}>Sign in</button>}>Sign in to track open trades and claim winnings.</EmptyState> : <>
         <section className="portfolio-hero slab">
-          <div className="slab-section"><span className="label">Open positions</span><span className="label portfolio-sub">Estimated at current prices</span><Money value={total} className="portfolio-total" /></div>
+          <div className="slab-section"><span className="label">Open positions</span><span className="label portfolio-sub">Estimated at current prices</span><Money value={total} className="portfolio-total" count /></div>
           <div className="slab-section slab-split" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Open</span><strong><CountUp value={open.length} /></strong></div><div className="stat"><span className="label">Resolved</span><strong><CountUp value={settled.length} /></strong></div><div className="stat"><span className="label">To claim</span><strong><CountUp value={claimable} /></strong></div></div>
         </section>
         <p className="portfolio-note">Estimates use current market prices and may differ from what you paid.</p>
 
-        <div className="segmented portfolio-tabs" role="tablist"><button type="button" role="tab" aria-selected={tab === "open"} className={tab === "open" ? "active" : ""} onClick={() => withTransition(() => setTab("open"))}>Open</button><button type="button" role="tab" aria-selected={tab === "resolved"} className={tab === "resolved" ? "active" : ""} onClick={() => withTransition(() => setTab("resolved"))}>Resolved{claimable ? ` · ${claimable}` : ""}</button></div>
+        <div className="segmented portfolio-tabs" role="tablist" ref={tabs.host}><span className="indicator" ref={tabs.bar} aria-hidden="true" /><button type="button" role="tab" aria-selected={tab === "open"} className={tab === "open" ? "active" : ""} onClick={() => setTab("open")}>Open</button><button type="button" role="tab" aria-selected={tab === "resolved"} className={tab === "resolved" ? "active" : ""} onClick={() => setTab("resolved")}>Resolved{claimable ? ` · ${claimable}` : ""}</button></div>
 
         {error && <div className="notice warn" role="alert"><span><strong>Couldn&apos;t load positions</strong>{error}</span></div>}
         {!address && !loading && <EmptyState icon={<BriefcaseBusiness size={26} strokeWidth={1.4} />} title="No wallet yet">Your Solana wallet is still being set up.</EmptyState>}
         {loading && rows.length === 0 && <p className="loading-line"><LoaderCircle size={16} className="spin" />Loading positions</p>}
         {!loading && !error && address && visible.length === 0 && <EmptyState icon={<BriefcaseBusiness size={26} strokeWidth={1.4} />} title={tab === "open" ? "No open positions" : "Nothing resolved yet"} action={tab === "open" ? <Link className="btn btn-primary" href="/?tab=markets">Browse markets</Link> : undefined}>{tab === "open" ? "Buy YES or NO on any market and it shows up here." : "Positions move here once their market resolves."}</EmptyState>}
 
-        <div className="position-list">{visible.map((row) => row.claimable
+        <div className={"position-list panel " + tabDirection} key={tab}>{visible.map((row) => row.claimable
           ? <article key={row.key} className="position-card claimable"><div className="position-top"><span className="tag tag-warn">Ready to claim</span><SideTag side={row.side} /></div><strong className="position-question">{titleOf(row)}</strong><div className="kv"><span>Shares</span><strong>{shares(row.shares)}</strong></div><button type="button" className="btn btn-primary btn-block" onClick={() => setClaim(row)}>Claim winnings</button></article>
           : <button type="button" key={row.key} className="position-card" onClick={() => setDetail(row)}>
             <span className="position-top"><SideTag side={row.side} /><span className="label">{isSettled(row) ? phaseLabel(row.phase) : row.market?.end_time ? "Ends " + shortDate(row.market.end_time) : phaseLabel(row.phase)}</span></span>

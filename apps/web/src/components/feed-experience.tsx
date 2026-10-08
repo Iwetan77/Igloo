@@ -25,7 +25,7 @@ import { WalletSheet } from "@/components/wallet-sheet";
 import { SearchSheet } from "@/components/search-sheet";
 import { EmptyState, TickMeter } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
-import { withTransition } from "@/lib/motion";
+import { expandInto, useIndicator, withTransition } from "@/lib/motion";
 import "@/styles/feed.css";
 
 function question(post: FeedPost): string {
@@ -65,6 +65,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const videos = useRef<Map<string, HTMLVideoElement>>(new Map());
   const activePost = posts.find((post) => post.id === activeId) || posts[0];
   const watch = useWatchSignals(tab === "markets" ? "" : activeId, session);
+  const tabs = useIndicator<HTMLElement>(tab);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -250,7 +251,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
       setPosts([]);
       setCursor(null);
       setActiveId("");
-    }, "page");
+    });
   }
   function buyMarket(market: MarketSummary, side: Side) {
     setBuy({ post: { panta_market_id: market.panta_market_id, caption: null, market: { question: market.question, yes_price: market.yes_price, no_price: market.no_price, category: market.category, phase: market.phase, end_time: market.end_time } }, side });
@@ -273,7 +274,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
       <main className="feed-column">
         <header className="feed-header"><div className="feed-bar slab">
           <button type="button" className="icon-btn sm" onClick={() => setSearch(true)} aria-label="Search markets and people" title="Search"><Search size={17} strokeWidth={1.5} /></button>
-          <nav className="feed-tabs" aria-label="Feed tabs">
+          <nav className="feed-tabs" aria-label="Feed tabs" ref={tabs.host}><span className="indicator" ref={tabs.bar} aria-hidden="true" />
             <button type="button" className={tab === "following" ? "active" : ""} onClick={() => switchTab("following")}>Following</button>
             <button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")}>For you</button>
           </nav>
@@ -306,7 +307,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
               </div>
 
               <section className="market-card-float" aria-label="Market">
-                <div className="slab mcf-slab"><div className="mcf-top"><span className="label">{categoryFor(post.market.category).label} · <span className={ended(post) ? "" : "live-dot"}>{ended(post) ? "Ended" : "Live"}</span></span><button type="button" className="mcf-link" onClick={() => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id))}>Market<ArrowUpRight size={14} /></button></div>
+                <div className="slab mcf-slab"><div className="mcf-top"><span className="label">{categoryFor(post.market.category).label} · <span className={ended(post) ? "" : "live-dot"}>{ended(post) ? "Ended" : "Live"}</span></span><button type="button" className="mcf-link" onClick={(event) => expandInto(event.currentTarget.closest(".mcf-slab"), () => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id)))}>Market<ArrowUpRight size={14} /></button></div>
                 <strong className="mcf-question">{question(post)}</strong>
                 <div className="mcf-odds"><span className="display mcf-chance"><CountUp value={percent(post.market.yes_price)} /><sup>%</sup></span><div className="mcf-meter"><TickMeter yes={post.market.yes_price} size="sm" legend /></div></div></div>
                 <div className="mcf-trade on-ink"><button type="button" className="btn btn-yes" disabled={ended(post)} onClick={() => setBuy({ post, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(post.market.yes_price)}</span></button><button type="button" className="btn btn-no" disabled={ended(post)} onClick={() => setBuy({ post, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(post.market.no_price)}</span></button></div>

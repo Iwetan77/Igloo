@@ -1,8 +1,9 @@
 "use client";
 
+import { useRef } from "react";
 import type { ReactNode } from "react";
 import { percent, usd } from "@/lib/format";
-import { useCountUp } from "@/components/count-up";
+import { setText, useTween } from "@/components/count-up";
 
 /** Probability as a row of thin bars: YES ticks, then NO ticks. */
 export function TickMeter({ yes, size, legend = false }: { yes: number | null; size?: "sm"; legend?: boolean }) {
@@ -15,12 +16,19 @@ export function TickMeter({ yes, size, legend = false }: { yes: number | null; s
   </div>;
 }
 
-/** A dollar figure with the cents set small, like a statement balance. */
-export function Money({ value, className = "", unit }: { value: number | null; className?: string; unit?: string }) {
-  const shown = useCountUp(value === null || !Number.isFinite(value) ? null : value);
-  if (shown === null) return <span className={"display " + className}>{"—"}</span>;
-  const [whole, fraction] = usd(shown).split(".");
-  return <span className={"display " + className}>${whole}<sup>.{fraction}</sup>{unit && <small className="money-unit">{unit}</small>}</span>;
+/** A dollar figure with the cents set small. `count` makes it count up on arrival, for headline totals. */
+export function Money({ value, className = "", unit, count = false }: { value: number | null; className?: string; unit?: string; count?: boolean }) {
+  const known = value !== null && Number.isFinite(value);
+  const dollars = useRef<HTMLSpanElement>(null);
+  const cents = useRef<HTMLElement>(null);
+  useTween(known && count ? value : null, (n) => {
+    const [whole, fraction] = usd(n).split(".");
+    setText(dollars.current, "$" + whole);
+    setText(cents.current, "." + fraction);
+  });
+  if (!known) return <span className={"display " + className}>{"\u2014"}</span>;
+  const [whole, fraction] = usd(value).split(".");
+  return <span className={"display " + className}><span ref={dollars}>{"$" + whole}</span><sup ref={cents}>{"." + fraction}</sup>{unit && <small className="money-unit">{unit}</small>}</span>;
 }
 
 export function EmptyState({ icon, title, children, action }: { icon: ReactNode; title: string; children?: ReactNode; action?: ReactNode }) {

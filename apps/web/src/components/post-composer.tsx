@@ -9,6 +9,7 @@ import { getSupabase, VIDEO_BUCKET } from "@/lib/supabase";
 import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import type { FeedPost, MarketSummary } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
+import { useDirection, useIndicator } from "@/lib/motion";
 import "@/styles/composer.css";
 
 const CAPTION_LIMIT = 500;
@@ -48,6 +49,8 @@ export function PostComposer({
   const [stage, setStage] = useState<"upload" | "post">("upload");
   const [error, setError] = useState("");
   const busy = step === "publishing";
+  const modes = useIndicator<HTMLDivElement>(mode + step);
+  const stepDirection = useDirection(["media", "caption", "publishing"].indexOf(step));
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
@@ -103,13 +106,13 @@ export function PostComposer({
       <input ref={fileInput} className="visually-hidden" type="file" accept="video/*" tabIndex={-1} onChange={(event) => { void choose(event.target.files?.[0]); }} />
       <input ref={cameraInput} className="visually-hidden" type="file" accept="video/*" capture="environment" tabIndex={-1} onChange={(event) => { void choose(event.target.files?.[0]); }} />
 
-      <div className="step-body" key={step}>
+      <div className={"step-body " + stepDirection} key={step}>
       {step === "media" && <>
         {head(quotePost ? "Quote this take" : "Your take")}
         <div className="capture-stage">
           {preview ? <video src={preview} muted playsInline controls className="capture-preview" /> : <div className="capture-empty"><Film size={30} strokeWidth={1.2} /><span className="label">Up to 60 seconds</span><p>{topic}</p></div>}
         </div>
-        <div className="segmented capture-modes"><button type="button" className={mode === "record" ? "active" : ""} onClick={() => setMode("record")}>Record</button><button type="button" className={mode === "upload" ? "active" : ""} onClick={() => setMode("upload")}>Upload</button></div>
+        <div className="segmented capture-modes" ref={modes.host}><span className="indicator" ref={modes.bar} aria-hidden="true" /><button type="button" className={mode === "record" ? "active" : ""} onClick={() => setMode("record")}>Record</button><button type="button" className={mode === "upload" ? "active" : ""} onClick={() => setMode("upload")}>Upload</button></div>
         <div className="capture-controls">
           <span />
           <button type="button" className="shutter" onClick={() => (mode === "record" ? cameraInput : fileInput).current?.click()} aria-label={mode === "record" ? "Record a video" : "Upload a video"}>{mode === "record" ? <Camera size={24} strokeWidth={1.5} /> : <Upload size={24} strokeWidth={1.5} />}</button>

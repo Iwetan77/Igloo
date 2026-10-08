@@ -10,7 +10,7 @@ import type { FeedPost, UserProfile } from "@/lib/types";
 import { useSession } from "@/lib/use-session";
 import { AppShell } from "@/components/app-shell";
 import { CountUp } from "@/components/count-up";
-import { withTransition } from "@/lib/motion";
+import { useDirection, useIndicator } from "@/lib/motion";
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { WalletSheet } from "@/components/wallet-sheet";
@@ -31,6 +31,8 @@ export function ProfileExperience({ own = false }: { own?: boolean }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [tab, setTab] = useState<ProfileTab>("videos");
+  const tabs = useIndicator<HTMLElement>(tab + (profile ? ":" + profile.id : ""));
+  const tabDirection = useDirection(tab === "videos" ? 0 : 1);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -86,7 +88,7 @@ export function ProfileExperience({ own = false }: { own?: boolean }) {
   }
   async function switchTab(next: ProfileTab) {
     if (next === tab || !profile) return;
-    withTransition(() => setTab(next));
+    setTab(next);
     setError("");
     if (next === "videos") {
       setLoading(true);
@@ -160,8 +162,8 @@ export function ProfileExperience({ own = false }: { own?: boolean }) {
           <div className="profile-actions">{isOwn
               ? <><button type="button" className="btn" onClick={() => openEdit(profile)}>Edit profile</button><button type="button" className="btn" onClick={() => setWallet(true)}>Wallet</button></>
               : <><button type="button" className={"btn " + (profile.is_following ? "" : "btn-primary")} disabled={busy} onClick={() => { void toggleFollow(); }}>{profile.is_following ? "Following" : "Follow"}</button>{profile.is_friend && <span className="tag tag-yes">Friends</span>}</>}</div>
-          <nav className="line-tabs profile-tabs" aria-label="Profile videos"><button type="button" className={tab === "videos" ? "active" : ""} onClick={() => { void switchTab("videos"); }}>Videos</button>{isOwn && <button type="button" className={tab === "liked" ? "active" : ""} onClick={() => { void switchTab("liked"); }}>Liked</button>}</nav>
-          {loading ? <p className="loading-line">Loading videos</p> : posts.length ? <ThumbnailGrid posts={posts} liked={tab === "liked"} /> : <EmptyState icon={<VideoOff size={24} strokeWidth={1.4} />} title={tab === "liked" ? "No liked videos yet" : "No videos yet"}>{isOwn && tab === "videos" ? "Post a take on any market and it shows up here." : undefined}</EmptyState>}
+          <nav className="line-tabs profile-tabs" aria-label="Profile videos" ref={tabs.host}><span className="indicator" ref={tabs.bar} aria-hidden="true" /><button type="button" className={tab === "videos" ? "active" : ""} onClick={() => { void switchTab("videos"); }}>Videos</button>{isOwn && <button type="button" className={tab === "liked" ? "active" : ""} onClick={() => { void switchTab("liked"); }}>Liked</button>}</nav>
+          {loading ? <p className="loading-line">Loading videos</p> : posts.length ? <div className={"panel " + tabDirection} key={tab}><ThumbnailGrid posts={posts} liked={tab === "liked"} /></div> : <EmptyState icon={<VideoOff size={24} strokeWidth={1.4} />} title={tab === "liked" ? "No liked videos yet" : "No videos yet"}>{isOwn && tab === "videos" ? "Post a take on any market and it shows up here." : undefined}</EmptyState>}
           {cursor && <button type="button" className="btn load-more" disabled={busy} onClick={() => { void loadMore(); }}>Load more</button>}
         </>}
       </>}

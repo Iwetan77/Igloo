@@ -22,7 +22,7 @@ export function WalletSheet({ session, onClose, notify }: { session: Session; on
       <div className="sheet-head"><h2 className="wallet-title">Your wallet</h2><button type="button" className="icon-btn sm" onClick={onClose} aria-label="Close wallet"><X size={17} strokeWidth={1.5} /></button></div>
       <div className="wallet-hero slab">
         <div className="slab-section"><span className="label">Total balance</span>
-        <Money value={session.balance} unit="USDC" className="wallet-balance" /></div>
+        <Money value={session.balance} unit="USDC" className="wallet-balance" count /></div>
         <div className="slab-section wallet-tags"><span className="tag">Solana mainnet</span>{session.synced ? <span className="tag tag-live">Account connected</span> : <span className="tag">{address ? "Connecting" : "No wallet yet"}</span>}</div>
       </div>
       {address ? <button type="button" className="address-row" onClick={copy} aria-label="Copy wallet address"><span className="label">Address</span><span className="address-value">{shortId(address)}</span><Copy size={16} strokeWidth={1.5} /></button>

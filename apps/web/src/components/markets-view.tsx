@@ -11,13 +11,13 @@ import { useCountdown } from "@/lib/use-countdown";
 import { authorName } from "@/components/profile-avatar";
 import { EmptyState, TickMeter } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
-import { withTransition } from "@/lib/motion";
+import { expandInto, useDirection, useIndicator } from "@/lib/motion";
 import type { FeedPost, MarketSummary, Side } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 import "@/styles/markets.css";
 
 const titleOf = (market: MarketSummary) => market.question || "Market " + shortId(market.panta_market_id);
-const openMarket = (id: string) => window.location.assign("/market/" + encodeURIComponent(id));
+const openMarket = (id: string, from?: HTMLElement | null) => expandInto(from ?? null, () => window.location.assign("/market/" + encodeURIComponent(id)));
 
 function timeLeft(endTime: string | null | undefined, countdown: ReturnType<typeof useCountdown>, ended: boolean) {
   if (ended) return "Ended";
@@ -29,7 +29,7 @@ function MarketCard({ market, now }: { market: MarketSummary; now: number }) {
   const countdown = useCountdown(market.end_time);
   const ended = marketEnded(market.end_time, now);
   const chance = percent(market.yes_price);
-  return <button type="button" className="market-tile" onClick={() => openMarket(market.panta_market_id)}>
+  return <button type="button" className="market-tile" onClick={(event) => openMarket(market.panta_market_id, event.currentTarget)}>
     <span className="market-tile-top"><span className="tag">{categoryFor(market.category).label}</span>{ended ? <span className="label">Ended</span> : <span className="label live-dot">Live</span>}</span>
     <strong className="market-tile-question">{titleOf(market)}</strong>
     <span className="market-tile-odds"><span className="display"><CountUp value={chance} /><sup>%</sup></span><span className="tag tag-yes">Yes</span></span>
@@ -54,7 +54,7 @@ function RelatedMarkets({ market, session }: { market: MarketSummary; session: S
   if (!related.length) return null;
   return <section className="market-section"><h3 className="label">Related markets</h3><div className="rows">{related.map((item) => {
     const chance = percent(item.yes_price);
-    return <button type="button" className="row" key={item.panta_market_id} onClick={() => openMarket(item.panta_market_id)}><span className="row-main"><span className="row-text">{titleOf(item)}</span><span className="row-sub">{item.post_count} takes · ends {shortDate(item.end_time)}</span></span>{chance !== null && <span className={"tag " + (chance >= 50 ? "tag-yes" : "tag-no")}>{chance}% yes</span>}</button>;
+    return <button type="button" className="row" key={item.panta_market_id} onClick={(event) => openMarket(item.panta_market_id, event.currentTarget)}><span className="row-main"><span className="row-text">{titleOf(item)}</span><span className="row-sub">{item.post_count} takes · ends {shortDate(item.end_time)}</span></span>{chance !== null && <span className={"tag " + (chance >= 50 ? "tag-yes" : "tag-no")}>{chance}% yes</span>}</button>;
   })}</div></section>;
 }
 
@@ -97,6 +97,9 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
   const [more, setMore] = useState(false);
   const [error, setError] = useState("");
   const [detailTab, setDetailTab] = useState<DetailTab>("overview");
+  const detailTabs = useIndicator<HTMLElement>(detailTab + (market ? ":ready" : ""));
+  const detailDirection = useDirection(["overview", "timeline", "videos"].indexOf(detailTab));
+  const chips = useIndicator<HTMLDivElement>(category);
   const [shared, setShared] = useState(false);
   const countdown = useCountdown(market?.end_time);
 
@@ -170,8 +173,9 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
           <div className="slab-section slab-split"><div className="stat"><span className="label">{ended ? "Trading" : "Time left"}</span><span className="label">Until trading closes</span><strong>{ended ? "Closed" : countdown ? countdown.label : market.end_time ? "Soon" : "Open"}</strong></div><div className="stat"><span className="label">Takes</span><span className="label">Videos on this market</span><strong><CountUp value={market.post_count} /></strong></div></div>
         </header>
         <div className="market-trade"><button type="button" className="btn btn-yes btn-lg" disabled={ended} onClick={() => onBuy(market, "YES")}><span>Buy Yes</span><span className="tabular">{cents(market.yes_price)}</span></button><button type="button" className="btn btn-no btn-lg" disabled={ended} onClick={() => onBuy(market, "NO")}><span>Buy No</span><span className="tabular">{cents(market.no_price)}</span></button></div>
-        <nav className="line-tabs" aria-label="Market sections">{(["overview", "timeline", "videos"] as DetailTab[]).map((item) => <button type="button" key={item} className={detailTab === item ? "active" : ""} onClick={() => withTransition(() => setDetailTab(item))}>{item === "videos" ? `Videos (${market.post_count})` : item}</button>)}</nav>
+        <nav className="line-tabs" aria-label="Market sections" ref={detailTabs.host}><span className="indicator" ref={detailTabs.bar} aria-hidden="true" />{(["overview", "timeline", "videos"] as DetailTab[]).map((item) => <button type="button" key={item} className={detailTab === item ? "active" : ""} onClick={() => setDetailTab(item)}>{item === "videos" ? `Videos (${market.post_count})` : item}</button>)}</nav>
 
+        <div className={"panel " + detailDirection} key={detailTab}>
         {detailTab === "overview" && <>
           <section className="market-section"><h3 className="label">About this market</h3><p className="market-about">This market resolves YES if “{titleOf(market)}” happens by the end date, and NO otherwise. Prices move with trading: a YES share at {cents(market.yes_price)} implies roughly a {chance ?? "—"}% chance.</p>
             <div className="card card-pad market-facts"><div className="kv"><span>Category</span><strong>{categoryFor(market.category).label}</strong></div><div className="kv"><span>Status</span><strong>{ended ? "Ended" : phaseLabel(market.phase)}</strong></div><div className="kv"><span>Closes</span><strong>{shortDate(market.end_time)}</strong></div><div className="kv"><span>YES / NO</span><strong>{cents(market.yes_price)} / {cents(market.no_price)}</strong></div></div>
@@ -185,6 +189,7 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
             : !loading && <EmptyState icon={<Film size={26} strokeWidth={1.4} />} title="No takes yet" action={<button type="button" className="btn btn-primary" onClick={() => onPost(market)}>Post the first take</button>}>Record a short video with your call on this market.</EmptyState>}
           {videoCursor && <button type="button" className="btn load-more" disabled={more} onClick={() => { void loadMore(); }}>Load more videos</button>}
         </section>}
+        </div>
       </>}
     </div>;
   }
@@ -192,11 +197,11 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
   const selected = categories.find((item) => item.id === category);
   return <div className="screen markets-home">
     <header className="screen-head"><h1 className="page-title">Markets</h1><button type="button" className="btn btn-sm" onClick={() => session.authenticated ? window.location.assign("/create" + (category ? "?category=" + category : "")) : session.login()}><Plus size={15} />Create</button><button type="button" className="icon-btn" onClick={onSearch} aria-label="Search markets"><Search size={17} strokeWidth={1.5} /></button></header>
-    <div className="chip-row markets-chips" aria-label="Market categories"><button type="button" className={"chip" + (!category ? " active" : "")} onClick={() => withTransition(() => setCategory(""))}>All</button>{categories.map((item) => <button type="button" key={item.id} className={"chip" + (category === item.id ? " active" : "")} onClick={() => withTransition(() => setCategory(item.id))}>{item.label}</button>)}</div>
+    <div className="chip-row markets-chips" aria-label="Market categories" ref={chips.host}><span className="indicator chip-indicator" ref={chips.bar} aria-hidden="true" /><button type="button" className={"chip" + (!category ? " active" : "")} onClick={() => setCategory("")}>All</button>{categories.map((item) => <button type="button" key={item.id} className={"chip" + (category === item.id ? " active" : "")} onClick={() => setCategory(item.id)}>{item.label}</button>)}</div>
     {errorBlock}
     {loading && <p className="loading-line">Loading markets</p>}
     {!loading && !error && markets.length === 0 && <EmptyState icon={<Film size={26} strokeWidth={1.4} />} title="No markets in this category yet" action={<button type="button" className="btn" onClick={() => session.authenticated ? window.location.assign("/create" + (category ? "?category=" + category : "")) : session.login()}>Create a market</button>}>Be the first to create a prediction market{selected ? " for " + selected.label : ""}.</EmptyState>}
-    <div className="market-grid">{markets.map((item) => <MarketCard key={item.panta_market_id} market={item} now={marketNow} />)}</div>
+    <div className="market-grid" key={category}>{markets.map((item) => <MarketCard key={item.panta_market_id} market={item} now={marketNow} />)}</div>
     {cursor && <button type="button" className="btn load-more" disabled={more} onClick={() => { void loadMore(); }}>Load more markets</button>}
   </div>;
 }

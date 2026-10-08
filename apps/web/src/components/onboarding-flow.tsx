@@ -6,7 +6,7 @@ import { ApiError, getUserByUsername } from "@/lib/api";
 import { uploadAvatar } from "@/lib/avatar";
 import { categories } from "@/lib/categories";
 import { errorCopy } from "@/lib/copy";
-import { withTransition } from "@/lib/motion";
+import { useDirection } from "@/lib/motion";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import type { Session } from "@/lib/use-session";
 import "@/styles/onboarding.css";
@@ -26,7 +26,7 @@ export function OnboardingFlow({ session }: { session: Session }) {
   const [active, setActive] = useState(false);
   const [plan, setPlan] = useState<Step[]>([]);
   const [step, setStep] = useState<Step>("profile");
-  const goStep = (next: Step) => withTransition(() => setStep(next));
+  const stepDirection = useDirection(["profile", "interests", "welcome"].indexOf(step));
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState(me?.display_name || "");
   const [availability, setAvailability] = useState<Availability>("idle");
@@ -73,7 +73,7 @@ export function OnboardingFlow({ session }: { session: Session }) {
     setError("");
     try {
       await session.updateProfile({ username: username.trim(), ...(displayName.trim() ? { display_name: displayName.trim() } : {}) });
-      goStep(plan.includes("interests") ? "interests" : "welcome");
+      setStep(plan.includes("interests") ? "interests" : "welcome");
     } catch (cause) { setError(errorCopy(cause)); }
     finally { setSaving(false); }
   }
@@ -83,7 +83,7 @@ export function OnboardingFlow({ session }: { session: Session }) {
     setError("");
     try {
       await session.saveInterests(selected);
-      goStep("welcome");
+      setStep("welcome");
     } catch (cause) { setError(errorCopy(cause)); }
     finally { setSaving(false); }
   }
@@ -107,7 +107,7 @@ export function OnboardingFlow({ session }: { session: Session }) {
       <p>Your live prediction feed is ready.</p>
       <button type="button" className="btn btn-primary" onClick={() => setActive(false)}>Enter</button>
       <span className="label live-dot welcome-foot">Entering workspace</span>
-    </div> : <div className="onboarding-panel">
+    </div> : <div className={"onboarding-panel step-body " + stepDirection} key={step}>
       {step === "profile" ? <>
         <div className="slab onboarding-intro"><span className="wordmark">Igloo<sup>®</sup></span>{plan.length > 1 && <span className="tag tag-yes">Step {index} of {plan.length}</span>}<h1>Set up your profile.</h1><p className="onboarding-lede">Choose how you appear across markets, feeds, and comments.</p></div>
         <label className="onboarding-avatar"><span className="avatar-ring"><ProfileAvatar src={me.avatar_url} name={me.display_name} size={96} /></span><span className="onboarding-avatar-edit" aria-hidden="true"><Camera size={15} strokeWidth={1.5} /></span><span className="visually-hidden">Upload a profile photo</span><input type="file" className="visually-hidden" accept="image/jpeg,image/png,image/webp" onChange={(event) => { void chooseAvatar(event.target.files?.[0]); }} /></label>
