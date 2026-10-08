@@ -71,7 +71,8 @@ export function BuySheet({ post, side, session, onClose, onConfirmed }: {
   }
 
   async function confirm() {
-    if (!quote || !session.wallet) { setError("Your Solana wallet is still connecting."); return; }
+    if (!quote) return;
+    if (!session.wallet) { fail("Your Solana wallet is still connecting. Try again in a moment.", () => { setError(""); setStep("review"); }); return; }
     if (Date.now() >= Date.parse(quote.expires_at)) {
       setQuote(null);
       setStep("amount");
