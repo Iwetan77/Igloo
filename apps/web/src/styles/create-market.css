@@ -1,0 +1,23 @@
+/* Create a market: form, cost, confirm, live. */
+.create-market .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.date-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+.date-row .input-wrap { min-width: 0; }
+.date-row input { min-width: 0; width: 100%; color-scheme: dark; }
+.cost-card { display: grid; gap: 4px; margin-bottom: 10px; }
+.cost-card > .label { margin-bottom: 6px; }
+.cost-total { padding-top: 6px; }
+.cost-total .display { font-size: 34px; }
+.balance-line { margin-bottom: 14px; padding: 0 4px; border-bottom: 0; }
+.balance-line strong { display: inline-flex; align-items: center; gap: 6px; }
+.ok-check { color: var(--lav-deep); }
+.review-card { display: grid; gap: 18px; }
+.review-card > div:not(.kv) { display: grid; gap: 8px; justify-items: start; }
+.review-card p { margin: 0; line-height: 1.5; }
+.review-question { font-size: 18px; }
+.review-rules { color: var(--muted); font-size: 14px; }
+.review-card .kv { padding-top: 14px; border-top: 1px solid var(--line); }
+.market-live { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 8vh; text-align: center; }
+.market-live h1 { margin: 16px 0 0; font-size: 34px; letter-spacing: -0.03em; }
+.market-live > p { max-width: 360px; margin: 0 0 22px; color: var(--muted); line-height: 1.5; }
+.share-row { display: flex; gap: 12px; }
+.live-actions { width: 100%; margin-top: 8vh; }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePrivy } from "@privy-io/react-auth";
-import { useCreateWallet, useWallets } from "@privy-io/react-auth/solana";
+import { useLinkAccount, usePrivy } from "@privy-io/react-auth";
+import { useCreateWallet, useExportWallet, useWallets } from "@privy-io/react-auth/solana";
 import { ApiError, getMe, patchMe, putInterests, syncUser } from "@/lib/api";
 import type { Me } from "@/lib/types";
 import { getUsdcBalance } from "@/lib/balance";
@@ -11,6 +11,8 @@ export function useSession() {
   const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
   const { ready: walletsReady, wallets } = useWallets();
   const { createWallet } = useCreateWallet();
+  const { exportWallet } = useExportWallet();
+  const { linkTwitter } = useLinkAccount();
   const [synced, setSynced] = useState(false);
   const [me, setMe] = useState<Me | null>(null);
   const [meError, setMeError] = useState("");
@@ -25,6 +27,10 @@ export function useSession() {
     account.type === "wallet" && account.chainType === "solana" ? [account.address] : [],
   )[0];
   const address = wallet?.address ?? linkedAddress;
+  // Privy holds the key for embedded wallets, so the user must back it up; external wallets bring their own.
+  const embeddedWallet = Boolean(wallet?.standardWallet.name.toLowerCase().includes("privy"));
+  const xHandle = user?.twitter?.username ?? null;
+  const backUpWallet = useCallback(() => exportWallet(address ? { address } : undefined), [exportWallet, address]);
 
   const createSolanaWallet = useCallback(async () => {
     if (!ready || !authenticated || !walletsReady || address || walletCreating) return;
@@ -132,6 +138,10 @@ export function useSession() {
     getAccessToken: getAccessToken,
     wallet,
     address,
+    embeddedWallet,
+    backUpWallet,
+    xHandle,
+    linkTwitter,
     walletCreating,
     createSolanaWallet,
     synced,

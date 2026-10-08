@@ -1,0 +1,32 @@
+/* Signed-out intro: a full-height ink splash that settles into the sign-in hero. */
+.intro { --canvas: var(--bg); position: fixed; z-index: 85; inset: 0; overflow-y: auto; background: var(--bg); animation: fade-in 260ms var(--ease-out); }
+.intro-inner { width: min(100%, 460px); min-height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; padding: calc(12px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom)); }
+.intro-top { display: flex; align-items: center; justify-content: space-between; height: 46px; padding: 0 8px 12px; overflow: hidden; transition: height 700ms var(--ease-glide), padding 700ms var(--ease-glide), opacity 400ms var(--ease-out) 300ms; }
+.intro.is-splash .intro-top { height: 0; padding-bottom: 0; opacity: 0; }
+
+/* The hero is one element: tall while it is the splash, then it shrinks to make room. */
+.intro-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; width: 100%; min-height: 300px; padding: 30px 24px; border: 0; color: var(--text); text-align: center; cursor: default; transition: min-height 760ms var(--ease-glide); animation: slab-in 700ms var(--ease-out); }
+.intro.is-splash .intro-hero { min-height: calc(100dvh - 30px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); cursor: pointer; }
+.intro-mark { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 16px; background: var(--lav); color: var(--ink); animation: mark-in 800ms var(--ease-pop) 100ms backwards; }
+.intro-brand { font-size: 60px; line-height: 1; letter-spacing: -0.05em; animation: page-in 700ms var(--ease-out) 180ms backwards; }
+.intro-brand sup { font-size: 15px; vertical-align: 2.4em; }
+.intro-tagline { color: var(--muted); font-size: 17px; line-height: 1.35; animation: page-in 700ms var(--ease-out) 280ms backwards; }
+.intro-dot { width: 8px; height: 8px; margin-top: 8px; border-radius: 50%; background: var(--lav); animation: dot-breathe 1.6s var(--ease-glide) infinite; transition: opacity 300ms var(--ease-out); }
+.intro:not(.is-splash) .intro-dot { opacity: 0; height: 0; margin: 0; }
+@keyframes mark-in { from { transform: scale(0.4) rotate(-20deg); opacity: 0; } }
+@keyframes dot-breathe { 50% { transform: scale(1.6); opacity: 0.5; } }
+
+.intro-auth { display: flex; flex: 1; flex-direction: column; padding: 18px 8px 0; }
+.intro-methods > * { animation: page-in 560ms var(--ease-out) backwards; }
+.intro-methods > :nth-child(1) { animation-delay: 260ms; }
+.intro-methods > :nth-child(2) { animation-delay: 320ms; }
+.intro-methods > :nth-child(3) { animation-delay: 380ms; }
+.intro-methods > :nth-child(4) { animation-delay: 440ms; }
+.intro-method { min-height: 56px; cursor: pointer; }
+.intro-method .row-title { flex: 1; font-weight: 500; }
+.intro-method > svg:last-child { color: var(--muted); transition: transform var(--t-fast) var(--ease); }
+.intro-method:hover > svg:last-child { transform: translateX(3px); color: var(--text); }
+.intro-method-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 10px; background: var(--ink); color: #eceee8; }
+.intro-terms { margin: auto 0 0; padding-top: 24px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; animation: fade-in 600ms var(--ease-out) 500ms backwards; }
+.intro-signin { margin: 10px 0 0; color: var(--muted); font-size: 13px; text-align: center; animation: fade-in 600ms var(--ease-out) 560ms backwards; }
+.intro-signin .link-btn { font-weight: 600; }

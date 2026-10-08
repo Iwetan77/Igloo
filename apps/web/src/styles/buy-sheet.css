@@ -1,36 +1,37 @@
-.buy-design { width: min(100%, 470px); }
-.buy-design .sheet-head { align-items: center; }
-.buy-design .sheet-head h2 { font-size: 23px; }
-.buy-market-line { display: flex; align-items: flex-start; gap: 11px; padding: 12px 0 18px; margin-bottom: 15px; border-bottom: 1px solid var(--line); }
-.buy-market-line .sheet-question { margin: 0; font-size: 14px; line-height: 1.45; }
-.buy-side { flex: none; display: grid; place-items: center; min-width: 45px; height: 27px; border-radius: var(--r-xs); color: var(--yes-ink); background: var(--yes); font-size: 11px; font-weight: 800; }
-.buy-design[data-side="NO"] .buy-side { color: #fff; background: var(--no); }
-.buy-design .field-label { display: block; margin-bottom: 9px; font-size: 12px; font-weight: 700; color: var(--muted); }
-.buy-design .amount-field { height: 64px; }
-.buy-design .amount-field input { font-size: 28px; }
-.amount-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 20px; }
-.amount-presets button { min-width: 0; min-height: 44px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--surface-3); color: var(--text); font-size: 13px; font-weight: 700; transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--spring); }
-.amount-presets button:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--ice); }
-.amount-presets button.active { color: var(--ice); border-color: var(--ice); background: var(--brand-soft); }
-.buy-design .buy-review { gap: 0; margin-top: 4px; padding: 0; border-top: 1px solid var(--line); }
-.buy-review > div { min-height: 44px; display: flex; justify-content: space-between; align-items: center; gap: 15px; border-bottom: 1px solid var(--line); font-size: 13px; }
-.buy-review > div strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.buy-review .buy-review-heading { min-height: 51px; }
-.buy-review .buy-review-heading > strong { font-size: 14px; }
-.buy-review .buy-review-heading > span { font-size: 12px; }
-.buy-review .buy-illustration { min-height: 65px; border-bottom: 0; }
-.buy-illustration span { max-width: 60%; }
-.buy-illustration strong { color: var(--yes); font-size: 27px; line-height: 1; }
-.buy-design[data-side="NO"] .buy-illustration strong { color: var(--no); }
-.buy-disclosure { color: var(--muted); font-size: 11px; line-height: 1.4; margin: -2px 0 12px; }
-.buy-review .buy-quote-clock { border-top: 1px solid var(--line); border-bottom: 0; }
-.buy-quote-clock span { display: inline-flex; align-items: center; gap: 6px; }
-.buy-design .solid-action { margin-top: 12px; }
-.buy-success { padding: 28px 5px 6px; }
-.buy-success > svg { filter: drop-shadow(0 0 14px var(--yes-soft)); }
-.buy-success > strong { color: var(--text); font-size: 27px; }
-.buy-success > span { max-width: 290px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-.buy-success .solid-action { margin-top: 26px; }
-.buy-design .progress-line { min-height: 50px; justify-content: center; }
-@media (max-width: 520px) { .buy-design { width: 100%; } .buy-design .buy-review-heading { align-items: flex-start; flex-direction: column; justify-content: center; gap: 2px; padding: 7px 0; } .buy-design .buy-illustration strong { font-size: 23px; } }
-@media (prefers-reduced-motion: reduce) { .buy-design *, .buy-design *::before, .buy-design *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+/* Buy flow: amount -> order summary -> confirm (slide) -> result. */
+.buy-sheet { width: min(100%, 420px); }
+.buy-sheet .sheet-head h2 { flex: 1; text-align: center; font-size: 19px; }
+.buy-sheet .yes { color: var(--yes); }
+.buy-sheet .no { color: var(--no); }
+.buy-question { margin: 0 0 6px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.buy-amount { display: flex; align-items: baseline; justify-content: center; gap: 2px; margin: 28px 0 8px; cursor: text; }
+.buy-amount .display { font-size: 76px; font-weight: 300; letter-spacing: -0.045em; }
+.buy-amount span.display { color: var(--ghost); }
+.buy-amount input { max-width: 7ch; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text); text-align: left; }
+.buy-amount input::placeholder { color: var(--ghost); }
+.buy-rate { text-align: center; margin: 0 0 22px; }
+.buy-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+.buy-presets .chip { justify-content: center; min-height: 40px; font-variant-numeric: tabular-nums; }
+.buy-balance { margin-bottom: 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) !important; }
+.buy-balance-value { font-size: 16px; font-weight: 400; letter-spacing: 0; }
+.buy-stats { margin-bottom: 8px; }
+.buy-stats .slab-split, .buy-receipt .slab-split { padding-block: 16px 20px; }
+.buy-summary { margin-bottom: 12px; }
+.buy-disclosure { margin: 0 0 14px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.buy-expiry { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 0 14px; }
+.buy-receipt { margin-bottom: 14px; }
+.buy-receipt-question { margin: 6px 0 4px; font-size: 15px; line-height: 1.4; }
+.buy-total { margin-top: 8px; border-top: 1px solid var(--line); }
+.buy-total strong { font-size: 18px; font-weight: 400; }
+.buy-result { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 4px 4px; text-align: center; animation: rise-in var(--t) var(--ease); }
+.buy-result h2 { margin: 10px 0 0; font-size: 22px; }
+.buy-result p { max-width: 300px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.buy-actions { display: grid; gap: 10px; width: 100%; margin-top: 18px; }
+
+/* Slide to confirm: an outlined track with an ink knob, like BRIK's "Slide to invest". */
+.slide-confirm { position: relative; height: 60px; margin-bottom: 8px; border-radius: var(--r-pill); border: 1.5px solid var(--edge); background: var(--surface); overflow: hidden; touch-action: none; user-select: none; }
+.slide-fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--slide) + 56px); background: var(--lav); }
+.slide-label { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 40px; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text); }
+.slide-knob { position: absolute; top: 4px; left: 4px; width: 49px; height: 49px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--ink); color: #eceee8; transform: translateX(var(--slide)); transition: transform 60ms linear; cursor: grab; }
+.slide-knob:active { cursor: grabbing; }
+.slide-confirm.disabled { opacity: 0.4; }

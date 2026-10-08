@@ -1,64 +1,9 @@
-.people-sheet, .profile-sheet {
-  width: min(100%, 540px);
-  animation-duration: var(--t);
-}
-.people-sheet .market-search {
-  height: 50px;
-  border-radius: var(--r-xs);
-}
-.people-sheet .people-results {
-  margin: 12px 0 18px;
-  max-height: min(55dvh, 460px);
-}
-.people-sheet .people-results button {
-  min-height: 64px;
-  gap: 12px;
-  padding: 10px 8px;
-  border-radius: var(--r-xs);
-  transition: background var(--t-fast) var(--ease);
-}
-.people-sheet .people-results button > span:nth-child(2) {
-  min-width: 0;
-}
-.people-sheet .people-results strong,
-.people-sheet .people-results small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.people-sheet .people-results .friend-badge {
-  flex: none;
-}
-.people-sheet .back-command {
-  min-height: 42px;
-}
-.profile-sheet .profile-stats {
-  justify-content: space-between;
-  gap: 10px;
-  margin-block: 8px;
-  padding-block: 18px;
-}
-.profile-sheet .profile-stats strong {
-  font-variant-numeric: tabular-nums;
-}
-.profile-sheet .profile-actions button {
-  min-height: 42px;
-}
-.profile-sheet .profile-posts {
-  gap: 8px;
-}
-.profile-sheet .profile-posts button {
-  min-height: 76px;
-  border-radius: var(--r-xs);
-}
-.profile-sheet .profile-posts button:hover {
-  border-color: var(--ice);
-}
-.profile-sheet .profile-posts video {
-  height: 76px;
-}
-@media (max-width: 520px) {
-  .profile-sheet .profile-posts {
-    grid-template-columns: 1fr;
-  }
-}
+/* Quick profile sheet for members without a username page. */
+.profile-sheet { width: min(100%, 480px); }
+.profile-sheet .profile-hero { padding-bottom: 18px; }
+.profile-sheet h3.label { margin: 8px 0 10px; }
+.profile-posts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.profile-posts button { position: relative; aspect-ratio: 3 / 4; padding: 0; overflow: hidden; border-radius: var(--r-sm); border: 0; background: var(--ink); color: #eceee8; text-align: left; }
+.profile-posts video { width: 100%; height: 100%; object-fit: cover; }
+.profile-posts button > span { position: absolute; left: 0; right: 0; bottom: 0; padding: 24px 8px 8px; background: linear-gradient(transparent, rgba(6, 25, 28, 0.9)); font-size: 11px; line-height: 1.3; }
+.profile-posts button > span > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }

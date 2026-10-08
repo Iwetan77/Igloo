@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
 import { categoryFor } from "@/lib/categories";
-import { CategoryIcon } from "@/components/category-icon";
 import { ApiError, getMarkets } from "@/lib/api";
 import { errorCopy } from "@/lib/copy";
+import { percent } from "@/lib/format";
 import { marketEnded, useMarketClock } from "@/lib/markets";
 import type { MarketSummary } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
-import "@/styles/market-picker.css";
+import "@/styles/composer.css";
 
+/** Step one of posting: choose the market your take is about. */
 export function MarketPicker({ session, onSelect, onClose }: {
   session: Session;
   onSelect: (market: MarketSummary) => void;
@@ -48,17 +49,30 @@ export function MarketPicker({ session, onSelect, onClose }: {
 
   useEffect(() => { void fetchPage(); }, [fetchPage]);
 
-  const filtered = markets.filter((market) => (market.question || market.panta_market_id).toLowerCase().includes(query.trim().toLowerCase()));
-  const groups = [...new Set(filtered.map((market) => market.category || "other"))];
+  const needle = query.trim().toLowerCase();
+  const filtered = markets.filter((market) => (market.question || market.panta_market_id).toLowerCase().includes(needle) || categoryFor(market.category).label.toLowerCase().includes(needle));
+  const open = filtered.filter((market) => !marketEnded(market.end_time, marketNow));
+  const closed = filtered.filter((market) => marketEnded(market.end_time, marketNow));
 
-  return <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="sheet market-picker-sheet" role="dialog" aria-modal="true" aria-label="Choose a market">
-    <div className="sheet-head"><div><span className="eyebrow">New post</span><h2>Choose a market</h2></div><button type="button" className="icon-action" onClick={onClose} aria-label="Close market picker" title="Close"><X size={20} /></button></div>
-    <label className="market-search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search markets" autoFocus /></label>
-    <div className="market-picker-list">{groups.map((group) => <section key={group}><h3><CategoryIcon name={categoryFor(group).icon} size={16} />{categoryFor(group).label}</h3>{filtered.filter((market) => (market.category || "other") === group).map((market) => <button type="button" className="market-picker-row" key={market.panta_market_id} onClick={() => onSelect(market)}><strong>{market.question || market.panta_market_id}</strong><span>{marketEnded(market.end_time, marketNow) ? "Ended" : market.phase || "Market"}</span></button>)}</section>)}
+  const row = (market: MarketSummary) => {
+    const chance = percent(market.yes_price);
+    const ended = marketEnded(market.end_time, marketNow);
+    return <button type="button" className="pick-row" key={market.panta_market_id} onClick={() => onSelect(market)}>
+      <span className="pick-tags"><span className="tag">{categoryFor(market.category).label}</span>{ended ? <span className="tag">Ended</span> : chance !== null && <span className={"tag " + (chance >= 50 ? "tag-yes" : "tag-no")}>{chance >= 50 ? "Yes " + chance : "No " + (100 - chance)}%</span>}</span>
+      <strong>{market.question || market.panta_market_id}</strong>
+    </button>;
+  };
+
+  return <div className="overlay composer-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="sheet composer-sheet" role="dialog" aria-modal="true" aria-label="Choose a market">
+    <div className="sheet-head"><h2 className="composer-title">New post</h2><button type="button" className="icon-btn sm" onClick={onClose} aria-label="Close" title="Close"><X size={17} strokeWidth={1.5} /></button></div>
+    <label className="input-wrap"><Search size={17} strokeWidth={1.5} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search for a market…" aria-label="Search for a market" autoFocus /></label>
+    <div className="pick-list">
+      {open.length > 0 && <><h3 className="label">Open markets</h3>{open.map(row)}</>}
+      {closed.length > 0 && <><h3 className="label">Ended</h3>{closed.map(row)}</>}
       {!loading && !error && filtered.length === 0 && <p className="empty-note">{query ? "No matching markets loaded." : "No markets available."}</p>}
       {error && <p className="inline-error" role="alert">{error}</p>}
-      {loading && <p className="empty-note">Loading markets...</p>}
+      {loading && <p className="loading-line">Loading markets</p>}
+      {cursor && !loading && <button type="button" className="btn load-more" onClick={() => { void fetchPage(cursor); }}>Load more markets</button>}
     </div>
-    {cursor && <button type="button" className="subtle-button" disabled={loading} onClick={() => { void fetchPage(cursor); }}>Load more markets</button>}
   </section></div>;
 }
