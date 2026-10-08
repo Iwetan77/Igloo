@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { ArrowUpRight, BriefcaseBusiness, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, UserPlus, Volume2, VolumeX } from "lucide-react";
 import { getFeed, getUserProfile, setFollow, sharePost, toggleLike } from "@/lib/api";
 import { errorCopy, optionalCopy, uiCopy } from "@/lib/copy";
@@ -268,14 +267,14 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   return <AppShell active={tab === "markets" ? "markets" : "home"} session={session} className={tab === "markets" ? "feed-shell markets-mode" : "feed-shell"} onHome={() => switchTab("for_you")} onMarkets={() => switchTab("markets")} onSearch={() => setSearch(true)} onPost={openPicker}>
     {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => window.location.assign("/?tab=markets")} onSearch={() => setSearch(true)} /> : <div className="feed-stage">
       <main className="feed-column">
-        <header className="feed-header">
+        <header className="feed-header"><div className="feed-bar slab">
           <button type="button" className="icon-btn sm" onClick={() => setSearch(true)} aria-label="Search markets and people" title="Search"><Search size={17} strokeWidth={1.5} /></button>
           <nav className="feed-tabs" aria-label="Feed tabs">
             <button type="button" className={tab === "following" ? "active" : ""} onClick={() => switchTab("following")}>Following</button>
             <button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")}>For you</button>
           </nav>
-          {session.authenticated ? <button type="button" className="balance-chip" onClick={() => setAccount(true)} aria-label="Wallet balance"><Image src="/brand/usdc-token.svg" alt="" width={20} height={20} />{session.balance === null ? "Wallet" : <span className="tabular">{compactUsd(session.balance)}</span>}</button> : <button type="button" className="btn btn-primary btn-sm" onClick={session.login}>Sign in</button>}
-        </header>
+          {session.authenticated ? <button type="button" className="tag tag-yes balance-pill" onClick={() => setAccount(true)} aria-label="Wallet balance">{session.balance === null ? "Wallet" : <span className="tabular">{compactUsd(session.balance)} USDC</span>}</button> : <button type="button" className="btn btn-primary btn-sm" onClick={session.login}>Sign in</button>}
+        </div></header>
 
         <div className="feed-scroll" ref={feedRef} onScroll={(event) => { const element = event.currentTarget; if (element.scrollTop + element.clientHeight >= element.scrollHeight - element.clientHeight * 1.5) void loadMore(); }}>
           {posts.map((post, index) => <article className="feed-item" id={"post-" + post.id} data-post-id={post.id} key={post.id}>
@@ -303,10 +302,10 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
               </div>
 
               <section className="market-card-float" aria-label="Market">
-                <div className="mcf-top"><span className="label">{categoryFor(post.market.category).label} · <span className={ended(post) ? "" : "live-dot"}>{ended(post) ? "Ended" : "Live"}</span></span><button type="button" className="mcf-link" onClick={() => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id))}>Market<ArrowUpRight size={14} /></button></div>
+                <div className="slab mcf-slab"><div className="mcf-top"><span className="label">{categoryFor(post.market.category).label} · <span className={ended(post) ? "" : "live-dot"}>{ended(post) ? "Ended" : "Live"}</span></span><button type="button" className="mcf-link" onClick={() => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id))}>Market<ArrowUpRight size={14} /></button></div>
                 <strong className="mcf-question">{question(post)}</strong>
-                <div className="mcf-odds"><span className="display mcf-chance">{percent(post.market.yes_price) ?? "—"}<sup>%</sup></span><div className="mcf-meter"><TickMeter yes={post.market.yes_price} size="sm" legend /></div></div>
-                <div className="mcf-trade"><button type="button" className="btn btn-yes" disabled={ended(post)} onClick={() => setBuy({ post, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(post.market.yes_price)}</span></button><button type="button" className="btn btn-no" disabled={ended(post)} onClick={() => setBuy({ post, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(post.market.no_price)}</span></button></div>
+                <div className="mcf-odds"><span className="display mcf-chance">{percent(post.market.yes_price) ?? "—"}<sup>%</sup></span><div className="mcf-meter"><TickMeter yes={post.market.yes_price} size="sm" legend /></div></div></div>
+                <div className="mcf-trade on-ink"><button type="button" className="btn btn-yes" disabled={ended(post)} onClick={() => setBuy({ post, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(post.market.yes_price)}</span></button><button type="button" className="btn btn-no" disabled={ended(post)} onClick={() => setBuy({ post, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(post.market.no_price)}</span></button></div>
               </section>
             </div>
           </article>)}
@@ -319,13 +318,13 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
 
       <aside className="watch-panel">
         <div className="label watch-title"><Eye size={13} strokeWidth={1.5} />Now watching</div>
-        {activePost ? <section className="watch-card">
-          <div className="watch-tags"><span className="tag">{categoryFor(activePost.market.category).label}</span>{ended(activePost) ? <span className="tag">Ended</span> : <span className="tag tag-live">Live</span>}</div>
-          <h2>{question(activePost)}</h2>
-          <div className="watch-odds"><span className="display watch-chance">{activeChance ?? "—"}<sup>%</sup></span><span className="label">Yes chance</span></div>
-          <TickMeter yes={activePost.market.yes_price} legend />
-          <div className="watch-trade"><button type="button" className="btn btn-yes btn-lg" disabled={ended(activePost)} onClick={() => setBuy({ post: activePost, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(activePost.market.yes_price)}</span></button><button type="button" className="btn btn-no btn-lg" disabled={ended(activePost)} onClick={() => setBuy({ post: activePost, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(activePost.market.no_price)}</span></button></div>
-          {activePost.caption && activePost.caption !== activePost.market.question && <p className="watch-caption">{activePost.caption}</p>}
+        {activePost ? <section className="watch-card slab">
+          <div className="slab-section"><div className="watch-tags"><span className="tag">{categoryFor(activePost.market.category).label}</span>{ended(activePost) ? <span className="tag">Ended</span> : <span className="tag tag-live">Live</span>}</div>
+          <h2>{question(activePost)}</h2></div>
+          <div className="slab-section"><div className="watch-odds"><span className="display watch-chance">{activeChance ?? "—"}<sup>%</sup></span><span className="label">Yes chance</span></div>
+          <TickMeter yes={activePost.market.yes_price} legend /></div>
+          <div className="slab-section"><div className="watch-trade"><button type="button" className="btn btn-yes btn-lg" disabled={ended(activePost)} onClick={() => setBuy({ post: activePost, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(activePost.market.yes_price)}</span></button><button type="button" className="btn btn-no btn-lg" disabled={ended(activePost)} onClick={() => setBuy({ post: activePost, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(activePost.market.no_price)}</span></button></div>
+          {activePost.caption && activePost.caption !== activePost.market.question && <p className="watch-caption">{activePost.caption}</p>}</div>
         </section> : <p className="empty-note">Scroll the feed to see a market here.</p>}
         <div className="rows watch-links">
           <a className="row" href={activePost ? "/market/" + encodeURIComponent(activePost.panta_market_id) : "/?tab=markets"}><span className="row-main"><span className="row-title">Open market</span><span className="row-sub">Overview, videos, timeline</span></span><span className="row-end"><ArrowUpRight size={16} /></span></a>

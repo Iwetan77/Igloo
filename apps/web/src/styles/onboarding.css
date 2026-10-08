@@ -1,22 +1,24 @@
-/* First-run setup: a full-screen night canvas, one question per step. */
-.onboarding { position: fixed; z-index: 80; inset: 0; overflow-y: auto; background: var(--night); animation: fade-in var(--t) var(--ease); }
-.onboarding-panel { width: min(100%, 440px); min-height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; padding: calc(32px + env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom)); }
-.onboarding-step { align-self: center; margin-bottom: 9vh; }
-.onboarding-panel h1 { margin: 0 0 10px; font-size: 32px; line-height: 1.1; }
-.onboarding-lede { margin: 0 0 28px; color: var(--muted); font-size: 15px; line-height: 1.5; }
-.onboarding-avatar { position: relative; align-self: center; margin-bottom: 28px; cursor: pointer; }
-.onboarding-avatar-edit { position: absolute; right: 2px; bottom: 2px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--text); color: var(--paper-ink); border: 3px solid var(--bg); }
-.username-status { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-.username-status.available { color: var(--yes); }
-.username-status.taken, .username-status.invalid { color: var(--no); }
-.interest-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
-.interest-chips .chip { min-height: 42px; padding: 0 18px; font-size: 14px; }
+/* First-run setup: an ink intro slab with big copy, the form on paper below. */
+.onboarding { --canvas: var(--bg); position: fixed; z-index: 80; inset: 0; overflow-y: auto; background: var(--bg); animation: fade-in var(--t) var(--ease); }
+.onboarding-panel { width: min(100%, 460px); min-height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; padding: calc(12px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom)); }
+.onboarding-intro { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 26px; padding: 18px 20px 26px; }
+.onboarding-intro .wordmark { margin-bottom: 26px; }
+.onboarding-intro h1 { margin: 6px 0 0; font-size: 38px; line-height: 1.02; letter-spacing: -0.035em; }
+.onboarding-lede { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.onboarding-panel > .field, .onboarding-panel > .interest-chips, .onboarding-panel > .label, .onboarding-panel > .inline-error, .onboarding-avatar { margin-inline: 8px; }
+.onboarding-avatar { position: relative; align-self: center; margin-bottom: 24px; cursor: pointer; }
+.username-status { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.username-status.available { color: var(--lav-deep); }
+.username-status.taken, .username-status.invalid { color: var(--danger); }
+.interest-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.interest-chips .chip { min-height: 40px; padding: 0 16px; font-size: 14px; }
 .onboarding-cta { margin-top: auto; }
-.onboarding-panel .field + .field { margin-bottom: 28px; }
+.onboarding-panel .field + .field { margin-bottom: 26px; }
 
-.onboarding-welcome { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px; text-align: center; background: var(--tide); }
-.welcome-mark { display: grid; place-items: center; width: 104px; height: 104px; margin-bottom: 20px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(5, 6, 7, 0.4); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); animation: rise-in 500ms var(--ease); }
-.onboarding-welcome h1 { margin: 0; font-size: 34px; font-weight: 300; }
-.onboarding-welcome p { margin: 0 0 18px; color: rgba(241, 242, 244, 0.8); }
-.welcome-foot { position: absolute; bottom: calc(32px + env(safe-area-inset-bottom)); color: var(--paper-ink); }
-.welcome-foot::before { background: var(--paper-ink) !important; }
+.onboarding-welcome { min-height: calc(100dvh - 24px); margin: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px 22px calc(26px + env(safe-area-inset-bottom)); }
+.onboarding-welcome .wordmark { margin-bottom: auto; }
+.welcome-mark { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: var(--lav); color: var(--ink); animation: rise-in 500ms var(--ease); }
+.onboarding-welcome h1 { margin: 0; font-size: 46px; line-height: 1; letter-spacing: -0.04em; }
+.onboarding-welcome p { margin: 0 0 18px; color: var(--muted); }
+.welcome-foot { margin-top: auto; }
+.welcome-foot::before { background: var(--lav) !important; }

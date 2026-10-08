@@ -5,10 +5,10 @@
 .comment > div:last-child { flex: 1; min-width: 0; }
 .comment-meta { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 3px 10px; }
 .comment-meta strong { font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
-.comment-meta time { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--subtle); }
+.comment-meta time { font-size: 11px; color: var(--subtle); }
 .comment p { margin: 5px 0 0; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
 .comment-form { flex: none; padding-top: 14px; }
 .comment-entry { display: flex; gap: 8px; }
 .comment-entry .input { border-radius: var(--r-pill); }
-.send-button { flex: 0 0 50px; height: 50px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--text); color: var(--paper-ink); }
+.send-button { flex: 0 0 50px; height: 50px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--ink); color: #eceee8; }
 @media (max-width: 760px) { .comments-sheet { height: 84dvh; } }

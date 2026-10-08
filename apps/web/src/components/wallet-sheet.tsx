@@ -16,14 +16,14 @@ export function WalletSheet({ session, onClose, notify }: { session: Session; on
   return <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="sheet wallet-sheet" role="dialog" aria-modal="true" aria-label="Wallet">
     {view === "deposit" ? <>
       <div className="sheet-head"><button type="button" className="icon-btn sm" onClick={() => setView("home")} aria-label="Back"><ArrowLeft size={17} strokeWidth={1.5} /></button><h2 className="wallet-title">Deposit USDC</h2><button type="button" className="icon-btn sm" onClick={onClose} aria-label="Close"><X size={17} strokeWidth={1.5} /></button></div>
-      <div className="deposit-card hero-tide"><span className="label">Your Solana address</span><p className="deposit-address">{address}</p><button type="button" className="btn btn-primary btn-block" onClick={copy}><Copy size={16} strokeWidth={1.5} />Copy address</button></div>
+      <div className="deposit-card slab"><span className="label">Your Solana address</span><p className="deposit-address">{address}</p><button type="button" className="btn btn-primary btn-block" onClick={copy}><Copy size={16} strokeWidth={1.5} />Copy address</button></div>
       <div className="notice warn"><TriangleAlert size={18} strokeWidth={1.5} /><span><strong>Network warning</strong>Send only USDC on the Solana network. Other tokens or networks may be lost permanently.</span></div>
     </> : <>
       <div className="sheet-head"><h2 className="wallet-title">Your wallet</h2><button type="button" className="icon-btn sm" onClick={onClose} aria-label="Close wallet"><X size={17} strokeWidth={1.5} /></button></div>
-      <div className="wallet-hero hero-dusk">
-        <span className="label">Total balance</span>
-        <Money value={session.balance} unit="USDC" className="wallet-balance" />
-        <div className="wallet-tags"><span className="tag">Solana mainnet</span>{session.synced ? <span className="tag tag-live">Account connected</span> : <span className="tag">{address ? "Connecting" : "No wallet yet"}</span>}</div>
+      <div className="wallet-hero slab">
+        <div className="slab-section"><span className="label">Total balance</span>
+        <Money value={session.balance} unit="USDC" className="wallet-balance" /></div>
+        <div className="slab-section wallet-tags"><span className="tag">Solana mainnet</span>{session.synced ? <span className="tag tag-live">Account connected</span> : <span className="tag">{address ? "Connecting" : "No wallet yet"}</span>}</div>
       </div>
       {address ? <button type="button" className="address-row" onClick={copy} aria-label="Copy wallet address"><span className="label">Address</span><span className="address-value">{shortId(address)}</span><Copy size={16} strokeWidth={1.5} /></button>
         : <button type="button" className="btn btn-primary btn-lg btn-block" disabled={!session.ready || session.walletCreating} onClick={() => { void session.createSolanaWallet(); }}>{session.walletCreating ? "Creating wallet…" : "Create Solana wallet"}</button>}

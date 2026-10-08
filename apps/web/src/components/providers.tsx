@@ -15,8 +15,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
           solana: { createOnLogin: "users-without-wallets" },
         },
         appearance: {
-          theme: "#0a0b0d",
-          accentColor: "#e6e8eb",
+          theme: "#f4f3ef",
+          accentColor: "#06191c",
           landingHeader: "Sign in to Igloo",
           logo: <span className="privy-logo"><span className="privy-logo-mark" />Igloo</span>,
         },

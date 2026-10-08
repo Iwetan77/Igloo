@@ -147,16 +147,17 @@ export function ProfileExperience({ own = false }: { own?: boolean }) {
         {loading && !profile && <p className="loading-line">Loading profile</p>}
         {error && !edit && <p className="inline-error" role="alert">{error}</p>}
         {profile && <>
-          <section className="profile-hero">
-            <span className="avatar-ring"><ProfileAvatar src={profile.avatar_url} name={profile.display_name} size={92} /></span>
-            <h2>{profile.display_name || handle || "Igloo member"}</h2>
-            {handle && profile.display_name && <span className="handle">{handle}</span>}
-            {profile.bio && <p className="profile-bio">{profile.bio}</p>}
-            <div className="profile-counts"><span><strong>{compact(profile.following_count)}</strong><span className="label">Following</span></span><span><strong>{compact(profile.follower_count)}</strong><span className="label">Followers</span></span><span><strong>{compact(profile.likes_received)}</strong><span className="label">Likes</span></span></div>
-            <div className="profile-actions">{isOwn
+          <section className="profile-hero slab">
+            <div className="slab-section profile-identity">
+              <span className="avatar-ring"><ProfileAvatar src={profile.avatar_url} name={profile.display_name} size={72} /></span>
+              <div><h2>{profile.display_name || handle || "Igloo member"}</h2>{handle && profile.display_name && <span className="handle">{handle}</span>}</div>
+            </div>
+            {profile.bio && <div className="slab-section"><p className="profile-bio">{profile.bio}</p></div>}
+            <div className="slab-section slab-split profile-counts" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Following</span><strong>{compact(profile.following_count)}</strong></div><div className="stat"><span className="label">Followers</span><strong>{compact(profile.follower_count)}</strong></div><div className="stat"><span className="label">Likes</span><strong>{compact(profile.likes_received)}</strong></div></div>
+          </section>
+          <div className="profile-actions">{isOwn
               ? <><button type="button" className="btn" onClick={() => openEdit(profile)}>Edit profile</button><button type="button" className="btn" onClick={() => setWallet(true)}>Wallet</button></>
               : <><button type="button" className={"btn " + (profile.is_following ? "" : "btn-primary")} disabled={busy} onClick={() => { void toggleFollow(); }}>{profile.is_following ? "Following" : "Follow"}</button>{profile.is_friend && <span className="tag tag-yes">Friends</span>}</>}</div>
-          </section>
           <nav className="line-tabs profile-tabs" aria-label="Profile videos"><button type="button" className={tab === "videos" ? "active" : ""} onClick={() => { void switchTab("videos"); }}>Videos</button>{isOwn && <button type="button" className={tab === "liked" ? "active" : ""} onClick={() => { void switchTab("liked"); }}>Liked</button>}</nav>
           {loading ? <p className="loading-line">Loading videos</p> : posts.length ? <ThumbnailGrid posts={posts} liked={tab === "liked"} /> : <EmptyState icon={<VideoOff size={24} strokeWidth={1.4} />} title={tab === "liked" ? "No liked videos yet" : "No videos yet"}>{isOwn && tab === "videos" ? "Post a take on any market and it shows up here." : undefined}</EmptyState>}
           {cursor && <button type="button" className="btn load-more" disabled={busy} onClick={() => { void loadMore(); }}>Load more</button>}

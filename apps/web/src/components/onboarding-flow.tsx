@@ -98,25 +98,23 @@ export function OnboardingFlow({ session }: { session: Session }) {
   const status = { idle: "", checking: "Checking", available: "Available", taken: "Taken", invalid: "3–20 a–z, 0–9, _ or ." }[availability];
 
   return <div className="onboarding" role="dialog" aria-modal="true" aria-label="Set up your Igloo account">
-    {step === "welcome" ? <div className="onboarding-welcome">
-      <span className="welcome-mark"><Check size={40} strokeWidth={1.25} /></span>
-      <h1>Welcome to Igloo</h1>
+    {step === "welcome" ? <div className="onboarding-welcome slab">
+      <span className="wordmark">Igloo<sup>®</sup></span>
+      <span className="welcome-mark"><Check size={34} strokeWidth={1.5} /></span>
+      <h1>Welcome to Igloo.</h1>
       <p>Your live prediction feed is ready.</p>
       <button type="button" className="btn btn-primary" onClick={() => setActive(false)}>Enter</button>
       <span className="label live-dot welcome-foot">Entering workspace</span>
     </div> : <div className="onboarding-panel">
-      {plan.length > 1 && <span className="tag onboarding-step">Step {index} of {plan.length}</span>}
       {step === "profile" ? <>
-        <h1>Set up your profile</h1>
-        <p className="onboarding-lede">Choose how you appear across markets, feeds, and comments.</p>
+        <div className="slab onboarding-intro"><span className="wordmark">Igloo<sup>®</sup></span>{plan.length > 1 && <span className="tag tag-yes">Step {index} of {plan.length}</span>}<h1>Set up your profile.</h1><p className="onboarding-lede">Choose how you appear across markets, feeds, and comments.</p></div>
         <label className="onboarding-avatar"><span className="avatar-ring"><ProfileAvatar src={me.avatar_url} name={me.display_name} size={96} /></span><span className="onboarding-avatar-edit" aria-hidden="true"><Camera size={15} strokeWidth={1.5} /></span><span className="visually-hidden">Upload a profile photo</span><input type="file" className="visually-hidden" accept="image/jpeg,image/png,image/webp" onChange={(event) => { void chooseAvatar(event.target.files?.[0]); }} /></label>
         <label className="field"><span className="label">Username (unique handle)</span><span className={"input-wrap" + (availability === "available" ? " ok" : availability === "taken" || availability === "invalid" ? " bad" : "")}><span>@</span><input autoFocus maxLength={20} value={username} onChange={(event) => setUsername(event.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ""))} placeholder="username" aria-describedby="username-status" />{status && <span id="username-status" className={"label username-status " + availability}>{availability === "checking" ? <LoaderCircle size={12} className="spin" /> : availability === "available" ? <Check size={12} /> : null}{status}</span>}</span></label>
         <label className="field"><span className="label">Display name</span><input className="input" maxLength={80} value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Your name" /></label>
         {error && <p className="inline-error" role="alert">{error}</p>}
         <button type="button" className="btn btn-primary btn-lg btn-block onboarding-cta" disabled={saving || availability === "taken" || availability === "checking" || !USERNAME.test(username.trim())} onClick={() => { void saveProfile(); }}>{saving ? "Saving…" : "Continue"}</button>
       </> : <>
-        <h1>What are you into?</h1>
-        <p className="onboarding-lede">Pick at least three topics to tune your live prediction feed.</p>
+        <div className="slab onboarding-intro"><span className="wordmark">Igloo<sup>®</sup></span>{plan.length > 1 && <span className="tag tag-yes">Step {index} of {plan.length}</span>}<h1>What are you into?</h1><p className="onboarding-lede">Pick at least three topics to tune your live prediction feed.</p></div>
         <div className="interest-chips">{categories.map((category) => <button key={category.id} type="button" className={"chip" + (selected.includes(category.id) ? " active" : "")} aria-pressed={selected.includes(category.id)} onClick={() => setSelected((current) => current.includes(category.id) ? current.filter((item) => item !== category.id) : [...current, category.id])}>{category.label}</button>)}</div>
         <p className="label">{selected.length} selected{selected.length < 3 ? " · " + (3 - selected.length) + " more" : ""}</p>
         {error && <p className="inline-error" role="alert">{error}</p>}

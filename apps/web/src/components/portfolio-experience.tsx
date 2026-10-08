@@ -65,10 +65,9 @@ export function PortfolioExperience() {
     <main className="screen portfolio">
       <header className="screen-head"><h1 className="page-title">Portfolio</h1>{authenticated && <button type="button" className="icon-btn" onClick={() => { void refresh(); }} disabled={loading} aria-label="Refresh positions"><RefreshCw size={17} strokeWidth={1.5} className={loading ? "spin" : ""} /></button>}</header>
       {!authenticated ? <EmptyState icon={<BriefcaseBusiness size={26} strokeWidth={1.4} />} title="Your positions live here" action={<button type="button" className="btn btn-primary" onClick={session.login}>Sign in</button>}>Sign in to track open trades and claim winnings.</EmptyState> : <>
-        <section className="portfolio-hero hero-dusk">
-          <span className="label">Open positions · est. value</span>
-          <Money value={total} className="portfolio-total" />
-          <div className="portfolio-stats"><div><span className="label">Open</span><strong>{open.length}</strong></div><div><span className="label">Resolved</span><strong>{settled.length}</strong></div><div><span className="label">To claim</span><strong>{claimable}</strong></div></div>
+        <section className="portfolio-hero slab">
+          <div className="slab-section"><span className="label">Open positions</span><span className="label portfolio-sub">Estimated at current prices</span><Money value={total} className="portfolio-total" /></div>
+          <div className="slab-section slab-split" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Open</span><strong>{open.length}</strong></div><div className="stat"><span className="label">Resolved</span><strong>{settled.length}</strong></div><div className="stat"><span className="label">To claim</span><strong>{claimable}</strong></div></div>
         </section>
         <p className="portfolio-note">Estimates use current market prices and may differ from what you paid.</p>
 

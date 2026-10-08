@@ -42,7 +42,7 @@ export function SettingsExperience() {
         </div>)}</div>
       </> : view === "about" ? <>
         {back("About")}
-        <section className="about-card hero-tide"><span className="wordmark"><span className="logo-square" />Igloo</span><p>Watch the market. Make your call.</p></section>
+        <section className="about-card slab"><span className="wordmark"><span className="logo-square" />Igloo</span><p>Watch the market. Make your call.</p></section>
         <div className="card card-pad"><div className="kv"><span>Network</span><strong>Solana mainnet</strong></div><div className="kv"><span>Markets</span><strong>Panta</strong></div><div className="kv"><span>Settlement</span><strong>USDC</strong></div></div>
       </> : <>
         <header className="screen-head"><h1 className="page-title">Settings</h1></header>

@@ -1,30 +1,28 @@
-/* Profiles: centred identity, quiet counts, a 3-up video grid. */
+/* Profiles: identity slab with fused stats, paired actions, a 3-up grid. */
 .profile-screen { max-width: 720px; }
-.profile-hero { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0 22px; text-align: center; }
-.profile-hero .avatar-ring { margin-bottom: 10px; }
-.profile-hero h2 { margin: 0; font-size: 24px; }
-.profile-bio { max-width: 46ch; margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
-.profile-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 120px)); justify-content: center; gap: 8px; margin: 18px 0 6px; }
-.profile-counts > span { display: grid; gap: 4px; justify-items: center; }
-.profile-counts strong { font-size: 22px; font-weight: 300; font-variant-numeric: tabular-nums; }
-.profile-actions { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 14px; }
-.profile-actions .btn { flex: 1; max-width: 200px; }
-.profile-tabs { justify-content: center; margin-bottom: 4px; }
+.profile-identity { display: flex; align-items: center; gap: 16px; padding-top: 22px; }
+.profile-identity h2 { margin: 0 0 4px; font-size: 24px; line-height: 1.15; overflow-wrap: anywhere; }
+.profile-identity .avatar-ring { background: var(--lav); }
+.profile-bio { max-width: 46ch; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.profile-counts { padding-block: 18px 22px; }
+.profile-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 18px; }
+.profile-actions .tag { justify-self: start; align-self: center; }
+.profile-tabs { margin-bottom: 4px; }
 
-.thumb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding-top: 10px; }
-.thumb-grid a { position: relative; display: block; min-width: 0; aspect-ratio: 3 / 4; overflow: hidden; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-2); color: var(--text); }
+.thumb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding-top: 12px; }
+.thumb-grid a { position: relative; display: block; min-width: 0; aspect-ratio: 3 / 4; overflow: hidden; border-radius: var(--r-lg); background: var(--ink); color: #eceee8; }
 .thumb-grid video { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms var(--ease); }
 .thumb-grid a:hover video { transform: scale(1.04); }
-.thumb-icon { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 38px; height: 38px; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(5, 6, 7, 0.5); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
-.thumb-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 30px 9px 9px; background: linear-gradient(transparent, rgba(0, 0, 0, 0.88)); font-size: 11px; line-height: 1.3; }
+.thumb-icon { position: absolute; top: 9px; left: 9px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--lav); color: var(--ink); }
+.thumb-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 30px 9px 9px; background: linear-gradient(transparent, rgba(6, 25, 28, 0.9)); font-size: 11px; line-height: 1.3; }
 .thumb-caption > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 
 .edit-profile-sheet .sheet-head h2 { text-align: center; }
-.edit-avatar { position: relative; display: block; width: max-content; margin: 4px auto 26px; cursor: pointer; }
-.edit-avatar .onboarding-avatar-edit { position: absolute; right: 2px; bottom: 2px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--text); color: var(--paper-ink); border: 3px solid var(--bg-2); }
+.edit-avatar { position: relative; display: block; width: max-content; margin: 4px auto 24px; cursor: pointer; }
+.edit-avatar .onboarding-avatar-edit, .onboarding-avatar-edit { position: absolute; right: 0; bottom: 0; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--lav); color: var(--ink); border: 3px solid var(--bg-2); }
 .edit-profile-sheet .field-hint { justify-self: end; }
 
 @media (max-width: 760px) {
   .thumb-grid { gap: 4px; }
-  .thumb-grid a { border-radius: var(--r-sm); }
+  .thumb-grid a { border-radius: var(--r-md); }
 }

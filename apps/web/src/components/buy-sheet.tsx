@@ -147,9 +147,10 @@ export function BuySheet({ post, side, session, onClose, onConfirmed }: {
   } else if (step === "review" && quote) {
     body = <>
       <div className="sheet-head"><button type="button" className="icon-btn sm" onClick={() => setStep("quoted")} aria-label="Back"><ArrowLeft size={17} strokeWidth={1.5} /></button><h2>Confirm trade</h2>{close}</div>
-      <div className="card card-pad buy-receipt"><span className="label">Market</span><p className="buy-receipt-question">{question}</p>
-        <div className="buy-receipt-grid"><div><span className="label">Side</span><strong className={sideClass}>{side}</strong></div><div><span className="label">Amount</span><strong>${usd(value)}</strong></div></div>
-        <div className="kv"><span>Fee</span><strong>${usd(quote.fee_usdc)}</strong></div><div className="kv"><span>Total</span><strong>${usd(value + quote.fee_usdc)}</strong></div></div>
+      <div className="slab buy-receipt">
+        <div className="slab-section slab-split" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Side</span><strong className={sideClass}>{side}</strong></div><div className="stat"><span className="label">Amount</span><strong>${usd(value)}</strong></div><div className="stat"><span className="label">Fee</span><strong>${usd(quote.fee_usdc)}</strong></div></div>
+        <div className="slab-section"><span className="label">Market</span><p className="buy-receipt-question">{question}</p><div className="kv buy-total"><span>Total</span><strong>${usd(value + quote.fee_usdc)}</strong></div></div>
+      </div>
       <p className="buy-expiry label"><Timer size={13} strokeWidth={1.5} />Quote expires in {clock}</p>
       {secondsLeft === 0 ? <button type="button" className="btn btn-primary btn-lg btn-block" onClick={() => { void getQuote(); }}>Refresh quote</button> : <SlideConfirm label="Slide to sign & buy" onConfirm={() => { void confirm(); }} />}
       <button type="button" className="btn btn-quiet btn-block" onClick={onClose}>Cancel</button>
@@ -157,7 +158,8 @@ export function BuySheet({ post, side, session, onClose, onConfirmed }: {
   } else if ((step === "quoted") && quote) {
     body = <>
       <div className="sheet-head"><button type="button" className="icon-btn sm" onClick={() => updateAmount(amount)} aria-label="Back"><ArrowLeft size={17} strokeWidth={1.5} /></button><h2>Order summary</h2>{close}</div>
-      <div className="buy-summary"><div className="kv"><span>Amount</span><strong>${usd(value)}</strong></div><div className="kv"><span>Price per share</span><strong>{sidePrice === null ? "—" : usd(sidePrice) + " USDC"}</strong></div><div className="kv"><span>Est. shares</span><strong>{shares(quote.estimated_shares)}</strong></div><div className="kv"><span>Fee</span><strong>${usd(quote.fee_usdc)}</strong></div>{payout !== null && <div className="kv"><span>Payout at $1 per share</span><strong className={sideClass}>${usd(payout)}</strong></div>}</div>
+      <div className="slab buy-stats"><div className="slab-section slab-split" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Amount</span><strong>${usd(value)}</strong></div><div className="stat"><span className="label">Shares</span><strong>{shares(quote.estimated_shares)}</strong></div><div className="stat"><span className="label">Fee</span><strong>${usd(quote.fee_usdc)}</strong></div></div></div>
+      <div className="buy-summary"><div className="kv"><span>Price per share</span><strong>{sidePrice === null ? "—" : usd(sidePrice) + " USDC"}</strong></div>{payout !== null && <div className="kv"><span>Payout at $1 per share</span><strong className={sideClass}>${usd(payout)}</strong></div>}</div>
       <p className="buy-disclosure">Illustration only. Panta sets the actual payout from final pools after the primary sale; it may be higher or lower.</p>
       <p className="buy-expiry label"><Timer size={13} strokeWidth={1.5} />Quote expires in {clock}</p>
       {secondsLeft === 0 ? <button type="button" className="btn btn-primary btn-lg btn-block" onClick={() => { void getQuote(); }}>Refresh quote</button> : <button type="button" className="btn btn-primary btn-lg btn-block" onClick={() => setStep("review")}>Continue</button>}

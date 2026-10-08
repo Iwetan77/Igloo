@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Clock3, Film, Play, Plus, Quote, Search, Share2, Video } from "lucide-react";
+import { ArrowLeft, Film, Play, Plus, Quote, Search, Share2, Video } from "lucide-react";
 import { ApiError, getFeed, getMarket, getMarkets } from "@/lib/api";
 import { categories, categoryFor } from "@/lib/categories";
 import { errorCopy } from "@/lib/copy";
@@ -162,14 +162,12 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
       {loading && !market && <p className="loading-line">Loading market</p>}
       {errorBlock}
       {market && <>
-        <header className="market-hero hero-dusk">
-          <span className="label">Prediction market</span>
-          <h1>{titleOf(market)}</h1>
-          <div className="market-hero-odds"><span className="display">{chance ?? "—"}<sup>%</sup></span><span className="label">Yes odds</span></div>
-          <TickMeter yes={market.yes_price} legend />
+        <header className="market-hero slab">
+          <div className="slab-section"><span className="label">Prediction market</span><h1>{titleOf(market)}</h1></div>
+          <div className="slab-section"><div className="market-hero-odds"><span className="label">Yes odds</span><span className="label">{cents(market.yes_price)} a share</span></div><div className="market-hero-meter"><span className="display">{chance ?? "\u2014"}<sup>%</sup></span><TickMeter yes={market.yes_price} /></div></div>
+          <div className="slab-section slab-split"><div className="stat"><span className="label">{ended ? "Trading" : "Time left"}</span><span className="label">Until trading closes</span><strong>{ended ? "Closed" : countdown ? countdown.label : market.end_time ? "Soon" : "Open"}</strong></div><div className="stat"><span className="label">Takes</span><span className="label">Videos on this market</span><strong>{market.post_count}</strong></div></div>
         </header>
         <div className="market-trade"><button type="button" className="btn btn-yes btn-lg" disabled={ended} onClick={() => onBuy(market, "YES")}><span>Buy Yes</span><span className="tabular">{cents(market.yes_price)}</span></button><button type="button" className="btn btn-no btn-lg" disabled={ended} onClick={() => onBuy(market, "NO")}><span>Buy No</span><span className="tabular">{cents(market.no_price)}</span></button></div>
-        <div className="market-meta label"><span><Clock3 size={13} strokeWidth={1.5} />{ended ? "Trading closed" : countdown ? countdown.label + " remaining" : market.end_time ? "Ends soon" : "No end date"}</span><span><Video size={13} strokeWidth={1.5} />{market.post_count} takes</span></div>
         <nav className="line-tabs" aria-label="Market sections">{(["overview", "timeline", "videos"] as DetailTab[]).map((item) => <button type="button" key={item} className={detailTab === item ? "active" : ""} onClick={() => setDetailTab(item)}>{item === "videos" ? `Videos (${market.post_count})` : item}</button>)}</nav>
 
         {detailTab === "overview" && <>

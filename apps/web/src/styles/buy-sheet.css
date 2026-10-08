@@ -4,35 +4,34 @@
 .buy-sheet .yes { color: var(--yes); }
 .buy-sheet .no { color: var(--no); }
 .buy-question { margin: 0 0 6px; color: var(--muted); font-size: 14px; line-height: 1.45; }
-.buy-amount { display: flex; align-items: baseline; justify-content: center; gap: 2px; margin: 26px 0 8px; cursor: text; }
-.buy-amount .display { font-size: 60px; }
-.buy-amount span.display { color: var(--muted); }
+.buy-amount { display: flex; align-items: baseline; justify-content: center; gap: 2px; margin: 28px 0 8px; cursor: text; }
+.buy-amount .display { font-size: 76px; font-weight: 300; letter-spacing: -0.045em; }
+.buy-amount span.display { color: var(--ghost); }
 .buy-amount input { max-width: 7ch; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text); text-align: left; }
+.buy-amount input::placeholder { color: var(--ghost); }
 .buy-rate { text-align: center; margin: 0 0 22px; }
-.buy-sheet.side-yes .buy-rate { color: var(--yes); }
-.buy-sheet.side-no .buy-rate { color: var(--no); }
-.buy-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
-.buy-presets .chip { justify-content: center; min-height: 40px; font-family: var(--mono); }
-.buy-balance { margin-bottom: 18px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) !important; }
+.buy-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+.buy-presets .chip { justify-content: center; min-height: 40px; font-variant-numeric: tabular-nums; }
+.buy-balance { margin-bottom: 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) !important; }
 .buy-balance-value { font-size: 16px; font-weight: 400; letter-spacing: 0; }
-.buy-summary { margin-bottom: 14px; }
-.buy-disclosure { margin: 0 0 16px; color: var(--subtle); font-size: 11px; line-height: 1.5; }
-.buy-expiry { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 0 16px; }
-.buy-receipt { display: grid; gap: 10px; margin-bottom: 16px; padding-bottom: 6px; background: var(--surface); }
-.buy-receipt-question { margin: 0; font-size: 15px; line-height: 1.4; }
-.buy-receipt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.buy-receipt-grid div { display: grid; gap: 4px; }
-.buy-receipt-grid div:last-child { text-align: right; }
-.buy-receipt-grid strong { font-weight: 500; font-size: 16px; }
+.buy-stats { margin-bottom: 8px; }
+.buy-stats .slab-split, .buy-receipt .slab-split { padding-block: 16px 20px; }
+.buy-summary { margin-bottom: 12px; }
+.buy-disclosure { margin: 0 0 14px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.buy-expiry { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 0 14px; }
+.buy-receipt { margin-bottom: 14px; }
+.buy-receipt-question { margin: 6px 0 4px; font-size: 15px; line-height: 1.4; }
+.buy-total { margin-top: 8px; border-top: 1px solid var(--line); }
+.buy-total strong { font-size: 18px; font-weight: 400; }
 .buy-result { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 4px 4px; text-align: center; animation: rise-in var(--t) var(--ease); }
 .buy-result h2 { margin: 10px 0 0; font-size: 22px; }
 .buy-result p { max-width: 300px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .buy-actions { display: grid; gap: 10px; width: 100%; margin-top: 18px; }
 
-/* Slide to confirm */
-.slide-confirm { position: relative; height: 60px; margin-bottom: 8px; border-radius: var(--r-pill); border: 1px solid var(--line-strong); background: var(--surface); overflow: hidden; touch-action: none; user-select: none; }
-.slide-fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--slide) + 56px); background: rgba(255, 255, 255, 0.08); }
-.slide-label { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 40px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-.slide-knob { position: absolute; top: 4px; left: 4px; width: 50px; height: 50px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--text); color: var(--paper-ink); transform: translateX(var(--slide)); transition: transform 60ms linear; cursor: grab; }
+/* Slide to confirm: an outlined track with an ink knob, like BRIK's "Slide to invest". */
+.slide-confirm { position: relative; height: 60px; margin-bottom: 8px; border-radius: var(--r-pill); border: 1.5px solid var(--edge); background: var(--surface); overflow: hidden; touch-action: none; user-select: none; }
+.slide-fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--slide) + 56px); background: var(--lav); }
+.slide-label { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 40px; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text); }
+.slide-knob { position: absolute; top: 4px; left: 4px; width: 49px; height: 49px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--ink); color: #eceee8; transform: translateX(var(--slide)); transition: transform 60ms linear; cursor: grab; }
 .slide-knob:active { cursor: grabbing; }
 .slide-confirm.disabled { opacity: 0.4; }
