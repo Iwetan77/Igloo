@@ -1,72 +1,58 @@
 [
   {
-    "panta_market_id": "demo-1",
-    "video_url": "https://placeholder-video-url/demo-1.mp4",
-    "caption": "Everyone said this was impossible last year.",
-    "category": "Crypto",
-    "market_question": "Will Bitcoin close above $150,000 before December 31, 2026?"
+    "panta_market_id": "GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V",
+    "video_url": "https://download.blender.org/durian/trailer/sintel_trailer-480p.mp4",
+    "caption": "Rockstar says November 19th is locked in. I'm not so sure.",
+    "category": "gaming",
+    "market_question": "Will GTA 6 release on November 19th, 2026"
   },
   {
-    "panta_market_id": "demo-2",
-    "video_url": "https://placeholder-video-url/demo-2.mp4",
-    "caption": "The polling is closer than the headlines admit.",
-    "category": "Politics",
-    "market_question": "Will the incumbent party retain control of the Senate in the 2026 midterms?"
+    "panta_market_id": "BpPmo7wHrh8bi3ea2ohiVy64sxEnSTufx67zTA9ntnfT",
+    "video_url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4",
+    "caption": "The run has been wild, but a $1B cap is a big ask.",
+    "category": "crypto",
+    "market_question": "Will $ANSEM reach a $1B market cap by December 31, 2026?"
   },
   {
-    "panta_market_id": "demo-3",
-    "video_url": "https://placeholder-video-url/demo-3.mp4",
-    "caption": "Injury report says questionable, my gut says no.",
-    "category": "Sports",
-    "market_question": "Will the league MVP play in the championship game this Sunday?"
+    "panta_market_id": "1Nm7PCxoHUwGk1J9NoSfy26TQZkitwDf6mamFTZDn1r",
+    "video_url": "https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4",
+    "caption": "Last time it broke $81k it didn't hold for long.",
+    "category": "crypto",
+    "market_question": "Will Bitcoin (BTC) be priced at $81,000.00 or higher on Tuesday, September 8, 2026, at 12:00 PM UTC?"
   },
   {
-    "panta_market_id": "demo-4",
-    "video_url": "https://placeholder-video-url/demo-4.mp4",
-    "caption": "Box office is strong, but the budget was massive.",
-    "category": "Entertainment",
-    "market_question": "Will this year's top-grossing film pass $1 billion worldwide?"
+    "panta_market_id": "C2XGH1Z6YivhXMqRRBhKDHnFZTAoqkRcwBFTEZ7bdUrr",
+    "video_url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+    "caption": "Witty Cruz has been on fire since GW1.",
+    "category": "sports",
+    "market_question": "Will Witty Cruz top The Pantas FPL Leaderboard by end of GW3?"
   },
   {
-    "panta_market_id": "demo-5",
-    "video_url": "https://placeholder-video-url/demo-5.mp4",
-    "caption": "The Fed keeps saying 'data dependent' and the data keeps moving.",
-    "category": "Finance",
-    "market_question": "Will the Fed cut interest rates at least twice more in 2026?"
+    "panta_market_id": "69A5oC4BXuHC1hG6EVpLZbgSH4GQGVBMgQKwHz3YhbZk",
+    "video_url": "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4",
+    "caption": "We've been grinding sideways. A drop under $58k changes everything.",
+    "category": "crypto",
+    "market_question": "Will Bitcoin drop below 58k in 2026?"
   },
   {
-    "panta_market_id": "demo-6",
-    "video_url": "https://placeholder-video-url/demo-6.mp4",
-    "caption": "New test results look genuinely encouraging.",
-    "category": "Science",
-    "market_question": "Will a major biotech receive FDA approval for its obesity drug this quarter?"
+    "panta_market_id": "BpPmo7wHrh8bi3ea2ohiVy64sxEnSTufx67zTA9ntnfT",
+    "video_url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4",
+    "caption": "Everyone's chasing the $1B cap. I'm fading it.",
+    "category": "crypto",
+    "market_question": "Will $ANSEM reach a $1B market cap by December 31, 2026?"
   },
   {
-    "panta_market_id": "demo-7",
-    "video_url": "https://placeholder-video-url/demo-7.mp4",
-    "caption": "The launch window is tight and the weather isn't cooperating.",
-    "category": "World",
-    "market_question": "Will the next crewed moon mission launch before October 2026?"
+    "panta_market_id": "GXh9iztJTm5v6qDWnR4YcKHbSc3AUZ2VEMGfKEegd92V",
+    "video_url": "https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4",
+    "caption": "Rockstar's last three games all slipped. Bet on the delay.",
+    "category": "gaming",
+    "market_question": "Will GTA 6 release on November 19th, 2026"
   },
   {
-    "panta_market_id": "demo-8",
-    "video_url": "https://placeholder-video-url/demo-8.mp4",
-    "caption": "Wen listing? The community is getting impatient.",
-    "category": "Crypto",
-    "market_question": "Will a major US exchange list the leading meme coin by year-end?"
-  },
-  {
-    "panta_market_id": "demo-9",
-    "video_url": "https://placeholder-video-url/demo-9.mp4",
-    "caption": "The rematch everyone's been waiting for is finally booked.",
-    "category": "Entertainment",
-    "market_question": "Will the title fight go the full twelve rounds?"
-  },
-  {
-    "panta_market_id": "demo-10",
-    "video_url": "https://placeholder-video-url/demo-10.mp4",
-    "caption": "Turnout models disagree wildly on this one.",
-    "category": "Politics",
-    "market_question": "Will voter turnout exceed 50% in the next presidential primary?"
+    "panta_market_id": "69A5oC4BXuHC1hG6EVpLZbgSH4GQGVBMgQKwHz3YhbZk",
+    "video_url": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+    "caption": "Bears keep calling for $58k. They've been wrong all year.",
+    "category": "crypto",
+    "market_question": "Will Bitcoin drop below 58k in 2026?"
   }
 ]

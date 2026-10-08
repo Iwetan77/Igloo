@@ -12,6 +12,7 @@ script and status notes.
 - Go 1.22+
 - Supabase CLI (`supabase`) — for applying migrations and running a local stack
 - A Supabase project (hosted or local) — for Postgres + Realtime
+- A Privy app with **Solana embedded wallets enabled** — for sign-in and trading
 
 ## Repo layout
 
@@ -23,33 +24,66 @@ content/       Static JSON (categories, UI copy, seed posts)
 docs/          README-adjacent docs and demo script
 ```
 
-## 1. Apply the database migrations
+## 1. Create the Supabase project and apply migrations
 
-Migrations live in `supabase/migrations/`. Apply them to your Supabase project:
+Create a Supabase project first (hosted or local). Migrations live in
+`supabase/migrations/` and run in order — `0001_init.sql` (schema),
+`0002_rls.sql` (row-level security), `0003_storage.sql` (storage bucket),
+`0004_quote_posts.sql` (quote posts), `0005_social_and_ranking.sql` (social and
+ranking), `0006_profiles.sql` (profiles), `0007_serverless_state.sql`
+(serverless state). Then run `supabase/seed.sql` once to load demo data.
 
 ```bash
 # local Supabase stack
 supabase start
-supabase db reset        # applies supabase/migrations/*.sql against local DB
+supabase db reset        # applies supabase/migrations/*.sql in order
 
 # or, against a hosted project
 supabase link --project-ref <your-project-ref>
 supabase db push
 ```
 
-This creates the `users`, `posts`, `comments`, `likes`, `shares`, and
+`0001` creates the `users`, `posts`, `comments`, `likes`, `shares`, and
 `positions_cache` tables and enables Realtime on `comments` and `likes`.
+`0002` enables row-level security on those tables and allows public reads on
+`comments` and `likes` (the backend connects as the database owner and bypasses
+RLS — this only locks down the browser's anon key).
+`0003` creates the `videos` storage bucket. Uploads go through backend-signed
+URLs, so no `storage.objects` policies are added on purpose.
+`0004` adds `posts.quoted_post_id` (null = original post) with an index, so a
+post can quote another post like a quote tweet or stitch.
+`0005` adds onboarding interests, follows, post watch signals, and a Panta
+market cache, plus ranking indexes. These tables are backend-only (RLS on, no
+policies).
+`0006` adds username/bio/avatar to `users` (with validation constraints), an
+`avatars` storage bucket, and `markets_cache.end_time` for hiding finished
+markets.
+`0007` adds `order_sessions` (in-progress buys) and `rate_events` (shared
+rate-limit events) so serverless instances can share state. Backend-only (RLS
+on, no policies).
+
+For a non-empty feed, run `supabase/seed.sql` in the Supabase SQL editor — it
+inserts a demo user (marked onboarded, with a few interests), seven seed posts
+plus two quote posts, and a couple of comments and likes (safe to run twice).
 
 ## 2. Run the backend (`services/api`)
 
 ```bash
 cd services/api
 cp .env.example .env   # then fill in the values (see .env.example notes)
-go run ./...
+set -a && . ./.env && set +a && go run .
 ```
+
+The backend reads environment variables (not a `.env` file directly), so the
+`set -a && . ./.env && set +a` line exports the `.env` values into the shell
+before starting it. Use `go run .` (not `go run ./...`).
 
 The API listens on its default port (see `services/api/.env.example`) and serves
 `/api/v1/...`.
+
+Video uploads go through the backend: `POST /api/v1/uploads/video` returns a
+signed URL, the client uploads the file to that URL, then calls `POST /posts`
+with the resulting `video_url`.
 
 ## 3. Run the frontend (`apps/web`)
 
@@ -62,6 +96,9 @@ npm run dev
 
 Open the printed localhost URL. The frontend calls the backend at
 `NEXT_PUBLIC_API_BASE_URL` — point it at the running `services/api` instance.
+In dev the backend is often exposed through a temporary Cloudflare tunnel whose
+URL can change, so update `NEXT_PUBLIC_API_BASE_URL` to whatever the current
+tunnel URL is.
 
 ## 4. Environment variables
 
@@ -71,12 +108,17 @@ Each app has a `.env.example` in its own directory:
   `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SOLANA_RPC_URL`.
 - `services/api/.env.example` — `PANTA_API_KEY`, `PANTA_BASE_URL`,
-  `PANTA_MODE` (`live` or `mock`), `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`, `SOLANA_RPC_URL`, `PRIVY_APP_ID`,
-  `PRIVY_APP_SECRET`.
+  `PANTA_MODE`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`,
+  `SOLANA_RPC_URL`, `PRIVY_APP_ID`, `PRIVY_APP_SECRET`.
 
-The variable names are fixed by the shared contract — don't rename them. Set
-`PANTA_MODE=mock` to develop without a live Panta account.
+These are the exact variable names the apps read — don't rename them.
+
+Notes:
+
+- Panta runs on **Solana mainnet only** — there is no mock mode, and buys spend
+  real USDC.
+- Set `DATABASE_URL` to the Supabase **transaction pooler** URL (port `6543`),
+  with `?sslmode=require`. The direct connection port (`5432`) times out on TLS.
 
 ## 5. Run everything side by side
 
@@ -85,7 +127,7 @@ The variable names are fixed by the shared contract — don't rename them. Set
 supabase start && supabase db reset
 
 # terminal 2
-cd services/api && go run ./...
+cd services/api && set -a && . ./.env && set +a && go run .
 
 # terminal 3
 cd apps/web && npm run dev
@@ -93,3 +135,14 @@ cd apps/web && npm run dev
 
 If the live feed is empty or Panta is unreachable, the backend can fall back to
 `content/seed-posts.json` for local demo data.
+
+## 6. Deploying to Vercel
+
+- **backend:** a Vercel project with Root Directory `services/api` and preset
+  **Other**. See `services/api/README.md` for its environment variables and
+  `CRON_SECRET`.
+- **frontend:** a Vercel project with Root Directory `apps/web` and preset
+  **Next.js**.
+- **after deploying:** add the frontend's Vercel URL to Privy's allowed origins,
+  and add the `IGLOO_API_URL` and `CRON_SECRET` GitHub repository secrets (for
+  the 30-minute market refresh workflow).
