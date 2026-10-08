@@ -178,6 +178,6 @@ export function BuySheet({ post, side, session, onClose, onConfirmed }: {
   }
 
   return <div className="overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
-    <section className={"sheet buy-sheet side-" + sideClass} role="dialog" aria-modal="true" aria-label={"Buy " + side}>{body}</section>
+    <section className={"sheet buy-sheet side-" + sideClass} role="dialog" aria-modal="true" aria-label={"Buy " + side}><div className="step-body" key={step === "quoting" ? "amount" : ["building", "signing", "broadcasting", "verifying"].includes(step) ? "progress" : step}>{body}</div></section>
   </div>;
 }

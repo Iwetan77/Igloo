@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { percent, usd } from "@/lib/format";
+import { useCountUp } from "@/components/count-up";
 
 /** Probability as a row of thin bars: YES ticks, then NO ticks. */
 export function TickMeter({ yes, size, legend = false }: { yes: number | null; size?: "sm"; legend?: boolean }) {
@@ -14,8 +17,9 @@ export function TickMeter({ yes, size, legend = false }: { yes: number | null; s
 
 /** A dollar figure with the cents set small, like a statement balance. */
 export function Money({ value, className = "", unit }: { value: number | null; className?: string; unit?: string }) {
-  if (value === null || !Number.isFinite(value)) return <span className={"display " + className}>{"—"}</span>;
-  const [whole, fraction] = usd(value).split(".");
+  const shown = useCountUp(value === null || !Number.isFinite(value) ? null : value);
+  if (shown === null) return <span className={"display " + className}>{"—"}</span>;
+  const [whole, fraction] = usd(shown).split(".");
   return <span className={"display " + className}>${whole}<sup>.{fraction}</sup>{unit && <small className="money-unit">{unit}</small>}</span>;
 }
 

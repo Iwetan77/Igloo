@@ -2,7 +2,8 @@
 .composer-sheet { width: min(100%, 480px); display: flex; flex-direction: column; }
 .composer-title { flex: 1; text-align: center; font-size: 18px; }
 .head-spacer { width: 34px; flex: none; }
-.composer-sheet > .input-wrap { flex: none; }
+.composer-sheet > .step-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.composer-sheet .input-wrap { flex: none; }
 
 .pick-list { flex: 1; min-height: 120px; margin-top: 8px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent; }
 .pick-list h3.label { margin: 22px 0 6px; }

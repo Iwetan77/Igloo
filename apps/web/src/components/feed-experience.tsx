@@ -24,6 +24,8 @@ import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import { WalletSheet } from "@/components/wallet-sheet";
 import { SearchSheet } from "@/components/search-sheet";
 import { EmptyState, TickMeter } from "@/components/ui";
+import { CountUp } from "@/components/count-up";
+import { withTransition } from "@/lib/motion";
 import "@/styles/feed.css";
 
 function question(post: FeedPost): string {
@@ -242,11 +244,13 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   function switchTab(next: FeedTab | "markets") {
     if (initialMarketId) { window.location.assign(next === "markets" ? "/?tab=markets" : "/"); return; }
     if (next === "following" && !session.authenticated) { session.login(); return; }
-    feedRef.current?.scrollTo({ top: 0 });
-    setTab(next);
-    setPosts([]);
-    setCursor(null);
-    setActiveId("");
+    withTransition(() => {
+      feedRef.current?.scrollTo({ top: 0 });
+      setTab(next);
+      setPosts([]);
+      setCursor(null);
+      setActiveId("");
+    }, "page");
   }
   function buyMarket(market: MarketSummary, side: Side) {
     setBuy({ post: { panta_market_id: market.panta_market_id, caption: null, market: { question: market.question, yes_price: market.yes_price, no_price: market.no_price, category: market.category, phase: market.phase, end_time: market.end_time } }, side });
@@ -304,7 +308,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
               <section className="market-card-float" aria-label="Market">
                 <div className="slab mcf-slab"><div className="mcf-top"><span className="label">{categoryFor(post.market.category).label} · <span className={ended(post) ? "" : "live-dot"}>{ended(post) ? "Ended" : "Live"}</span></span><button type="button" className="mcf-link" onClick={() => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id))}>Market<ArrowUpRight size={14} /></button></div>
                 <strong className="mcf-question">{question(post)}</strong>
-                <div className="mcf-odds"><span className="display mcf-chance">{percent(post.market.yes_price) ?? "—"}<sup>%</sup></span><div className="mcf-meter"><TickMeter yes={post.market.yes_price} size="sm" legend /></div></div></div>
+                <div className="mcf-odds"><span className="display mcf-chance"><CountUp value={percent(post.market.yes_price)} /><sup>%</sup></span><div className="mcf-meter"><TickMeter yes={post.market.yes_price} size="sm" legend /></div></div></div>
                 <div className="mcf-trade on-ink"><button type="button" className="btn btn-yes" disabled={ended(post)} onClick={() => setBuy({ post, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(post.market.yes_price)}</span></button><button type="button" className="btn btn-no" disabled={ended(post)} onClick={() => setBuy({ post, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(post.market.no_price)}</span></button></div>
               </section>
             </div>
@@ -321,7 +325,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
         {activePost ? <section className="watch-card slab">
           <div className="slab-section"><div className="watch-tags"><span className="tag">{categoryFor(activePost.market.category).label}</span>{ended(activePost) ? <span className="tag">Ended</span> : <span className="tag tag-live">Live</span>}</div>
           <h2>{question(activePost)}</h2></div>
-          <div className="slab-section"><div className="watch-odds"><span className="display watch-chance">{activeChance ?? "—"}<sup>%</sup></span><span className="label">Yes chance</span></div>
+          <div className="slab-section"><div className="watch-odds"><span className="display watch-chance"><CountUp value={activeChance} /><sup>%</sup></span><span className="label">Yes chance</span></div>
           <TickMeter yes={activePost.market.yes_price} legend /></div>
           <div className="slab-section"><div className="watch-trade"><button type="button" className="btn btn-yes btn-lg" disabled={ended(activePost)} onClick={() => setBuy({ post: activePost, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(activePost.market.yes_price)}</span></button><button type="button" className="btn btn-no btn-lg" disabled={ended(activePost)} onClick={() => setBuy({ post: activePost, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(activePost.market.no_price)}</span></button></div>
           {activePost.caption && activePost.caption !== activePost.market.question && <p className="watch-caption">{activePost.caption}</p>}</div>

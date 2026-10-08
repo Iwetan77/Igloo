@@ -9,6 +9,8 @@ import { errorCopy } from "@/lib/copy";
 import type { FeedPost, UserProfile } from "@/lib/types";
 import { useSession } from "@/lib/use-session";
 import { AppShell } from "@/components/app-shell";
+import { CountUp } from "@/components/count-up";
+import { withTransition } from "@/lib/motion";
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { WalletSheet } from "@/components/wallet-sheet";
@@ -84,7 +86,7 @@ export function ProfileExperience({ own = false }: { own?: boolean }) {
   }
   async function switchTab(next: ProfileTab) {
     if (next === tab || !profile) return;
-    setTab(next);
+    withTransition(() => setTab(next));
     setError("");
     if (next === "videos") {
       setLoading(true);
@@ -153,7 +155,7 @@ export function ProfileExperience({ own = false }: { own?: boolean }) {
               <div><h2>{profile.display_name || handle || "Igloo member"}</h2>{handle && profile.display_name && <span className="handle">{handle}</span>}</div>
             </div>
             {profile.bio && <div className="slab-section"><p className="profile-bio">{profile.bio}</p></div>}
-            <div className="slab-section slab-split profile-counts" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Following</span><strong>{compact(profile.following_count)}</strong></div><div className="stat"><span className="label">Followers</span><strong>{compact(profile.follower_count)}</strong></div><div className="stat"><span className="label">Likes</span><strong>{compact(profile.likes_received)}</strong></div></div>
+            <div className="slab-section slab-split profile-counts" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Following</span><strong><CountUp value={profile.following_count} format={(n) => compact(Math.round(n))} /></strong></div><div className="stat"><span className="label">Followers</span><strong><CountUp value={profile.follower_count} format={(n) => compact(Math.round(n))} /></strong></div><div className="stat"><span className="label">Likes</span><strong><CountUp value={profile.likes_received} format={(n) => compact(Math.round(n))} /></strong></div></div>
           </section>
           <div className="profile-actions">{isOwn
               ? <><button type="button" className="btn" onClick={() => openEdit(profile)}>Edit profile</button><button type="button" className="btn" onClick={() => setWallet(true)}>Wallet</button></>

@@ -6,6 +6,7 @@ import { ApiError, getUserByUsername } from "@/lib/api";
 import { uploadAvatar } from "@/lib/avatar";
 import { categories } from "@/lib/categories";
 import { errorCopy } from "@/lib/copy";
+import { withTransition } from "@/lib/motion";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import type { Session } from "@/lib/use-session";
 import "@/styles/onboarding.css";
@@ -25,6 +26,7 @@ export function OnboardingFlow({ session }: { session: Session }) {
   const [active, setActive] = useState(false);
   const [plan, setPlan] = useState<Step[]>([]);
   const [step, setStep] = useState<Step>("profile");
+  const goStep = (next: Step) => withTransition(() => setStep(next));
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState(me?.display_name || "");
   const [availability, setAvailability] = useState<Availability>("idle");
@@ -71,7 +73,7 @@ export function OnboardingFlow({ session }: { session: Session }) {
     setError("");
     try {
       await session.updateProfile({ username: username.trim(), ...(displayName.trim() ? { display_name: displayName.trim() } : {}) });
-      setStep(plan.includes("interests") ? "interests" : "welcome");
+      goStep(plan.includes("interests") ? "interests" : "welcome");
     } catch (cause) { setError(errorCopy(cause)); }
     finally { setSaving(false); }
   }
@@ -81,7 +83,7 @@ export function OnboardingFlow({ session }: { session: Session }) {
     setError("");
     try {
       await session.saveInterests(selected);
-      setStep("welcome");
+      goStep("welcome");
     } catch (cause) { setError(errorCopy(cause)); }
     finally { setSaving(false); }
   }

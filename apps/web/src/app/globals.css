@@ -63,8 +63,12 @@
   --glass-strong: rgba(6, 25, 28, 0.86);
   --blur: saturate(140%) blur(18px);
 
-  /* Motion */
+  /* Motion: BRIK moves slowly in and slowly out */
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-brik: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-page: 720ms;
+  --t-drop: 620ms;
   --t-fast: 140ms;
   --t: 240ms;
 
@@ -322,7 +326,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
   --canvas: var(--bg-2);
   width: min(100%, 440px); max-height: min(92dvh, 820px); overflow-y: auto; padding: 22px;
   border-radius: var(--r-xl); background: var(--bg-2); color: var(--text); box-shadow: var(--shadow-lg);
-  animation: rise-in 300ms var(--ease); scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent;
+  animation: sheet-up 520ms var(--ease-brik); scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent;
 }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .sheet-head h2 { margin: 0; font-size: 20px; }
@@ -359,7 +363,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 .bottom-nav { display: none; }
 
 /* Page screens (portfolio, settings, create, profile) */
-.screen { width: 100%; max-width: 680px; margin: 0 auto; padding: 24px 20px calc(var(--nav-h) + 40px); animation: fade-in var(--t) var(--ease); }
+.screen { width: 100%; max-width: 680px; margin: 0 auto; padding: 24px 20px calc(var(--nav-h) + 40px); }
 .screen-head { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-bottom: 18px; }
 .screen-head h1 { margin: 0; font-size: 22px; }
 .screen-head .grow { flex: 1; min-width: 0; }
@@ -396,6 +400,65 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
   .overlay { align-items: flex-end; padding: 0; }
   .sheet { width: 100%; max-height: 94dvh; border-radius: var(--r-xl) var(--r-xl) 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); }
 }
+/* ==========================================================================
+   Motion, after the BRIK reference
+   1. Page and tab changes: the new view wipes down over the old one like a
+      curtain, while the dock, the side rail and active tab pills persist and
+      slide (view transitions; cross-document for full page loads).
+   2. Content arrives top to bottom: rows drop in on a stagger, slabs grow
+      downward out of their top edge, tick bars fill, figures count up.
+   3. Expanding rows fill with ink and open downward.
+   ========================================================================== */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: page-hold var(--t-page) linear both; }
+::view-transition-new(root) { animation: page-wipe var(--t-page) var(--ease-brik) both; }
+::view-transition-group(*) { animation-duration: 560ms; animation-timing-function: var(--ease-brik); }
+@keyframes page-hold { from { opacity: 1; } to { opacity: 1; } }
+@keyframes page-wipe { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+
+.side-rail { view-transition-name: rail; }
+.side-link.active { view-transition-name: rail-active; }
+.bottom-nav { view-transition-name: dock; }
+.dock-pill button.active { view-transition-name: dock-active; }
+.feed-tabs button.active { view-transition-name: feed-tab; }
+:root:active-view-transition-type(tab) :is(.screen .line-tabs, .screen .segmented) button.active { view-transition-name: tab-active; }
+.dock-pill button, .side-link, .line-tabs button, .segmented button, .feed-tabs button { transition: background 420ms var(--ease-brik), color 420ms var(--ease-brik); }
+
+@keyframes drop-in { from { opacity: 0; transform: translateY(-22px); } to { opacity: 1; transform: none; } }
+@keyframes slab-grow { from { clip-path: inset(0 0 100% 0 round var(--r-xl)); } to { clip-path: inset(0 0 0 0 round var(--r-xl)); } }
+@keyframes ticks-fill { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes sheet-up { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
+
+.screen > *, .step-body > *, .market-section > *, .position-list > *, .market-grid > *, .rows > *, .settings-group > *, .faq > *, .thumb-grid > *, .pick-list > *, .search-section > * {
+  animation: drop-in var(--t-drop) var(--ease-settle) backwards;
+}
+.screen > .slab, .step-body > .slab { animation-name: slab-grow; animation-duration: var(--t-page); animation-timing-function: var(--ease-brik); }
+.screen > .step-body { animation: none; }
+:is(.screen, .step-body, .market-section, .position-list, .market-grid, .rows, .settings-group, .faq, .thumb-grid, .pick-list, .search-section) > :nth-child(2) { animation-delay: 60ms; }
+:is(.screen, .step-body, .market-section, .position-list, .market-grid, .rows, .settings-group, .faq, .thumb-grid, .pick-list, .search-section) > :nth-child(3) { animation-delay: 120ms; }
+:is(.screen, .step-body, .market-section, .position-list, .market-grid, .rows, .settings-group, .faq, .thumb-grid, .pick-list, .search-section) > :nth-child(4) { animation-delay: 180ms; }
+:is(.screen, .step-body, .market-section, .position-list, .market-grid, .rows, .settings-group, .faq, .thumb-grid, .pick-list, .search-section) > :nth-child(5) { animation-delay: 240ms; }
+:is(.screen, .step-body, .market-section, .position-list, .market-grid, .rows, .settings-group, .faq, .thumb-grid, .pick-list, .search-section) > :nth-child(6) { animation-delay: 300ms; }
+:is(.screen, .step-body, .market-section, .position-list, .market-grid, .rows, .settings-group, .faq, .thumb-grid, .pick-list, .search-section) > :nth-child(n+7) { animation-delay: 360ms; }
+.screen-foot { animation: none !important; }
+.ticks .ticks-yes { animation: ticks-fill 1s var(--ease-brik) 200ms backwards; }
+.mcf-slab, .watch-card { animation: slab-grow var(--t-page) var(--ease-brik) backwards; }
+.market-trade .btn, .mcf-trade .btn, .watch-trade .btn { transition: background 420ms var(--ease-brik), transform var(--t-fast) var(--ease); }
+
+/* The dock glides out when a sheet or full-screen task takes over, as in BRIK's game screen. */
+.bottom-nav { transition: transform 560ms var(--ease-brik); }
+.shell:has(.overlay, .onboarding) .bottom-nav { transform: translateY(130%); }
+
+/* Expanding rows: the row fills with ink, then its body opens downward. */
+.faq-item { transition: background 420ms var(--ease-brik), border-color 420ms var(--ease-brik), color 420ms var(--ease-brik); }
+.faq-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 560ms var(--ease-brik); }
+.faq-body > div { overflow: hidden; }
+.faq-item.open .faq-body { grid-template-rows: 1fr; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
 }

@@ -10,6 +10,8 @@ import { marketEnded, useMarketClock } from "@/lib/markets";
 import { useCountdown } from "@/lib/use-countdown";
 import { authorName } from "@/components/profile-avatar";
 import { EmptyState, TickMeter } from "@/components/ui";
+import { CountUp } from "@/components/count-up";
+import { withTransition } from "@/lib/motion";
 import type { FeedPost, MarketSummary, Side } from "@/lib/types";
 import type { Session } from "@/lib/use-session";
 import "@/styles/markets.css";
@@ -30,7 +32,7 @@ function MarketCard({ market, now }: { market: MarketSummary; now: number }) {
   return <button type="button" className="market-tile" onClick={() => openMarket(market.panta_market_id)}>
     <span className="market-tile-top"><span className="tag">{categoryFor(market.category).label}</span>{ended ? <span className="label">Ended</span> : <span className="label live-dot">Live</span>}</span>
     <strong className="market-tile-question">{titleOf(market)}</strong>
-    <span className="market-tile-odds"><span className="display">{chance ?? "—"}<sup>%</sup></span><span className="tag tag-yes">Yes</span></span>
+    <span className="market-tile-odds"><span className="display"><CountUp value={chance} /><sup>%</sup></span><span className="tag tag-yes">Yes</span></span>
     <TickMeter yes={market.yes_price} size="sm" />
     <span className="market-tile-foot label"><span title={market.post_count + " takes"}><Video size={12} strokeWidth={1.5} />{market.post_count}</span><span>{timeLeft(market.end_time, countdown, ended)}</span></span>
   </button>;
@@ -164,11 +166,11 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
       {market && <>
         <header className="market-hero slab">
           <div className="slab-section"><span className="label">Prediction market</span><h1>{titleOf(market)}</h1></div>
-          <div className="slab-section"><div className="market-hero-odds"><span className="label">Yes odds</span><span className="label">{cents(market.yes_price)} a share</span></div><div className="market-hero-meter"><span className="display">{chance ?? "\u2014"}<sup>%</sup></span><TickMeter yes={market.yes_price} /></div></div>
-          <div className="slab-section slab-split"><div className="stat"><span className="label">{ended ? "Trading" : "Time left"}</span><span className="label">Until trading closes</span><strong>{ended ? "Closed" : countdown ? countdown.label : market.end_time ? "Soon" : "Open"}</strong></div><div className="stat"><span className="label">Takes</span><span className="label">Videos on this market</span><strong>{market.post_count}</strong></div></div>
+          <div className="slab-section"><div className="market-hero-odds"><span className="label">Yes odds</span><span className="label">{cents(market.yes_price)} a share</span></div><div className="market-hero-meter"><span className="display"><CountUp value={chance} /><sup>%</sup></span><TickMeter yes={market.yes_price} /></div></div>
+          <div className="slab-section slab-split"><div className="stat"><span className="label">{ended ? "Trading" : "Time left"}</span><span className="label">Until trading closes</span><strong>{ended ? "Closed" : countdown ? countdown.label : market.end_time ? "Soon" : "Open"}</strong></div><div className="stat"><span className="label">Takes</span><span className="label">Videos on this market</span><strong><CountUp value={market.post_count} /></strong></div></div>
         </header>
         <div className="market-trade"><button type="button" className="btn btn-yes btn-lg" disabled={ended} onClick={() => onBuy(market, "YES")}><span>Buy Yes</span><span className="tabular">{cents(market.yes_price)}</span></button><button type="button" className="btn btn-no btn-lg" disabled={ended} onClick={() => onBuy(market, "NO")}><span>Buy No</span><span className="tabular">{cents(market.no_price)}</span></button></div>
-        <nav className="line-tabs" aria-label="Market sections">{(["overview", "timeline", "videos"] as DetailTab[]).map((item) => <button type="button" key={item} className={detailTab === item ? "active" : ""} onClick={() => setDetailTab(item)}>{item === "videos" ? `Videos (${market.post_count})` : item}</button>)}</nav>
+        <nav className="line-tabs" aria-label="Market sections">{(["overview", "timeline", "videos"] as DetailTab[]).map((item) => <button type="button" key={item} className={detailTab === item ? "active" : ""} onClick={() => withTransition(() => setDetailTab(item))}>{item === "videos" ? `Videos (${market.post_count})` : item}</button>)}</nav>
 
         {detailTab === "overview" && <>
           <section className="market-section"><h3 className="label">About this market</h3><p className="market-about">This market resolves YES if “{titleOf(market)}” happens by the end date, and NO otherwise. Prices move with trading: a YES share at {cents(market.yes_price)} implies roughly a {chance ?? "—"}% chance.</p>
@@ -190,7 +192,7 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
   const selected = categories.find((item) => item.id === category);
   return <div className="screen markets-home">
     <header className="screen-head"><h1 className="page-title">Markets</h1><button type="button" className="btn btn-sm" onClick={() => session.authenticated ? window.location.assign("/create" + (category ? "?category=" + category : "")) : session.login()}><Plus size={15} />Create</button><button type="button" className="icon-btn" onClick={onSearch} aria-label="Search markets"><Search size={17} strokeWidth={1.5} /></button></header>
-    <div className="chip-row markets-chips" aria-label="Market categories"><button type="button" className={"chip" + (!category ? " active" : "")} onClick={() => setCategory("")}>All</button>{categories.map((item) => <button type="button" key={item.id} className={"chip" + (category === item.id ? " active" : "")} onClick={() => setCategory(item.id)}>{item.label}</button>)}</div>
+    <div className="chip-row markets-chips" aria-label="Market categories"><button type="button" className={"chip" + (!category ? " active" : "")} onClick={() => withTransition(() => setCategory(""))}>All</button>{categories.map((item) => <button type="button" key={item.id} className={"chip" + (category === item.id ? " active" : "")} onClick={() => withTransition(() => setCategory(item.id))}>{item.label}</button>)}</div>
     {errorBlock}
     {loading && <p className="loading-line">Loading markets</p>}
     {!loading && !error && markets.length === 0 && <EmptyState icon={<Film size={26} strokeWidth={1.4} />} title="No markets in this category yet" action={<button type="button" className="btn" onClick={() => session.authenticated ? window.location.assign("/create" + (category ? "?category=" + category : "")) : session.login()}>Create a market</button>}>Be the first to create a prediction market{selected ? " for " + selected.label : ""}.</EmptyState>}

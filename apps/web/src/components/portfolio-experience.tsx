@@ -11,6 +11,8 @@ import type { MarketSummary, Position } from "@/lib/types";
 import { useSession } from "@/lib/use-session";
 import type { Session } from "@/lib/use-session";
 import { AppShell } from "@/components/app-shell";
+import { CountUp } from "@/components/count-up";
+import { withTransition } from "@/lib/motion";
 import { EmptyState, Money, SideTag, TickMeter } from "@/components/ui";
 import "@/styles/portfolio.css";
 
@@ -67,11 +69,11 @@ export function PortfolioExperience() {
       {!authenticated ? <EmptyState icon={<BriefcaseBusiness size={26} strokeWidth={1.4} />} title="Your positions live here" action={<button type="button" className="btn btn-primary" onClick={session.login}>Sign in</button>}>Sign in to track open trades and claim winnings.</EmptyState> : <>
         <section className="portfolio-hero slab">
           <div className="slab-section"><span className="label">Open positions</span><span className="label portfolio-sub">Estimated at current prices</span><Money value={total} className="portfolio-total" /></div>
-          <div className="slab-section slab-split" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Open</span><strong>{open.length}</strong></div><div className="stat"><span className="label">Resolved</span><strong>{settled.length}</strong></div><div className="stat"><span className="label">To claim</span><strong>{claimable}</strong></div></div>
+          <div className="slab-section slab-split" style={{ ["--cols" as string]: 3 }}><div className="stat"><span className="label">Open</span><strong><CountUp value={open.length} /></strong></div><div className="stat"><span className="label">Resolved</span><strong><CountUp value={settled.length} /></strong></div><div className="stat"><span className="label">To claim</span><strong><CountUp value={claimable} /></strong></div></div>
         </section>
         <p className="portfolio-note">Estimates use current market prices and may differ from what you paid.</p>
 
-        <div className="segmented portfolio-tabs" role="tablist"><button type="button" role="tab" aria-selected={tab === "open"} className={tab === "open" ? "active" : ""} onClick={() => setTab("open")}>Open</button><button type="button" role="tab" aria-selected={tab === "resolved"} className={tab === "resolved" ? "active" : ""} onClick={() => setTab("resolved")}>Resolved{claimable ? ` · ${claimable}` : ""}</button></div>
+        <div className="segmented portfolio-tabs" role="tablist"><button type="button" role="tab" aria-selected={tab === "open"} className={tab === "open" ? "active" : ""} onClick={() => withTransition(() => setTab("open"))}>Open</button><button type="button" role="tab" aria-selected={tab === "resolved"} className={tab === "resolved" ? "active" : ""} onClick={() => withTransition(() => setTab("resolved"))}>Resolved{claimable ? ` · ${claimable}` : ""}</button></div>
 
         {error && <div className="notice warn" role="alert"><span><strong>Couldn&apos;t load positions</strong>{error}</span></div>}
         {!address && !loading && <EmptyState icon={<BriefcaseBusiness size={26} strokeWidth={1.4} />} title="No wallet yet">Your Solana wallet is still being set up.</EmptyState>}

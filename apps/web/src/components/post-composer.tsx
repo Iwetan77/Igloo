@@ -103,6 +103,7 @@ export function PostComposer({
       <input ref={fileInput} className="visually-hidden" type="file" accept="video/*" tabIndex={-1} onChange={(event) => { void choose(event.target.files?.[0]); }} />
       <input ref={cameraInput} className="visually-hidden" type="file" accept="video/*" capture="environment" tabIndex={-1} onChange={(event) => { void choose(event.target.files?.[0]); }} />
 
+      <div className="step-body" key={step}>
       {step === "media" && <>
         {head(quotePost ? "Quote this take" : "Your take")}
         <div className="capture-stage">
@@ -137,6 +138,7 @@ export function PostComposer({
           <p className="label" role="status">{stage === "upload" ? "Uploading video" : "Publishing your take"}</p>
         </div>
       </>}
+      </div>
     </section>
   </div>;
 }

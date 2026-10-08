@@ -31,7 +31,7 @@
 .market-hero-meter > div { flex: 1; min-width: 0; }
 .market-hero .slab-split { padding-block: 18px 22px; }
 .market-trade { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 18px; }
-.market-section { padding: 22px 0 6px; animation: fade-in var(--t) var(--ease); }
+.market-section { padding: 22px 0 6px; }
 .market-section h3.label { margin: 0 0 12px; font-size: 13px; color: var(--text); }
 .market-about { margin: 0 0 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .market-facts { padding-block: 4px; }

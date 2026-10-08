@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, ChevronDown, ChevronRight, CircleHelp, Info, LogOut, UserRound, Wallet } from "lucide-react";
 import { useSession } from "@/lib/use-session";
 import { AppShell } from "@/components/app-shell";
+import { withTransition } from "@/lib/motion";
 import { WalletSheet } from "@/components/wallet-sheet";
 import { EmptyState } from "@/components/ui";
 import "@/styles/settings.css";
@@ -25,7 +26,7 @@ export function SettingsExperience() {
   const [wallet, setWallet] = useState(false);
   const [toast, setToast] = useState("");
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(""), 3000); };
-  const back = (title: string) => <header className="screen-head"><button type="button" className="icon-btn" onClick={() => setView("home")} aria-label="Back to settings"><ArrowLeft size={18} strokeWidth={1.5} /></button><h1 className="grow">{title}</h1></header>;
+  const back = (title: string) => <header className="screen-head"><button type="button" className="icon-btn" onClick={() => withTransition(() => setView("home"))} aria-label="Back to settings"><ArrowLeft size={18} strokeWidth={1.5} /></button><h1 className="grow">{title}</h1></header>;
   const icon = { size: 18, strokeWidth: 1.5 };
 
   return <AppShell active="settings" session={session}>
@@ -38,7 +39,7 @@ export function SettingsExperience() {
         <h2 className="label settings-section">Frequently asked questions</h2>
         <div className="faq">{faqs.map((item, index) => <div key={item.q} className={"faq-item" + (open === index ? " open" : "")}>
           <button type="button" aria-expanded={open === index} onClick={() => setOpen(open === index ? -1 : index)}>{item.q}<ChevronDown size={17} strokeWidth={1.5} /></button>
-          {open === index && <p>{item.a}</p>}
+          <div className="faq-body" aria-hidden={open !== index}><div><p>{item.a}</p></div></div>
         </div>)}</div>
       </> : view === "about" ? <>
         {back("About")}
@@ -49,8 +50,8 @@ export function SettingsExperience() {
         <div className="settings-group">
           <a className="settings-row" href="/profile?edit=1"><UserRound {...icon} /><span>Account</span><small className="label">Name, handle, bio</small><ChevronRight size={17} strokeWidth={1.5} /></a>
           <button type="button" className="settings-row" onClick={() => setWallet(true)}><Wallet {...icon} /><span>Wallet</span><small className="label">Balance, deposit</small><ChevronRight size={17} strokeWidth={1.5} /></button>
-          <button type="button" className="settings-row" onClick={() => setView("support")}><CircleHelp {...icon} /><span>Support</span><small className="label">FAQ</small><ChevronRight size={17} strokeWidth={1.5} /></button>
-          <button type="button" className="settings-row" onClick={() => setView("about")}><Info {...icon} /><span>About</span><ChevronRight size={17} strokeWidth={1.5} /></button>
+          <button type="button" className="settings-row" onClick={() => withTransition(() => setView("support"))}><CircleHelp {...icon} /><span>Support</span><small className="label">FAQ</small><ChevronRight size={17} strokeWidth={1.5} /></button>
+          <button type="button" className="settings-row" onClick={() => withTransition(() => setView("about"))}><Info {...icon} /><span>About</span><ChevronRight size={17} strokeWidth={1.5} /></button>
         </div>
         <button type="button" className="settings-row danger" onClick={() => { void session.logout().then(() => window.location.assign("/")); }}><LogOut {...icon} /><span>Sign out</span></button>
       </>}
