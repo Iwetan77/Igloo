@@ -2,48 +2,33 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Bookmark, ChevronRight, Compass, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, TrendingUp, UserRound, Volume2, VolumeX, Wallet } from "lucide-react";
+import { ArrowUpRight, BriefcaseBusiness, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, UserPlus, Volume2, VolumeX } from "lucide-react";
 import { getFeed, getUserProfile, setFollow, sharePost, toggleLike } from "@/lib/api";
 import { errorCopy, optionalCopy, uiCopy } from "@/lib/copy";
 import { demoPosts } from "@/lib/seed";
 import { getSupabase } from "@/lib/supabase";
 import { marketEnded, useMarketClock } from "@/lib/markets";
+import { cents, compactUsd, percent, shortId } from "@/lib/format";
+import { categoryFor } from "@/lib/categories";
 import type { FeedPost, FeedTab, MarketSummary, Side, UserProfile } from "@/lib/types";
 import { useSession } from "@/lib/use-session";
 import { useWatchSignals } from "@/lib/use-watch-signals";
+import { AppShell } from "@/components/app-shell";
 import { BuySheet } from "@/components/buy-sheet";
 import { CommentsDrawer } from "@/components/comments-drawer";
 import { MarketPicker } from "@/components/market-picker";
 import { MarketsView } from "@/components/markets-view";
-import { OnboardingPicker } from "@/components/onboarding-picker";
+import { OnboardingFlow } from "@/components/onboarding-flow";
 import { ProfilePanel } from "@/components/people-panels";
 import { PostComposer } from "@/components/post-composer";
 import { ProfileAvatar, authorName } from "@/components/profile-avatar";
 import { WalletSheet } from "@/components/wallet-sheet";
 import { SearchSheet } from "@/components/search-sheet";
-import { PositionsPanel } from "@/components/positions-panel";
-import "@/styles/wallet-chip.css";
+import { EmptyState, TickMeter } from "@/components/ui";
+import "@/styles/feed.css";
 
-function short(value: string): string {
-  return value.length > 18 ? value.slice(0, 8) + "..." + value.slice(-5) : value;
-}
-function price(value: number | null): string {
-  return value === null ? "\u2014" : (value * 100).toFixed(1) + "\u00a2";
-}
-function compactUsd(value: number): string {
-  if (value >= 1_000_000) return "$" + (value / 1_000_000).toFixed(1).replace(/\.0$/, "") + "m";
-  if (value >= 10_000) return "$" + Math.round(value / 1000) + "k";
-  if (value >= 1_000) return "$" + (value / 1000).toFixed(1).replace(/\.0$/, "") + "k";
-  return "$" + value.toFixed(2);
-}
-function chance(value: number | null): string {
-  return value === null ? "\u2014" : Math.round(value * 100) + "%";
-}
-function ProbabilityBar({ yes }: { yes: number | null }) {
-  return <div className={"prob-bar" + (yes === null ? " unknown" : "")} aria-hidden="true">{yes !== null && <span style={{ width: Math.max(2, Math.min(98, yes * 100)) + "%" }} />}</div>;
-}
 function question(post: FeedPost): string {
-  return post.market.question?.trim() || post.caption?.trim() || "Market " + short(post.panta_market_id);
+  return post.market.question?.trim() || post.caption?.trim() || "Market " + shortId(post.panta_market_id);
 }
 
 type ComposerTarget = { quotePost: FeedPost; market?: never } | { market: MarketSummary; quotePost?: never };
@@ -71,7 +56,6 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const [search, setSearch] = useState(false);
   const [profileId, setProfileId] = useState("");
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
-  const [positions, setPositions] = useState(false);
   const [account, setAccount] = useState(false);
   const walletSetupShown = useRef(false);
   const requestedProfiles = useRef(new Set<string>());
@@ -82,7 +66,10 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const watch = useWatchSignals(tab === "markets" ? "" : activeId, session);
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("tab") === "markets") setTab("markets");
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "markets") setTab("markets");
+    if (params.get("search") === "1") setSearch(true);
+    if (params.get("compose") === "1") setMarketPicker(true);
   }, []);
   useEffect(() => {
     if (!session.authenticated) walletSetupShown.current = false;
@@ -265,41 +252,88 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   function buyMarket(market: MarketSummary, side: Side) {
     setBuy({ post: { panta_market_id: market.panta_market_id, caption: null, market: { question: market.question, yes_price: market.yes_price, no_price: market.no_price, category: market.category, phase: market.phase, end_time: market.end_time } }, side });
   }
+  function openAuthor(post: FeedPost) {
+    if (!session.authenticated) { session.login(); return; }
+    if (post.author.username) window.location.assign("/u/" + encodeURIComponent(post.author.username));
+    else setProfileId(post.author.id);
+  }
 
-  if (!process.env.NEXT_PUBLIC_PRIVY_APP_ID) return <main className="setup-screen"><h1>Igloo</h1><p>Set NEXT_PUBLIC_PRIVY_APP_ID in apps/web/.env.local to enable sign in.</p></main>;
+  if (!process.env.NEXT_PUBLIC_PRIVY_APP_ID) return <main className="setup-screen"><span className="wordmark"><span className="logo-square" />Igloo</span><p className="muted">Set NEXT_PUBLIC_PRIVY_APP_ID in apps/web/.env.local to enable sign in.</p></main>;
 
   const follower = (post: FeedPost) => profiles[post.author.id];
-  return <div className={"app-frame" + (tab === "markets" ? " market-mode" : "")}>
-    <aside className="left-nav" aria-label="Main navigation"><div className="wordmark"><span className="logo-square" />Igloo</div><nav>
-      <button type="button" className={"nav-item" + (tab === "for_you" ? " active" : "")} onClick={() => switchTab("for_you")}><Compass size={20} />For You</button>
-      <button type="button" className={"nav-item" + (tab === "markets" ? " active" : "")} onClick={() => switchTab("markets")}><TrendingUp size={20} />Markets</button>
-      <button type="button" className="nav-item" onClick={() => setSearch(true)}><Search size={20} />Search</button>
-      <button type="button" className="nav-item" onClick={() => session.authenticated ? setPositions(true) : session.login()}><Bookmark size={20} />Positions</button>
-      <button type="button" className="nav-item" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()}><UserRound size={20} />Profile</button>
-      <button type="button" className="nav-item nav-post" onClick={openPicker}><Plus size={20} />Post</button>
-    </nav><button type="button" className="left-footer profile-entry" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()}><ProfileAvatar src={me?.avatar_url} name={me?.display_name} size={34} /><span>{session.authenticated ? (me?.username ? "@" + me.username : me?.display_name || "Profile") : "Sign in"}<small>{session.authenticated ? "View profile" : "Join Igloo"}</small></span></button></aside>
+  const isFollowing = (post: FeedPost) => follower(post)?.is_following ?? post.author.is_following ?? false;
+  const ended = (post: Pick<FeedPost, "market">) => marketEnded(post.market.end_time, marketNow);
+  const activeChance = activePost ? percent(activePost.market.yes_price) : null;
 
-    <main className="feed-column"><header className="feed-header"><button type="button" className="header-search" onClick={() => setSearch(true)} aria-label="Search markets and people" title="Search"><Search size={18} /></button><nav className="top-tabs" aria-label="Feed tabs">
-      <button type="button" className={tab === "following" ? "active" : ""} onClick={() => switchTab("following")}>Following</button>
-      <button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")}>For You</button>
-    </nav>{session.authenticated ? <button type="button" className="header-wallet" onClick={() => setAccount(true)}><Image src="/brand/usdc-token.svg" alt="" width={32} height={32} className="usdc-token-mark" />{session.balance === null ? <span>Wallet</span> : <><span className="wallet-full">{session.balance.toFixed(2)} USDC</span><span className="wallet-short" aria-hidden="true">{compactUsd(session.balance)}</span></>}</button> : <button type="button" className="header-signin" onClick={session.login}>Sign in</button>}</header>
+  return <AppShell active={tab === "markets" ? "markets" : "home"} session={session} className={tab === "markets" ? "feed-shell markets-mode" : "feed-shell"} onHome={() => switchTab("for_you")} onMarkets={() => switchTab("markets")} onSearch={() => setSearch(true)} onPost={openPicker}>
+    {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => window.location.assign("/?tab=markets")} onSearch={() => setSearch(true)} /> : <div className="feed-stage">
+      <main className="feed-column">
+        <header className="feed-header">
+          <button type="button" className="icon-btn sm" onClick={() => setSearch(true)} aria-label="Search markets and people" title="Search"><Search size={17} strokeWidth={1.5} /></button>
+          <nav className="feed-tabs" aria-label="Feed tabs">
+            <button type="button" className={tab === "following" ? "active" : ""} onClick={() => switchTab("following")}>Following</button>
+            <button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")}>For you</button>
+          </nav>
+          {session.authenticated ? <button type="button" className="balance-chip" onClick={() => setAccount(true)} aria-label="Wallet balance"><Image src="/brand/usdc-token.svg" alt="" width={20} height={20} />{session.balance === null ? "Wallet" : <span className="tabular">{compactUsd(session.balance)}</span>}</button> : <button type="button" className="btn btn-primary btn-sm" onClick={session.login}>Sign in</button>}
+        </header>
 
-    {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => window.location.assign("/?tab=markets")} /> : <div className="feed-scroll" ref={feedRef} onScroll={(event) => { const element = event.currentTarget; if (element.scrollTop + element.clientHeight >= element.scrollHeight - element.clientHeight * 1.5) void loadMore(); }}>
-      {posts.map((post, index) => <article className="feed-item" id={"post-" + post.id} data-post-id={post.id} key={post.id}>
-        {videoErrors[post.id] ? <div className="video-fallback"><span>{post.market.category || "Market"}</span><strong>{question(post)}</strong><small>Video unavailable</small></div> : <video ref={(element) => { if (element) videos.current.set(post.id, element); else videos.current.delete(post.id); }} src={post.video_url} className="post-video" autoPlay={post.id === activeId} loop muted playsInline preload={post.id === activeId || posts[index - 1]?.id === activeId ? "auto" : "metadata"} onPlay={() => watch.onPlay(post.id)} onPause={() => watch.onPause(post.id)} onTimeUpdate={(event) => watch.onTimeUpdate(post.id, event.currentTarget)} onEnded={() => watch.onEnded(post.id)} onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} onError={() => setVideoErrors((current) => ({ ...current, [post.id]: true }))} aria-label={question(post) + " video; tap to toggle sound"} />}
-        <div className="video-shade" aria-hidden /><div className="post-topline"><span className="category-tag">{post.market.category || "Market"}</span>{post.demo && <span className="demo-tag">Demo</span>}</div>
-        <div className="post-content"><div className="post-copy"><div className="author-line"><button type="button" className="creator" onClick={() => session.authenticated ? (post.author.username ? window.location.assign("/u/" + encodeURIComponent(post.author.username)) : setProfileId(post.author.id)) : session.login()}><ProfileAvatar src={post.author.avatar_url} name={post.author.display_name} size={28} />{authorName(post.author)}</button>{(follower(post)?.is_friend ?? post.author.is_friend) && <span className="friend-badge">Friends</span>}{me?.id !== post.author.id && <button type="button" className={"follow-button" + ((follower(post)?.is_following ?? post.author.is_following) ? " following" : "")} onClick={() => { void follow(post); }}>{follower(post)?.is_following ?? post.author.is_following ? "Following" : "Follow"}</button>}</div><h1>{question(post)}</h1>{post.caption && post.caption !== post.market.question && <p>{post.caption}</p>}{post.quoted_post && <button type="button" className="quoted-preview" onClick={() => openOriginal(post.quoted_post!.id)}><video src={post.quoted_post.video_url} muted playsInline preload="metadata" aria-hidden="true" /><span><small>Quoted post</small><strong><ProfileAvatar src={post.quoted_post.author.avatar_url} name={post.quoted_post.author.display_name} size={21} />{authorName(post.quoted_post.author)}</strong><em>{post.quoted_post.caption || "View original"}</em></span></button>}</div>
-          <div className="action-rail"><button type="button" className={"rail-button" + (post.liked_by_me ? " selected" : "")} onClick={() => { void like(post); }} aria-label="Like" title="Like"><Heart size={25} fill={post.liked_by_me ? "currentColor" : "none"} /><span>{post.like_count}</span></button><button type="button" className="rail-button" onClick={() => setComments(post)} aria-label="Comments" title="Comments"><MessageCircle size={25} /><span>{post.comment_count}</span></button><button type="button" className="rail-button" onClick={() => { void share(post); }} aria-label="Share" title="Share"><Share2 size={24} /><span>{post.share_count}</span></button><button type="button" className="rail-button" onClick={() => openQuote(post)} aria-label="Quote" title="Quote"><Quote size={24} /><span>{post.quote_count ?? 0}</span></button><button type="button" className="rail-button sound-button" onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} aria-label={unmutedId === post.id ? "Mute video" : "Unmute video"} title={unmutedId === post.id ? "Mute" : "Unmute"}>{unmutedId === post.id ? <Volume2 size={23} /> : <VolumeX size={23} />}</button></div>
-          <div className="market-strip"><div className="market-heading"><button type="button" onClick={() => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id))}>View market<ChevronRight size={14} /></button><span className={"status-pill" + (marketEnded(post.market.end_time, marketNow) ? " ended" : "")}>{marketEnded(post.market.end_time, marketNow) ? "Ended" : "Live"}</span></div><div className="chance-row"><span className="chance-value">{chance(post.market.yes_price)}<small>chance</small></span><em>YES</em></div><ProbabilityBar yes={post.market.yes_price} /><div className="trade-sides"><button type="button" className="trade-yes" disabled={marketEnded(post.market.end_time, marketNow)} onClick={() => setBuy({ post, side: "YES" })}><span>YES</span><strong>{price(post.market.yes_price)}</strong></button><button type="button" className="trade-no" disabled={marketEnded(post.market.end_time, marketNow)} onClick={() => setBuy({ post, side: "NO" })}><span>NO</span><strong>{price(post.market.no_price)}</strong></button></div></div>
-        </div></article>)}
-      {!loading && !feedError && posts.length === 0 && <div className="feed-empty"><strong>{tab === "following" ? "Your following feed is quiet." : "No videos yet."}</strong><p>{tab === "following" ? optionalCopy("following.empty", "Follow people to see their videos here.") : "Check back for new market videos."}</p>{tab === "following" && <button type="button" className="subtle-button" onClick={() => setSearch(true)}><Search size={16} />Find people</button>}</div>}
-      {feedError && posts.length === 0 && <div className="feed-empty"><p className="inline-error" role="alert">{feedError}</p><button type="button" className="subtle-button" onClick={() => { void refresh(initialPostId); }}>Retry</button></div>}
-      {loadingMore && <div className="load-indicator">Loading more...</div>}
+        <div className="feed-scroll" ref={feedRef} onScroll={(event) => { const element = event.currentTarget; if (element.scrollTop + element.clientHeight >= element.scrollHeight - element.clientHeight * 1.5) void loadMore(); }}>
+          {posts.map((post, index) => <article className="feed-item" id={"post-" + post.id} data-post-id={post.id} key={post.id}>
+            {videoErrors[post.id] ? <div className="video-fallback"><span className="label">{categoryFor(post.market.category).label}</span><strong>{question(post)}</strong><small className="label">Video unavailable</small></div> : <video ref={(element) => { if (element) videos.current.set(post.id, element); else videos.current.delete(post.id); }} src={post.video_url} className="post-video" autoPlay={post.id === activeId} loop muted playsInline preload={post.id === activeId || posts[index - 1]?.id === activeId ? "auto" : "metadata"} onPlay={() => watch.onPlay(post.id)} onPause={() => watch.onPause(post.id)} onTimeUpdate={(event) => watch.onTimeUpdate(post.id, event.currentTarget)} onEnded={() => watch.onEnded(post.id)} onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} onError={() => setVideoErrors((current) => ({ ...current, [post.id]: true }))} aria-label={question(post) + " video; tap to toggle sound"} />}
+            <div className="video-shade" aria-hidden />
+            {post.demo && <span className="tag tag-warn demo-tag">Demo</span>}
+
+            <div className="post-overlay">
+              <div className="post-copy">
+                <div className="author-line">
+                  <button type="button" className="author" onClick={() => openAuthor(post)}><ProfileAvatar src={post.author.avatar_url} name={post.author.display_name} size={30} />{authorName(post.author)}</button>
+                  {(follower(post)?.is_friend ?? post.author.is_friend) && <span className="tag">Friends</span>}
+                  {me?.id !== post.author.id && !post.demo && <button type="button" className={"follow-pill" + (isFollowing(post) ? " following" : "")} onClick={() => { void follow(post); }}>{isFollowing(post) ? "Following" : "Follow"}</button>}
+                </div>
+                {post.caption && post.caption !== post.market.question && <p className="post-caption">{post.caption}</p>}
+                {post.quoted_post && <button type="button" className="quoted-preview" onClick={() => openOriginal(post.quoted_post!.id)}><video src={post.quoted_post.video_url} muted playsInline preload="metadata" aria-hidden="true" /><span><small className="label">Quoting</small><strong>{authorName(post.quoted_post.author)}</strong><em>{post.quoted_post.caption || "View original"}</em></span></button>}
+              </div>
+
+              <div className="action-rail">
+                <button type="button" className={"rail-button" + (post.liked_by_me ? " selected" : "")} onClick={() => { void like(post); }} aria-label="Like" title="Like"><Heart size={22} strokeWidth={1.5} fill={post.liked_by_me ? "currentColor" : "none"} /><span>{post.like_count}</span></button>
+                <button type="button" className="rail-button" onClick={() => setComments(post)} aria-label="Comments" title="Comments"><MessageCircle size={22} strokeWidth={1.5} /><span>{post.comment_count}</span></button>
+                <button type="button" className="rail-button" onClick={() => { void share(post); }} aria-label="Share" title="Share"><Share2 size={21} strokeWidth={1.5} /><span>{post.share_count}</span></button>
+                <button type="button" className="rail-button" onClick={() => openQuote(post)} aria-label="Quote" title="Quote"><Quote size={21} strokeWidth={1.5} /><span>{post.quote_count ?? 0}</span></button>
+                <button type="button" className="rail-button" onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} aria-label={unmutedId === post.id ? "Mute video" : "Unmute video"} title={unmutedId === post.id ? "Mute" : "Unmute"}>{unmutedId === post.id ? <Volume2 size={21} strokeWidth={1.5} /> : <VolumeX size={21} strokeWidth={1.5} />}</button>
+              </div>
+
+              <section className="market-card-float" aria-label="Market">
+                <div className="mcf-top"><span className="label">{categoryFor(post.market.category).label} · <span className={ended(post) ? "" : "live-dot"}>{ended(post) ? "Ended" : "Live"}</span></span><button type="button" className="mcf-link" onClick={() => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id))}>Market<ArrowUpRight size={14} /></button></div>
+                <strong className="mcf-question">{question(post)}</strong>
+                <div className="mcf-odds"><span className="display mcf-chance">{percent(post.market.yes_price) ?? "—"}<sup>%</sup></span><div className="mcf-meter"><TickMeter yes={post.market.yes_price} size="sm" legend /></div></div>
+                <div className="mcf-trade"><button type="button" className="btn btn-yes" disabled={ended(post)} onClick={() => setBuy({ post, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(post.market.yes_price)}</span></button><button type="button" className="btn btn-no" disabled={ended(post)} onClick={() => setBuy({ post, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(post.market.no_price)}</span></button></div>
+              </section>
+            </div>
+          </article>)}
+          {!loading && !feedError && posts.length === 0 && <div className="feed-empty">{tab === "following" ? <EmptyState icon={<UserPlus size={26} strokeWidth={1.4} />} title="Nothing here yet" action={<button type="button" className="btn btn-primary" onClick={() => setSearch(true)}>Discover people to follow</button>}>{optionalCopy("following.empty", "Follow people to see their video takes and current market positions.")}</EmptyState> : <EmptyState icon={<Eye size={26} strokeWidth={1.4} />} title="No videos yet">Check back for new market takes.</EmptyState>}</div>}
+          {feedError && posts.length === 0 && <div className="feed-empty"><EmptyState icon={<Eye size={26} strokeWidth={1.4} />} title="The feed is offline" action={<button type="button" className="btn" onClick={() => { void refresh(initialPostId); }}>Retry</button>}>{feedError}</EmptyState></div>}
+        </div>
+        {loading && <div className="feed-status label" role="status">Updating feed</div>}
+        {loadingMore && <div className="feed-status bottom label" role="status">Loading more</div>}
+      </main>
+
+      <aside className="watch-panel">
+        <div className="label watch-title"><Eye size={13} strokeWidth={1.5} />Now watching</div>
+        {activePost ? <section className="watch-card">
+          <div className="watch-tags"><span className="tag">{categoryFor(activePost.market.category).label}</span>{ended(activePost) ? <span className="tag">Ended</span> : <span className="tag tag-live">Live</span>}</div>
+          <h2>{question(activePost)}</h2>
+          <div className="watch-odds"><span className="display watch-chance">{activeChance ?? "—"}<sup>%</sup></span><span className="label">Yes chance</span></div>
+          <TickMeter yes={activePost.market.yes_price} legend />
+          <div className="watch-trade"><button type="button" className="btn btn-yes btn-lg" disabled={ended(activePost)} onClick={() => setBuy({ post: activePost, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(activePost.market.yes_price)}</span></button><button type="button" className="btn btn-no btn-lg" disabled={ended(activePost)} onClick={() => setBuy({ post: activePost, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(activePost.market.no_price)}</span></button></div>
+          {activePost.caption && activePost.caption !== activePost.market.question && <p className="watch-caption">{activePost.caption}</p>}
+        </section> : <p className="empty-note">Scroll the feed to see a market here.</p>}
+        <div className="rows watch-links">
+          <a className="row" href={activePost ? "/market/" + encodeURIComponent(activePost.panta_market_id) : "/?tab=markets"}><span className="row-main"><span className="row-title">Open market</span><span className="row-sub">Overview, videos, timeline</span></span><span className="row-end"><ArrowUpRight size={16} /></span></a>
+          <button type="button" className="row" onClick={() => session.authenticated ? window.location.assign("/portfolio") : session.login()}><span className="row-main"><span className="row-title">Your positions</span><span className="row-sub">Open and resolved</span></span><span className="row-end"><BriefcaseBusiness size={16} strokeWidth={1.5} /></span></button>
+          <button type="button" className="row" onClick={() => activePost && !activePost.demo ? (session.authenticated ? setComposer({ market: { panta_market_id: activePost.panta_market_id, question: activePost.market.question, category: activePost.market.category, phase: activePost.market.phase, end_time: activePost.market.end_time, yes_price: activePost.market.yes_price, no_price: activePost.market.no_price, image_url: null, post_count: 0 } }) : session.login()) : openPicker()}><span className="row-main"><span className="row-title">Post a take on this market</span><span className="row-sub">Record or upload a video</span></span><span className="row-end"><Plus size={16} /></span></button>
+        </div>
+      </aside>
     </div>}
-    <nav className="mobile-nav" aria-label="Mobile navigation"><button type="button" className={tab === "for_you" || tab === "following" ? "active" : ""} onClick={() => switchTab("for_you")} aria-label="Feed" title="Feed"><Compass size={21} /><span>Feed</span></button><button type="button" className={tab === "markets" ? "active" : ""} onClick={() => switchTab("markets")} aria-label="Markets" title="Markets"><TrendingUp size={21} /><span>Markets</span></button><button type="button" className="create-nav" onClick={openPicker} aria-label="Create post" title="Create post"><Plus size={24} /></button><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()} aria-label="Positions" title="Positions"><Bookmark size={21} /><span>Positions</span></button><button type="button" onClick={() => session.authenticated ? window.location.assign("/profile") : session.login()} aria-label="Profile" title="Profile"><ProfileAvatar src={me?.avatar_url} name={me?.display_name} size={23} /><span>Profile</span></button></nav>
-    {loading && tab !== "markets" && <div className="feed-loading" role="status">Updating feed...</div>}</main>
-
-    <aside className="right-panel"><div className="right-title"><Eye size={14} />Now watching</div>{activePost && tab !== "markets" && <><div className="watch-card"><span className="right-category">{activePost.market.category || "Market"}</span><h2>{question(activePost)}</h2><span className="chance-value">{chance(activePost.market.yes_price)}<small>chance</small></span><ProbabilityBar yes={activePost.market.yes_price} /><div className="right-prices"><button type="button" disabled={marketEnded(activePost.market.end_time, marketNow)} onClick={() => setBuy({ post: activePost, side: "YES" })}><span>Buy Yes</span><strong>{price(activePost.market.yes_price)}</strong></button><button type="button" disabled={marketEnded(activePost.market.end_time, marketNow)} onClick={() => setBuy({ post: activePost, side: "NO" })}><span>Buy No</span><strong>{price(activePost.market.no_price)}</strong></button></div></div>{activePost.caption && <p className="right-caption">{activePost.caption}</p>}</>}<div className="right-bottom"><button type="button" onClick={() => session.authenticated ? setPositions(true) : session.login()}><Wallet size={17} />View positions</button><button type="button" onClick={openPicker}><Plus size={17} />Post</button></div></aside>
 
     {toast && <div className="toast" role="status">{toast}</div>}
     {buy && <BuySheet post={buy.post} side={buy.side} session={session} onClose={() => setBuy(null)} onConfirmed={() => notify("Order confirmed.")} />}
@@ -308,8 +342,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     {composer && <PostComposer market={composer.market} quotePost={composer.quotePost} session={session} onClose={() => setComposer(null)} onPosted={onPosted} />}
     {search && <SearchSheet session={session} onClose={() => setSearch(false)} onOpenProfile={(user) => { setSearch(false); if (user.username) window.location.assign("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
     {profileId && <ProfilePanel id={profileId} session={session} onClose={() => setProfileId("")} onOpenPost={openOriginal} onProfile={onProfile} />}
-    {positions && <PositionsPanel session={session} onClose={() => setPositions(false)} />}
-    {session.synced && me && (!me.onboarded || ("username" in me && !me.username)) && <OnboardingPicker session={session} />}
+    {session.synced && me && <OnboardingFlow session={session} />}
     {account && <WalletSheet session={session} onClose={() => setAccount(false)} notify={notify} />}
-  </div>;
+  </AppShell>;
 }

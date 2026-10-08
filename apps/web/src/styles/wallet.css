@@ -1,0 +1,19 @@
+.wallet-sheet { width: min(100%, 420px); }
+.wallet-title { flex: 1; font-size: 19px; }
+.wallet-sheet .sheet-head > .icon-btn:first-child + .wallet-title { text-align: center; }
+.wallet-hero { display: grid; gap: 12px; padding: 22px 20px 20px; margin-bottom: 12px; }
+.wallet-hero > .label { color: rgba(241, 242, 244, 0.72); }
+.wallet-balance { font-size: 54px; }
+.wallet-balance sup { color: rgba(241, 242, 244, 0.7); }
+.wallet-balance .money-unit { color: rgba(241, 242, 244, 0.7); font-size: 13px; }
+.wallet-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.wallet-hero .tag { color: var(--text); border-color: rgba(255, 255, 255, 0.22); background: rgba(0, 0, 0, 0.2); }
+.address-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 16px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); color: var(--muted); }
+.address-row:hover { border-color: var(--line-strong); color: var(--text); }
+.address-value { flex: 1; text-align: left; font-family: var(--mono); font-size: 14px; color: var(--text); }
+.wallet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.wallet-note { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 16px 0 0; }
+.wallet-signout { margin-top: 18px; }
+.deposit-card { display: grid; gap: 14px; padding: 22px 20px; margin-bottom: 12px; }
+.deposit-card > .label { color: rgba(241, 242, 244, 0.72); }
+.deposit-address { margin: 0; font-family: var(--mono); font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }

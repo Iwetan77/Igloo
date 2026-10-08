@@ -1,0 +1,20 @@
+/* Settings: grouped rows, a support FAQ, and an about card. */
+.settings-group { margin-bottom: 14px; overflow: hidden; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--surface); }
+.settings-row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 58px; padding: 0 16px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; text-decoration: none; font-size: 15px; }
+.settings-group .settings-row:last-child { border-bottom: 0; }
+.settings-row:hover { background: rgba(255, 255, 255, 0.025); }
+.settings-row > svg:first-child { color: var(--muted); }
+.settings-row > span { flex: 1; }
+.settings-row > small { color: var(--subtle); }
+.settings-row > svg:last-child { color: var(--subtle); }
+.settings-row.danger { border-radius: var(--r-lg); border: 1px solid var(--no-line); color: var(--no); }
+.settings-row.danger > svg:first-child { color: var(--no); }
+.settings-section { margin: 0 0 12px; }
+.faq { display: grid; gap: 8px; }
+.faq-item { border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); }
+.faq-item button { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 56px; padding: 0 16px; border: 0; background: transparent; color: var(--text); text-align: left; font-size: 15px; }
+.faq-item button svg { flex: none; color: var(--muted); transition: transform var(--t) var(--ease); }
+.faq-item.open button svg { transform: rotate(180deg); }
+.faq-item p { margin: 0; padding: 0 16px 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.about-card { display: grid; gap: 12px; padding: 28px 22px; margin-bottom: 12px; }
+.about-card p { margin: 0; font-size: 22px; font-weight: 300; }

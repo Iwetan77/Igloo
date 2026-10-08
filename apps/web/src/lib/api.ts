@@ -169,3 +169,37 @@ export function requestVideoUpload(content_type: string, token: string) {
   );
 }
 
+export function buildClaim(panta_market_id: string, token: string) {
+  return apiRequest<{ winning_shares: number; unsigned_tx_base64: string }>("/claims/build", {
+    method: "POST", body: { panta_market_id }, token,
+  });
+}
+
+export type CreateMarketInput = {
+  question: string;
+  resolution_rule: string;
+  sources_of_truth: string[];
+  category: string;
+  start_time: number;
+  end_time: number;
+  resolution_time: number;
+  market_type?: string;
+  title?: string;
+  description?: string;
+  image_url?: string;
+};
+export function quoteMarketCreation(input: CreateMarketInput, token: string) {
+  return apiRequest<{ create_id: string; expected_panta_market_id: string; fee_usdc: number; expires_at: string }>(
+    "/markets/quote", { method: "POST", body: input, token },
+  );
+}
+export function buildMarketCreation(create_id: string, token: string) {
+  return apiRequest<{ create_id: string; unsigned_tx_base64: string; expected_panta_market_id: string }>(
+    "/markets/build", { method: "POST", body: { create_id }, token },
+  );
+}
+export function registerMarket(create_id: string, signature: string, token: string) {
+  return apiRequest<{ panta_market_id: string; status: string }>(
+    "/markets/register", { method: "POST", body: { create_id, signature }, token },
+  );
+}
