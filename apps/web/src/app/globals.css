@@ -257,14 +257,19 @@ h1, h2, h3 { font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
 .card-pad { padding: 18px; }
 .paper { background: var(--bg-2); color: var(--text); border-radius: var(--r-lg); }
 
-/* Slab: fused ink sections separated by pill slits cut in the canvas colour. */
+/* Fused ink sections, with rounded canvas slits entering from both edges. */
 .slab, .hero-dusk, .hero-tide { position: relative; background: var(--ink); border-radius: var(--r-xl); }
 .slab-section { position: relative; padding: 18px 20px; }
-.slab-section + .slab-section::before { content: ""; position: absolute; z-index: 1; top: -4px; left: 20px; right: 20px; height: 8px; border-radius: 8px; background: var(--canvas); }
+.slab > :is(.slab-section, .slab-split) + :is(.slab-section, .slab-split)::before,
+.slab > :is(.slab-section, .slab-split) + :is(.slab-section, .slab-split)::after {
+  content: ""; position: absolute; z-index: 1; top: -28px; width: 48px; height: 56px;
+  background: var(--canvas); mask: url("/shapes/slab-slit.svg") center / 100% 100% no-repeat; pointer-events: none;
+}
+.slab > :is(.slab-section, .slab-split) + :is(.slab-section, .slab-split)::before { left: 0; }
+.slab > :is(.slab-section, .slab-split) + :is(.slab-section, .slab-split)::after { right: 0; transform: scaleX(-1); }
 .slab-split { position: relative; display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); column-gap: 28px; }
 .slab-split > * { position: relative; }
 .slab-split > * + *::after { content: ""; position: absolute; z-index: 1; left: -18px; top: 0; bottom: 0; width: 8px; border-radius: 8px; background: var(--canvas); }
-.slab-split + .slab-section::before, .slab-section + .slab-split::before { content: ""; position: absolute; z-index: 1; top: -4px; left: 20px; right: 20px; height: 8px; border-radius: 8px; background: var(--canvas); }
 .slab-split.slab-section > * { padding: 0; }
 .stat { display: grid; gap: 3px; min-width: 0; }
 .stat > .label + .label { font-size: 10px; color: var(--subtle); }

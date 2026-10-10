@@ -6,6 +6,7 @@ import { BriefcaseBusiness, ChartSpline, House, Moon, Plus, Search, Settings, Su
 import { useThemeSwitch } from "@/lib/theme";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { BrandLogo } from "@/components/brand-logo";
+import { DesktopPageFrame } from "@/components/desktop-page-frame";
 import type { Session } from "@/lib/use-session";
 import { useIndicator } from "@/lib/motion";
 
@@ -64,7 +65,7 @@ export function AppShell({ active, session, children, className = "", ...handler
         </div>
       </div>
     </aside>
-    <div className="shell-main">{children}</div>
+    <div className="shell-main">{active === "home" ? children : <DesktopPageFrame session={session} onSearch={search} onMarkets={markets} onPost={post}>{children}</DesktopPageFrame>}</div>
     <nav className="bottom-nav" aria-label="Mobile navigation">
       <button type="button" className="dock-round" onClick={post} aria-label="Post a take"><Plus size={20} strokeWidth={1.75} /></button>
       <div className="dock-pill" ref={dockTabs.host}>
