@@ -57,6 +57,29 @@
   --r-lg: 22px;
   --r-xl: 28px;
   --r-pill: 999px;
+  /* Shared spacing tokens for the editable Figma components. */
+  --space-0: 0px;
+  --space-2: 2px;
+  --space-3: 3px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-18: 18px;
+  --space-20: 20px;
+  --space-22: 22px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-56: 56px;
+  --space-72: 72px;
+  --space-84: 84px;
+  --space-999: 999px;
   --shadow-md: 0 12px 30px rgba(6, 25, 28, 0.12);
   --shadow-lg: 0 30px 70px rgba(6, 25, 28, 0.22);
   --glass: rgba(6, 25, 28, 0.55);
@@ -186,9 +209,8 @@ h1, h2, h3 { font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
 /* ---------- Brand ---------- */
 .wordmark { display: inline-flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 400; letter-spacing: -0.02em; }
 .wordmark sup { font-size: 9px; vertical-align: 0.9em; margin-left: -4px; }
-.logo-square { display: inline-block; width: 22px; height: 22px; flex: none; background: url("/brand/igloo-mark.png") center / contain no-repeat; filter: grayscale(1) brightness(2.2); }
-.privy-logo { display: inline-flex; align-items: center; gap: 8px; color: var(--text); font-size: 18px; }
-.privy-logo-mark { width: 24px; height: 24px; background: url("/brand/igloo-mark.png") center / contain no-repeat; }
+.brand-logo { display: inline-block; width: 150px; height: 34px; flex: none; color: var(--text); background: currentColor; mask: url("/brand/igloo-logo.svg") center / contain no-repeat; }
+.brand-symbol { width: 40px; height: 30px; mask-image: url("/brand/igloo-symbol.svg"); }
 
 /* ---------- Buttons: ink pills with tiny bold uppercase labels ---------- */
 .btn {
@@ -422,7 +444,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 @media (max-width: 1080px) {
   .shell { grid-template-columns: 84px minmax(0, 1fr); }
   .side-rail { align-items: center; padding-inline: 10px; }
-  .side-rail .wordmark { margin-inline: 0; font-size: 0; gap: 0; }
+  .side-rail .wordmark { margin-inline: 0; font-size: 0; gap: 0; width: 38px; height: 30px; mask-image: url("/brand/igloo-symbol.svg"); }
   .side-rail .wordmark sup { display: none; }
   .side-link { justify-content: center; width: 44px; padding: 0; font-size: 0; gap: 0; }
   .side-post { width: 44px; min-height: 44px; padding: 0; font-size: 0; gap: 0; }
