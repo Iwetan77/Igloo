@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { getMarkets } from "@/lib/api";
@@ -18,6 +20,7 @@ export function DesktopMarketRail({ posts, session, now, onMarkets }: {
   now: number;
   onMarkets: () => void;
 }) {
+  const router = useRouter();
   const { authenticated, getAccessToken } = session;
   const [markets, setMarkets] = useState<MarketSummary[]>([]);
 
@@ -64,7 +67,7 @@ export function DesktopMarketRail({ posts, session, now, onMarkets }: {
       {items.map((market) => {
         const chance = percent(market.yes_price);
         return <button type="button" className="trending-card slab" key={market.panta_market_id}
-          onClick={(event) => expandInto(event.currentTarget, () => window.location.assign("/market/" + encodeURIComponent(market.panta_market_id)))}>
+          onClick={(event) => expandInto(event.currentTarget, () => router.push("/market/" + encodeURIComponent(market.panta_market_id)))}>
           <strong>{market.question || "Market " + shortId(market.panta_market_id)}</strong>
           <span className="trending-odds"><b className="tabular">{chance === null ? "—" : chance + "%"}<small> Yes</small></b><ArrowUpRight size={15} /></span>
           <TickMeter yes={market.yes_price} size="sm" />

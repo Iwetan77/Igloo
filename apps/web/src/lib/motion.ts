@@ -1,50 +1,24 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { flushSync } from "react-dom";
 
 export function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-type Update = () => void;
-type TransitionDocument = Document & { startViewTransition?: (update: Update) => unknown };
-
 /**
- * Swaps whole pages inside a view transition. The page itself is not
- * animated by the transition (each page plays its own entrance); only
- * persistent pieces with a view-transition-name, like the dock pill, glide
- * between their old and new places.
- */
-export function withTransition(update: Update) {
-  const doc = typeof document === "undefined" ? null : document as TransitionDocument;
-  if (!doc?.startViewTransition || prefersReducedMotion()) { update(); return; }
-  doc.startViewTransition(() => flushSync(update));
-}
-
-/**
- * Grows an ink panel out of the tapped card until it fills the screen, then
- * runs `go` (the navigation) and fades the panel away over the new page.
+ * Give the tapped card a small press response, then navigate immediately.
+ * A full-viewport expansion delayed navigation and obscured the stable rail.
  */
 export function expandInto(from: HTMLElement | null, go: () => void) {
-  if (!from || prefersReducedMotion() || typeof from.animate !== "function") { go(); return; }
-  const rect = from.getBoundingClientRect();
-  const radius = getComputedStyle(from).borderRadius || "22px";
-  const ghost = document.createElement("div");
-  ghost.className = "expand-ghost";
-  Object.assign(ghost.style, { top: rect.top + "px", left: rect.left + "px", width: rect.width + "px", height: rect.height + "px", borderRadius: radius });
-  document.body.appendChild(ghost);
-  const grow = ghost.animate([
-    { top: rect.top + "px", left: rect.left + "px", width: rect.width + "px", height: rect.height + "px", borderRadius: radius },
-    { top: "0px", left: "0px", width: window.innerWidth + "px", height: window.innerHeight + "px", borderRadius: "0px" },
-  ], { duration: 460, easing: "cubic-bezier(0.65, 0, 0.35, 1)", fill: "forwards" });
-  grow.onfinish = () => {
-    go();
-    window.setTimeout(() => {
-      const fade = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 360, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "forwards" });
-      fade.onfinish = () => ghost.remove();
-    }, 90);
-  };
+  if (from && !prefersReducedMotion() && typeof from.animate === "function") {
+    try {
+      from.animate([{ transform: "scale(1)" }, { transform: "scale(0.985)" }, { transform: "scale(1)" }], {
+        duration: 180, easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      });
+    } catch { /* Optional feedback must never prevent navigation. */ }
+  }
+  go();
 }
 
 /** "forward" when a step or tab index grows, "back" when it shrinks. */
@@ -83,6 +57,7 @@ export function useIndicator<T extends HTMLElement>(key: unknown) {
     const frame = requestAnimationFrame(() => indicator.classList.add("ready"));
     const observer = new ResizeObserver(place);
     observer.observe(root);
+    if (active) observer.observe(active);
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
   }, [key]);
   return { host, bar };

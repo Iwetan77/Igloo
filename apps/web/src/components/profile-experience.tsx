@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import { ArrowLeft, Camera, Heart, Settings, VideoOff, X } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ApiError, getLikedPosts, getUserByUsername, getUserPosts, getUserProfile, setFollow } from "@/lib/api";
 import { uploadAvatar } from "@/lib/avatar";
 import { errorCopy } from "@/lib/copy";
@@ -22,6 +24,7 @@ type ProfileTab = "videos" | "liked";
 const compact = (value: number) => value >= 1000 ? (value / 1000).toFixed(1).replace(/\.0$/, "") + "k" : String(value);
 
 export function ProfileExperience({ own = false }: { own?: boolean }) {
+  const router = useRouter();
   const params = useParams<{ username?: string }>();
   const username = params.username;
   const session = useSession();
@@ -141,8 +144,8 @@ export function ProfileExperience({ own = false }: { own?: boolean }) {
 
   const handle = profile?.username ? "@" + profile.username : "";
   const header = isOwn || own
-    ? <header className="screen-head"><h1 className="page-title">Profile</h1>{session.authenticated && <a className="icon-btn" href="/settings" aria-label="Settings"><Settings size={18} strokeWidth={1.5} /></a>}</header>
-    : <header className="screen-head"><button type="button" className="icon-btn" onClick={() => window.history.length > 1 ? window.history.back() : window.location.assign("/")} aria-label="Back"><ArrowLeft size={18} strokeWidth={1.5} /></button><h1 className="grow">{"@" + (username || "")}</h1></header>;
+    ? <header className="screen-head"><h1 className="page-title">Profile</h1>{session.authenticated && <Link className="icon-btn" href="/settings" aria-label="Settings"><Settings size={18} strokeWidth={1.5} /></Link>}</header>
+    : <header className="screen-head"><button type="button" className="icon-btn" onClick={() => window.history.length > 1 ? window.history.back() : router.push("/")} aria-label="Back"><ArrowLeft size={18} strokeWidth={1.5} /></button><h1 className="grow">{"@" + (username || "")}</h1></header>;
 
   return <AppShell active={own || isOwn ? "profile" : null} session={session}>
     <main className="screen profile-screen">

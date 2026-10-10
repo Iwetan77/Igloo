@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useEffect, useRef, useState } from "react";
 import { Globe, Search, X } from "lucide-react";
 import { searchMarkets, searchUsers } from "@/lib/api";
@@ -26,6 +28,7 @@ export function SearchSheet({ session, onClose, onOpenProfile }: {
   onClose: () => void;
   onOpenProfile: (user: UserProfile) => void;
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Results | null>(null);
   const [loading, setLoading] = useState(false);
@@ -83,7 +86,7 @@ export function SearchSheet({ session, onClose, onOpenProfile }: {
 
         {results && results.markets.length > 0 && <section className="search-section">
           <h3 className="label">Markets</h3>
-          {results.markets.map((market) => <button type="button" key={market.panta_market_id} className="search-row" onClick={() => window.location.assign("/market/" + encodeURIComponent(market.panta_market_id))}>
+          {results.markets.map((market) => <button type="button" key={market.panta_market_id} className="search-row" onClick={() => router.push("/market/" + encodeURIComponent(market.panta_market_id))}>
             <span className="search-row-text"><strong>{market.question}</strong><small>{categoryFor(market.category).label}{market.post_count ? " · " + market.post_count + (market.post_count === 1 ? " take" : " takes") : ""}</small></span>
             {market.yes_price !== null && <span className="search-chance display">{chance(market.yes_price)}<small className="label">yes</small></span>}
           </button>)}
