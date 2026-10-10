@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, BriefcaseBusiness, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, UserPlus, Volume2, VolumeX } from "lucide-react";
+import { ArrowUpRight, BriefcaseBusiness, ChevronDown, ChevronUp, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, UserPlus, Volume2, VolumeX } from "lucide-react";
 import { getFeed, getUserProfile, setFollow, sharePost, toggleLike } from "@/lib/api";
 import { errorCopy, optionalCopy, uiCopy } from "@/lib/copy";
 import { demoPosts } from "@/lib/seed";
@@ -26,7 +26,8 @@ import { WalletSheet } from "@/components/wallet-sheet";
 import { SearchSheet } from "@/components/search-sheet";
 import { EmptyState, TickMeter } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
-import { expandInto, useIndicator, withTransition } from "@/lib/motion";
+import { DesktopMarketRail } from "@/components/desktop-market-rail";
+import { expandInto, prefersReducedMotion, useIndicator, withTransition } from "@/lib/motion";
 import "@/styles/feed.css";
 
 function question(post: FeedPost): string {
@@ -67,6 +68,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const activePost = posts.find((post) => post.id === activeId) || posts[0];
   const watch = useWatchSignals(tab === "markets" ? "" : activeId, session);
   const tabs = useIndicator<HTMLElement>(tab);
+  const desktopTabs = useIndicator<HTMLElement>(tab);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -263,6 +265,12 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     else setProfileId(post.author.id);
   }
 
+  function movePost(direction: -1 | 1) {
+    const index = posts.findIndex((post) => post.id === activeId);
+    const next = posts[index + direction];
+    if (next) document.getElementById("post-" + next.id)?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+  }
+
   if (!process.env.NEXT_PUBLIC_PRIVY_APP_ID) return <main className="setup-screen"><span className="wordmark"><span className="logo-square" />Igloo</span><p className="muted">Set NEXT_PUBLIC_PRIVY_APP_ID in apps/web/.env.local to enable sign in.</p></main>;
 
   const follower = (post: FeedPost) => profiles[post.author.id];
@@ -273,6 +281,15 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   return <AppShell active={tab === "markets" ? "markets" : "home"} session={session} className={tab === "markets" ? "feed-shell markets-mode" : "feed-shell"} onHome={() => switchTab("for_you")} onMarkets={() => switchTab("markets")} onSearch={() => setSearch(true)} onPost={openPicker}>
     {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => window.location.assign("/?tab=markets")} onSearch={() => setSearch(true)} /> : <div className="feed-stage">
       <main className="feed-column">
+        <header className="desktop-feed-header">
+          <button type="button" className="desktop-search slab" onClick={() => setSearch(true)} aria-label="Search markets and people"><Search size={18} strokeWidth={1.5} /><span>Search creators and markets...</span></button>
+          <div className="desktop-wallet">
+            {session.authenticated ? <><span className="label">Balance</span><button type="button" className="btn btn-primary btn-sm" onClick={() => setAccount(true)} aria-label="Wallet balance">{session.balance === null ? "Wallet" : <span className="tabular">{compactUsd(session.balance)} USDC</span>}</button></> : <button type="button" className="btn btn-primary btn-sm" onClick={session.login}>Sign in</button>}
+          </div>
+        </header>
+        <DesktopMarketRail posts={posts} session={session} now={marketNow} onMarkets={() => switchTab("markets")} />
+
+        <div className="feed-player">
         <header className="feed-header"><div className="feed-bar slab">
           <button type="button" className="icon-btn sm" onClick={() => setSearch(true)} aria-label="Search markets and people" title="Search"><Search size={17} strokeWidth={1.5} /></button>
           <nav className="feed-tabs" aria-label="Feed tabs" ref={tabs.host}><span className="indicator" ref={tabs.bar} aria-hidden="true" />
@@ -287,6 +304,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
             {videoErrors[post.id] ? <div className="video-fallback"><span className="label">{categoryFor(post.market.category).label}</span><strong>{question(post)}</strong><small className="label">Video unavailable</small></div> : <video ref={(element) => { if (element) videos.current.set(post.id, element); else videos.current.delete(post.id); }} src={post.video_url} className="post-video" autoPlay={post.id === activeId} loop muted playsInline preload={post.id === activeId || posts[index - 1]?.id === activeId ? "auto" : "metadata"} onPlay={() => watch.onPlay(post.id)} onPause={() => watch.onPause(post.id)} onTimeUpdate={(event) => watch.onTimeUpdate(post.id, event.currentTarget)} onEnded={() => watch.onEnded(post.id)} onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} onError={() => setVideoErrors((current) => ({ ...current, [post.id]: true }))} aria-label={question(post) + " video; tap to toggle sound"} />}
             <div className="video-shade" aria-hidden />
             {post.demo && <span className="tag tag-warn demo-tag">Demo</span>}
+            <span className="desktop-video-tag tag on-ink">{categoryFor(post.market.category).label} · {ended(post) ? "Ended" : "Market take"}</span>
 
             <div className="post-overlay">
               <div className="post-copy">
@@ -320,6 +338,26 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
         </div>
         {loading && <div className="feed-status label" role="status">Updating feed</div>}
         {loadingMore && <div className="feed-status bottom label" role="status">Loading more</div>}
+        <aside className="desktop-engagement slab" aria-label="Video engagement">
+          <nav className="feed-tabs desktop-feed-tabs" aria-label="Desktop feed tabs" ref={desktopTabs.host}><span className="indicator" ref={desktopTabs.bar} aria-hidden="true" />
+            <button type="button" className={tab === "following" ? "active" : ""} onClick={() => switchTab("following")}>Following</button>
+            <button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")}>For you</button>
+          </nav>
+          <h2 className="label">Engagement</h2>
+          {activePost ? <>
+            <div className="engagement-actions">
+              <button type="button" className={"engagement-action" + (activePost.liked_by_me ? " selected" : "")} onClick={() => { void like(activePost); }} aria-label="Like"><Heart size={20} strokeWidth={1.5} fill={activePost.liked_by_me ? "currentColor" : "none"} /><span><strong>{activePost.like_count} Likes</strong><small>React to this take</small></span></button>
+              <button type="button" className="engagement-action" onClick={() => setComments(activePost)} aria-label="Comments"><MessageCircle size={20} strokeWidth={1.5} /><span><strong>{activePost.comment_count} Comments</strong><small>Join the conversation</small></span></button>
+              <button type="button" className="engagement-action" onClick={() => { void share(activePost); }} aria-label="Share"><Share2 size={20} strokeWidth={1.5} /><span><strong>{activePost.share_count} Shares</strong><small>Share this take</small></span></button>
+              <button type="button" className="engagement-action" onClick={() => openQuote(activePost)} aria-label="Quote"><Quote size={20} strokeWidth={1.5} /><span><strong>{activePost.quote_count ?? 0} Quotes</strong><small>Add your perspective</small></span></button>
+            </div>
+            <div className="engagement-controls">
+              <button type="button" className="engagement-action" onClick={() => setUnmutedId((current) => current === activePost.id ? "" : activePost.id)} aria-label={unmutedId === activePost.id ? "Mute video" : "Unmute video"}>{unmutedId === activePost.id ? <Volume2 size={20} strokeWidth={1.5} /> : <VolumeX size={20} strokeWidth={1.5} />}<span><strong>{unmutedId === activePost.id ? "Sound on" : "Sound off"}</strong><small>Click to toggle</small></span></button>
+              <div className="feed-pagination"><span className="label">{posts.findIndex((post) => post.id === activePost.id) + 1} / {posts.length}</span><button type="button" className="icon-btn sm" aria-label="Previous take" disabled={activePost.id === posts[0]?.id} onClick={() => movePost(-1)}><ChevronUp size={18} /></button><button type="button" className="icon-btn sm" aria-label="Next take" disabled={activePost.id === posts[posts.length - 1]?.id} onClick={() => movePost(1)}><ChevronDown size={18} /></button></div>
+            </div>
+          </> : <p className="muted">Choose a take to join the conversation.</p>}
+        </aside>
+        </div>
       </main>
 
       <aside className="watch-panel">
