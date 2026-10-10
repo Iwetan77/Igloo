@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, LoaderCircle, Timer, TriangleAlert, X } from "lucide-react";
 import { ApiError, buildOrder, quoteOrder, submitOrder, verifyOrder } from "@/lib/api";
@@ -27,6 +29,7 @@ export function BuySheet({ post, side, session, onClose, onConfirmed }: {
   onClose: () => void;
   onConfirmed: () => void;
 }) {
+  const router = useRouter();
   const [amount, setAmount] = useState("5");
   const [quote, setQuote] = useState<Quote | null>(null);
   const [step, setStep] = useState<Step>("amount");
@@ -140,7 +143,7 @@ export function BuySheet({ post, side, session, onClose, onConfirmed }: {
   let body: React.ReactNode;
 
   if (step === "confirmed") {
-    body = <div className="buy-result"><span className="status-ring ok"><Check size={30} strokeWidth={1.5} /></span><h2>Position added</h2><p>You bought about {quote ? shares(quote.estimated_shares) : ""} {side} shares. It now shows in your portfolio.</p><div className="buy-actions"><button type="button" className="btn btn-primary btn-lg btn-block" onClick={() => window.location.assign("/portfolio")}>View positions</button><button type="button" className="btn btn-lg btn-block" onClick={onClose}>Done</button></div></div>;
+    body = <div className="buy-result"><span className="status-ring ok"><Check size={30} strokeWidth={1.5} /></span><h2>Position added</h2><p>You bought about {quote ? shares(quote.estimated_shares) : ""} {side} shares. It now shows in your portfolio.</p><div className="buy-actions"><button type="button" className="btn btn-primary btn-lg btn-block" onClick={() => router.push("/portfolio")}>View positions</button><button type="button" className="btn btn-lg btn-block" onClick={onClose}>Done</button></div></div>;
   } else if (step === "failed") {
     body = <div className="buy-result"><span className="status-ring bad"><TriangleAlert size={28} strokeWidth={1.5} /></span><h2>Something went wrong</h2><p>{error || uiCopy("error.generic")}</p><div className="buy-actions"><button type="button" className="btn btn-primary btn-lg btn-block" onClick={() => retry.current()}>Retry</button><button type="button" className="btn btn-quiet btn-block" onClick={onClose}>Cancel</button></div><span className="label">If the issue persists, contact support.</span></div>;
   } else if (step === "pending") {

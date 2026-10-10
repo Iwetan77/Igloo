@@ -5,6 +5,7 @@ import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { useEffect } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { syncThemeColor, useTheme } from "@/lib/theme";
+import { SessionProvider } from "@/lib/use-session";
 
 const solanaConnectors = toSolanaWalletConnectors({ shouldAutoConnect: false });
 
@@ -32,7 +33,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      <SessionProvider>{children}</SessionProvider>
     </PrivyProvider>
   );
 }

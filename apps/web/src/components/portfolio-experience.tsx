@@ -109,7 +109,7 @@ function PositionDetail({ row, onClose }: { row: Row; onClose: () => void }) {
     <div className="detail-tiles"><div className="card card-pad"><span className="label">Shares</span><strong className="display">{shares(row.shares)}</strong></div><div className="card card-pad"><span className="label">Current price</span><strong className="display">{cents(sidePrice(row))}</strong></div></div>
     <div className="card card-pad detail-breakdown"><span className="label">Position breakdown</span><div className="kv"><span>Side</span><strong><SideTag side={row.side} /></strong></div><div className="kv"><span>Shares</span><strong>{shares(row.shares)}</strong></div><div className="kv"><span>Est. value</span><strong>{value === null ? "—" : "$" + usd(value)}</strong></div><div className="kv"><span>Phase</span><strong>{phaseLabel(row.phase)}</strong></div></div>
     {row.market && <div className="card card-pad detail-odds"><div className="position-top"><span className="label">Yes probability</span><span className="label">{row.market.end_time ? "Ends " + shortDate(row.market.end_time) : ""}</span></div><TickMeter yes={row.market.yes_price} legend /></div>}
-    <a className="btn btn-primary btn-lg btn-block" href={"/market/" + encodeURIComponent(row.panta_market_id)}>View market<ArrowUpRight size={16} /></a>
+    <Link className="btn btn-primary btn-lg btn-block" href={"/market/" + encodeURIComponent(row.panta_market_id)}>View market<ArrowUpRight size={16} /></Link>
   </section></div>;
 }
 

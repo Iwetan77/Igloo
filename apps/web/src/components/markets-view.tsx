@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Film, Play, Plus, Quote, Search, Share2, Video } from "lucide-react";
 import { ApiError, getFeed, getMarket, getMarkets } from "@/lib/api";
 import { categories, categoryFor } from "@/lib/categories";
@@ -17,7 +18,10 @@ import type { Session } from "@/lib/use-session";
 import "@/styles/markets.css";
 
 const titleOf = (market: MarketSummary) => market.question || "Market " + shortId(market.panta_market_id);
-const openMarket = (id: string, from?: HTMLElement | null) => expandInto(from ?? null, () => window.location.assign("/market/" + encodeURIComponent(id)));
+function useOpenMarket() {
+  const router = useRouter();
+  return (id: string, from?: HTMLElement | null) => expandInto(from ?? null, () => router.push("/market/" + encodeURIComponent(id)));
+}
 
 function timeLeft(endTime: string | null | undefined, countdown: ReturnType<typeof useCountdown>, ended: boolean) {
   if (ended) return "Ended";
@@ -26,6 +30,7 @@ function timeLeft(endTime: string | null | undefined, countdown: ReturnType<type
 }
 
 function MarketCard({ market, now }: { market: MarketSummary; now: number }) {
+  const openMarket = useOpenMarket();
   const countdown = useCountdown(market.end_time);
   const ended = marketEnded(market.end_time, now);
   const chance = percent(market.yes_price);
@@ -39,6 +44,7 @@ function MarketCard({ market, now }: { market: MarketSummary; now: number }) {
 }
 
 function RelatedMarkets({ market, session }: { market: MarketSummary; session: Session }) {
+  const openMarket = useOpenMarket();
   const { authenticated, getAccessToken } = session;
   const [related, setRelated] = useState<MarketSummary[]>([]);
   useEffect(() => {
@@ -84,6 +90,7 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
   onBack: () => void;
   onSearch: () => void;
 }) {
+  const router = useRouter();
   const { authenticated, getAccessToken } = session;
   const marketNow = useMarketClock();
   const requestKey = useRef(0);
@@ -196,11 +203,11 @@ export function MarketsView({ marketId, session, onPost, onQuote, onBuy, onOpenP
 
   const selected = categories.find((item) => item.id === category);
   return <div className="screen markets-home">
-    <header className="screen-head"><h1 className="page-title">Markets</h1><button type="button" className="btn btn-sm" onClick={() => session.authenticated ? window.location.assign("/create" + (category ? "?category=" + category : "")) : session.login()}><Plus size={15} />Create</button><button type="button" className="icon-btn" onClick={onSearch} aria-label="Search markets"><Search size={17} strokeWidth={1.5} /></button></header>
+    <header className="screen-head"><h1 className="page-title">Markets</h1><button type="button" className="btn btn-sm" onClick={() => session.authenticated ? router.push("/create" + (category ? "?category=" + category : "")) : session.login()}><Plus size={15} />Create</button><button type="button" className="icon-btn" onClick={onSearch} aria-label="Search markets"><Search size={17} strokeWidth={1.5} /></button></header>
     <div className="chip-row markets-chips" aria-label="Market categories" ref={chips.host}><span className="indicator chip-indicator" ref={chips.bar} aria-hidden="true" /><button type="button" className={"chip" + (!category ? " active" : "")} onClick={() => setCategory("")}>All</button>{categories.map((item) => <button type="button" key={item.id} className={"chip" + (category === item.id ? " active" : "")} onClick={() => setCategory(item.id)}>{item.label}</button>)}</div>
     {errorBlock}
     {loading && <p className="loading-line">Loading markets</p>}
-    {!loading && !error && markets.length === 0 && <EmptyState icon={<Film size={26} strokeWidth={1.4} />} title="No markets in this category yet" action={<button type="button" className="btn" onClick={() => session.authenticated ? window.location.assign("/create" + (category ? "?category=" + category : "")) : session.login()}>Create a market</button>}>Be the first to create a prediction market{selected ? " for " + selected.label : ""}.</EmptyState>}
+    {!loading && !error && markets.length === 0 && <EmptyState icon={<Film size={26} strokeWidth={1.4} />} title="No markets in this category yet" action={<button type="button" className="btn" onClick={() => session.authenticated ? router.push("/create" + (category ? "?category=" + category : "")) : session.login()}>Create a market</button>}>Be the first to create a prediction market{selected ? " for " + selected.label : ""}.</EmptyState>}
     <div className="market-grid" key={category}>{markets.map((item) => <MarketCard key={item.panta_market_id} market={item} now={marketNow} />)}</div>
     {cursor && <button type="button" className="btn load-more" disabled={more} onClick={() => { void loadMore(); }}>Load more markets</button>}
   </div>;

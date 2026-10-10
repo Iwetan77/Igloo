@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowUpRight, BriefcaseBusiness, ChevronDown, ChevronUp, Eye, Heart, MessageCircle, Plus, Quote, Search, Share2, UserPlus, Volume2, VolumeX } from "lucide-react";
 import { getFeed, getUserProfile, setFollow, sharePost, toggleLike } from "@/lib/api";
 import { errorCopy, optionalCopy, uiCopy } from "@/lib/copy";
@@ -28,7 +30,7 @@ import { SearchSheet } from "@/components/search-sheet";
 import { EmptyState, TickMeter } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
 import { DesktopMarketRail } from "@/components/desktop-market-rail";
-import { expandInto, prefersReducedMotion, useIndicator, withTransition } from "@/lib/motion";
+import { expandInto, prefersReducedMotion, useIndicator } from "@/lib/motion";
 import "@/styles/feed.css";
 
 function question(post: FeedPost): string {
@@ -39,10 +41,12 @@ type ComposerTarget = { quotePost: FeedPost; market?: never } | { market: Market
 type BuyTarget = { post: Pick<FeedPost, "panta_market_id" | "market" | "caption">; side: Side };
 
 export function FeedExperience({ initialPostId, initialMarketId }: { initialPostId?: string; initialMarketId?: string }) {
+  const router = useRouter();
   const session = useSession();
   const marketNow = useMarketClock();
   const { authenticated, getAccessToken, authorized, me, synced } = session;
   const [tab, setTab] = useState<FeedTab | "markets">(initialMarketId ? "markets" : "for_you");
+  const previousFeedTab = useRef<FeedTab>("for_you");
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [source, setSource] = useState<"live" | "demo">("live");
   const [cursor, setCursor] = useState<string | null>(null);
@@ -71,7 +75,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const tabs = useIndicator<HTMLElement>(tab);
   const desktopTabs = useIndicator<HTMLElement>(tab);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("tab") === "markets") setTab("markets");
     if (params.get("search") === "1") setSearch(true);
@@ -240,29 +244,33 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   }
   function openOriginal(id: string) {
     if (posts.some((post) => post.id === id) && tab !== "markets") document.getElementById("post-" + id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    else window.location.assign("/post/" + encodeURIComponent(id));
+    else router.push("/post/" + encodeURIComponent(id));
   }
   function onPosted(id: string) {
     setComposer(null);
-    window.location.assign("/post/" + encodeURIComponent(id));
+    router.push("/post/" + encodeURIComponent(id));
   }
   function switchTab(next: FeedTab | "markets") {
-    if (initialMarketId) { window.location.assign(next === "markets" ? "/?tab=markets" : "/"); return; }
+    if (initialMarketId) { router.push(next === "markets" ? "/?tab=markets" : "/"); return; }
     if (next === "following" && !session.authenticated) { session.login(); return; }
-    withTransition(() => {
-      feedRef.current?.scrollTo({ top: 0 });
-      setTab(next);
+    if (next === tab) return;
+    // Preserve the feed while browsing Markets; clear it only when changing
+    // feed filters so another filter's posts cannot appear underneath.
+    if (next !== "markets" && next !== previousFeedTab.current) {
+      setLoading(true);
       setPosts([]);
       setCursor(null);
       setActiveId("");
-    });
+    }
+    if (next !== "markets") previousFeedTab.current = next;
+    setTab(next);
   }
   function buyMarket(market: MarketSummary, side: Side) {
     setBuy({ post: { panta_market_id: market.panta_market_id, caption: null, market: { question: market.question, yes_price: market.yes_price, no_price: market.no_price, category: market.category, phase: market.phase, end_time: market.end_time } }, side });
   }
   function openAuthor(post: FeedPost) {
     if (!session.authenticated) { session.login(); return; }
-    if (post.author.username) window.location.assign("/u/" + encodeURIComponent(post.author.username));
+    if (post.author.username) router.push("/u/" + encodeURIComponent(post.author.username));
     else setProfileId(post.author.id);
   }
 
@@ -280,7 +288,8 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const activeChance = activePost ? percent(activePost.market.yes_price) : null;
 
   return <AppShell active={tab === "markets" ? "markets" : "home"} session={session} className={tab === "markets" ? "feed-shell markets-mode" : "feed-shell"} onHome={() => switchTab("for_you")} onMarkets={() => switchTab("markets")} onSearch={() => setSearch(true)} onPost={openPicker}>
-    {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => window.location.assign("/?tab=markets")} onSearch={() => setSearch(true)} /> : <div className="feed-stage">
+    <div className="view-content" key={tab === "markets" ? "markets" : "feed"}>
+    {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => router.push("/?tab=markets")} onSearch={() => setSearch(true)} /> : <div className="feed-stage">
       <main className="feed-column">
         <header className="desktop-feed-header">
           <button type="button" className="desktop-search slab" onClick={() => setSearch(true)} aria-label="Search markets and people"><Search size={18} strokeWidth={1.5} /><span>Search creators and markets...</span></button>
@@ -327,7 +336,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
               </div>
 
               <section className="market-card-float" aria-label="Market">
-                <div className="slab mcf-slab"><div className="mcf-top"><span className="label">{categoryFor(post.market.category).label} · <span className={ended(post) ? "" : "live-dot"}>{ended(post) ? "Ended" : "Live"}</span></span><button type="button" className="mcf-link" onClick={(event) => expandInto(event.currentTarget.closest(".mcf-slab"), () => window.location.assign("/market/" + encodeURIComponent(post.panta_market_id)))}>Market<ArrowUpRight size={14} /></button></div>
+                <div className="slab mcf-slab"><div className="mcf-top"><span className="label">{categoryFor(post.market.category).label} · <span className={ended(post) ? "" : "live-dot"}>{ended(post) ? "Ended" : "Live"}</span></span><button type="button" className="mcf-link" onClick={(event) => expandInto(event.currentTarget.closest(".mcf-slab"), () => router.push("/market/" + encodeURIComponent(post.panta_market_id)))}>Market<ArrowUpRight size={14} /></button></div>
                 <strong className="mcf-question">{question(post)}</strong>
                 <div className="mcf-odds"><span className="display mcf-chance"><CountUp value={percent(post.market.yes_price)} /><sup>%</sup></span><div className="mcf-meter"><TickMeter yes={post.market.yes_price} size="sm" legend /></div></div></div>
                 <div className="mcf-trade on-ink"><button type="button" className="btn btn-yes" disabled={ended(post)} onClick={() => setBuy({ post, side: "YES" })}><span>Buy Yes</span><span className="tabular">{cents(post.market.yes_price)}</span></button><button type="button" className="btn btn-no" disabled={ended(post)} onClick={() => setBuy({ post, side: "NO" })}><span>Buy No</span><span className="tabular">{cents(post.market.no_price)}</span></button></div>
@@ -372,19 +381,20 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
           {activePost.caption && activePost.caption !== activePost.market.question && <p className="watch-caption">{activePost.caption}</p>}</div>
         </section> : <p className="empty-note">Scroll the feed to see a market here.</p>}
         <div className="rows watch-links">
-          <a className="row" href={activePost ? "/market/" + encodeURIComponent(activePost.panta_market_id) : "/?tab=markets"}><span className="row-main"><span className="row-title">Open market</span><span className="row-sub">Overview, videos, timeline</span></span><span className="row-end"><ArrowUpRight size={16} /></span></a>
-          <button type="button" className="row" onClick={() => session.authenticated ? window.location.assign("/portfolio") : session.login()}><span className="row-main"><span className="row-title">Your positions</span><span className="row-sub">Open and resolved</span></span><span className="row-end"><BriefcaseBusiness size={16} strokeWidth={1.5} /></span></button>
+          <Link className="row" href={activePost ? "/market/" + encodeURIComponent(activePost.panta_market_id) : "/?tab=markets"}><span className="row-main"><span className="row-title">Open market</span><span className="row-sub">Overview, videos, timeline</span></span><span className="row-end"><ArrowUpRight size={16} /></span></Link>
+          <button type="button" className="row" onClick={() => session.authenticated ? router.push("/portfolio") : session.login()}><span className="row-main"><span className="row-title">Your positions</span><span className="row-sub">Open and resolved</span></span><span className="row-end"><BriefcaseBusiness size={16} strokeWidth={1.5} /></span></button>
           <button type="button" className="row" onClick={() => activePost && !activePost.demo ? (session.authenticated ? setComposer({ market: { panta_market_id: activePost.panta_market_id, question: activePost.market.question, category: activePost.market.category, phase: activePost.market.phase, end_time: activePost.market.end_time, yes_price: activePost.market.yes_price, no_price: activePost.market.no_price, image_url: null, post_count: 0 } }) : session.login()) : openPicker()}><span className="row-main"><span className="row-title">Post a take on this market</span><span className="row-sub">Record or upload a video</span></span><span className="row-end"><Plus size={16} /></span></button>
         </div>
       </aside>
     </div>}
+    </div>
 
     {toast && <div className="toast" role="status">{toast}</div>}
     {buy && <BuySheet post={buy.post} side={buy.side} session={session} onClose={() => setBuy(null)} onConfirmed={() => notify("Order confirmed.")} />}
     {comments && <CommentsDrawer post={comments} session={session} onClose={() => setComments(null)} onAdded={() => setPosts((current) => current.map((post) => post.id === comments.id ? { ...post, comment_count: post.comment_count + 1 } : post))} />}
     {marketPicker && <MarketPicker session={session} onClose={() => setMarketPicker(false)} onSelect={(market) => { setMarketPicker(false); setComposer({ market }); }} />}
     {composer && <PostComposer market={composer.market} quotePost={composer.quotePost} session={session} onClose={() => setComposer(null)} onPosted={onPosted} />}
-    {search && <SearchSheet session={session} onClose={() => setSearch(false)} onOpenProfile={(user) => { setSearch(false); if (user.username) window.location.assign("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
+    {search && <SearchSheet session={session} onClose={() => setSearch(false)} onOpenProfile={(user) => { setSearch(false); if (user.username) router.push("/u/" + encodeURIComponent(user.username)); else setProfileId(user.id); }} />}
     {profileId && <ProfilePanel id={profileId} session={session} onClose={() => setProfileId("")} onOpenPost={openOriginal} onProfile={onProfile} />}
     {session.synced && me && <OnboardingFlow session={session} />}
     <IntroFlow session={session} />

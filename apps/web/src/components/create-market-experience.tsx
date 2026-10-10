@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Check, Link2, LoaderCircle, Share2, TriangleAlert } from "lucide-react";
@@ -24,6 +26,7 @@ function defaultEnd() {
 }
 
 export function CreateMarketExperience() {
+  const router = useRouter();
   const session = useSession();
   const [step, setStep] = useState<Step>("form");
   const stepDirection = useDirection(["form", "cost", "review", "live"].indexOf(step));
@@ -110,10 +113,10 @@ export function CreateMarketExperience() {
   return <AppShell active="markets" session={session}>
     <main className="screen create-market"><div className={"step-body " + stepDirection} key={step}>
       {!session.authenticated ? <>
-        {head("New market", () => window.location.assign("/?tab=markets"))}
+        {head("New market", () => router.push("/?tab=markets"))}
         <EmptyState icon={<CalendarDays size={26} strokeWidth={1.4} />} title="Sign in to create a market" action={<button type="button" className="btn btn-primary" onClick={session.login}>Sign in</button>}>Markets you create are listed for everyone to trade.</EmptyState>
       </> : step === "form" ? <>
-        {head("New market", () => window.location.assign("/?tab=markets"))}
+        {head("New market", () => router.push("/?tab=markets"))}
         <label className="field"><span className="label">Market question</span><input className="input" maxLength={160} value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Will Bitcoin reach $100K by March 2027?" /></label>
         <div className="field"><span className="label">Category</span><div className="chip-wrap">{categories.filter((item) => item.id !== "other").map((item) => <button type="button" key={item.id} className={"chip" + (category === item.id ? " active" : "")} aria-pressed={category === item.id} onClick={() => setCategory(item.id)}>{item.label}</button>)}</div></div>
         <label className="field"><span className="label">Resolution rules</span><textarea className="textarea" maxLength={1000} value={rules} onChange={(event) => setRules(event.target.value)} placeholder="Describe exactly when this market resolves YES, and when it resolves NO…" /></label>
@@ -137,7 +140,7 @@ export function CreateMarketExperience() {
           <div className="kv"><span>Creation fee</span><strong>${usd(quote.fee_usdc)}</strong></div>
         </section>
         {error && <p className="inline-error" role="alert">{error}</p>}
-        <div className="screen-foot"><button type="button" className="btn btn-primary btn-lg btn-block" disabled={Boolean(busy)} onClick={() => { void create(); }}>{busy ? <><LoaderCircle size={17} className="spin" />{busy === "build" ? "Preparing transaction" : busy === "sign" ? "Approve in your wallet" : "Listing your market"}</> : "Sign & create"}</button><button type="button" className="btn btn-quiet btn-block" disabled={Boolean(busy)} onClick={() => window.location.assign("/?tab=markets")}>Cancel</button></div>
+        <div className="screen-foot"><button type="button" className="btn btn-primary btn-lg btn-block" disabled={Boolean(busy)} onClick={() => { void create(); }}>{busy ? <><LoaderCircle size={17} className="spin" />{busy === "build" ? "Preparing transaction" : busy === "sign" ? "Approve in your wallet" : "Listing your market"}</> : "Sign & create"}</button><button type="button" className="btn btn-quiet btn-block" disabled={Boolean(busy)} onClick={() => router.push("/?tab=markets")}>Cancel</button></div>
       </> : <div className="market-live">
         <span className="status-ring ok"><Check size={32} strokeWidth={1.5} /></span>
         <h1>Your market is live</h1>
@@ -145,7 +148,7 @@ export function CreateMarketExperience() {
         <span className="label">Share market</span>
         <div className="share-row"><button type="button" className="icon-btn" onClick={() => { void navigator.clipboard.writeText(window.location.origin + "/market/" + encodeURIComponent(marketId)).then(() => setCopied(true)); }} aria-label="Copy link"><Link2 size={17} strokeWidth={1.5} /></button><button type="button" className="icon-btn" onClick={() => { void share(); }} aria-label="Share"><Share2 size={17} strokeWidth={1.5} /></button></div>
         {copied && <span className="label">Link copied</span>}
-        <div className="screen-foot live-actions"><a className="btn btn-primary btn-lg btn-block" href={"/market/" + encodeURIComponent(marketId)}>View market</a><Link className="btn btn-quiet btn-block" href="/?tab=markets">Done</Link></div>
+        <div className="screen-foot live-actions"><Link className="btn btn-primary btn-lg btn-block" href={"/market/" + encodeURIComponent(marketId)}>View market</Link><Link className="btn btn-quiet btn-block" href="/?tab=markets">Done</Link></div>
       </div>}
     </div></main>
   </AppShell>;

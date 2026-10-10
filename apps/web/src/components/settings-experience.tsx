@@ -1,5 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
+import { useRouter } from "next/navigation";
+
 import { useState } from "react";
 import { ArrowLeft, ChevronDown, ChevronRight, CircleHelp, Info, LogOut, Moon, UserRound, Wallet } from "lucide-react";
 import { useSession } from "@/lib/use-session";
@@ -22,6 +26,7 @@ const faqs = [
 type View = "home" | "support" | "about";
 
 export function SettingsExperience() {
+  const router = useRouter();
   const session = useSession();
   const [view, setView] = useState<View>("home");
   const viewDirection = useDirection(view === "home" ? 0 : 1);
@@ -52,13 +57,13 @@ export function SettingsExperience() {
       </> : <>
         <header className="screen-head"><h1 className="page-title">Settings</h1></header>
         <div className="settings-group">
-          <a className="settings-row" href="/profile?edit=1"><UserRound {...icon} /><span>Account</span><small className="label">Name, handle, bio</small><ChevronRight size={17} strokeWidth={1.5} /></a>
+          <Link className="settings-row" href="/profile?edit=1"><UserRound {...icon} /><span>Account</span><small className="label">Name, handle, bio</small><ChevronRight size={17} strokeWidth={1.5} /></Link>
           <button type="button" className="settings-row" onClick={() => setWallet(true)}><Wallet {...icon} /><span>Wallet</span><small className="label">Balance, deposit</small><ChevronRight size={17} strokeWidth={1.5} /></button>
           <button type="button" className="settings-row" role="switch" aria-checked={theme.dark} onClick={(event) => theme.toggle(event.currentTarget.querySelector(".switch") as HTMLElement)}><Moon {...icon} /><span>Dark mode</span><span className={"switch" + (theme.dark ? " on" : "")} aria-hidden="true" /></button>
           <button type="button" className="settings-row" onClick={() => setView("support")}><CircleHelp {...icon} /><span>Support</span><small className="label">FAQ</small><ChevronRight size={17} strokeWidth={1.5} /></button>
           <button type="button" className="settings-row" onClick={() => setView("about")}><Info {...icon} /><span>About</span><ChevronRight size={17} strokeWidth={1.5} /></button>
         </div>
-        <button type="button" className="settings-row danger" onClick={() => { void session.logout().then(() => window.location.assign("/")); }}><LogOut {...icon} /><span>Sign out</span></button>
+        <button type="button" className="settings-row danger" onClick={() => { void session.logout().then(() => router.push("/")); }}><LogOut {...icon} /><span>Sign out</span></button>
       </>}
     </div></main>
     {wallet && <WalletSheet session={session} onClose={() => setWallet(false)} notify={notify} />}

@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useLinkAccount, usePrivy } from "@privy-io/react-auth";
 import { useCreateWallet, useExportWallet, useWallets } from "@privy-io/react-auth/solana";
 import { ApiError, getMe, patchMe, putInterests, syncUser } from "@/lib/api";
 import type { Me } from "@/lib/types";
 import { getUsdcBalance } from "@/lib/balance";
 
-export function useSession() {
+function useSessionState() {
   const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
   const { ready: walletsReady, wallets } = useWallets();
   const { createWallet } = useCreateWallet();
@@ -158,4 +158,18 @@ export function useSession() {
   };
 }
 
-export type Session = ReturnType<typeof useSession>;
+export type Session = ReturnType<typeof useSessionState>;
+
+const SessionContext = createContext<Session | null>(null);
+
+/** Keep account and balance state alive while the Next router changes pages. */
+export function SessionProvider({ children }: { children: ReactNode }) {
+  const session = useSessionState();
+  return createElement(SessionContext.Provider, { value: session }, children);
+}
+
+export function useSession(): Session {
+  const session = useContext(SessionContext);
+  if (!session) throw new Error("useSession must be used inside SessionProvider");
+  return session;
+}

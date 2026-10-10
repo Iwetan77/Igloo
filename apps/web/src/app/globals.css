@@ -173,6 +173,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 100%; min-height: 100%; }
+html { overflow-y: scroll; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -416,7 +417,9 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 }
 .side-link:hover { color: var(--text); background: rgba(236, 238, 232, 0.06); }
 .side-link.active { color: var(--ink); background: var(--lav); }
-.side-post { margin-top: 16px; }
+.side-post { order: 1; margin-top: 12px; }
+.side-links { position: relative; display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.side-links > .side-link, .dock-pill > button { position: relative; z-index: 1; }
 .side-foot { margin-top: auto; display: grid; gap: 6px; }
 .side-theme .switch { margin-left: auto; }
 .slab .switch.on { background: var(--lav-deep); }
@@ -430,6 +433,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 .side-me small { font-size: 10px; color: var(--muted); }
 .side-me b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shell-main { min-width: 0; }
+.shell-main > .screen, .view-content { animation: content-in 240ms var(--ease-out); }
 
 .bottom-nav { display: none; }
 
@@ -441,12 +445,17 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 .screen-head .page-title { flex: 1; }
 .screen-foot { position: sticky; bottom: calc(var(--nav-h) + 8px); padding-top: 18px; display: grid; gap: 8px; background: linear-gradient(transparent, var(--bg) 30%); }
 
-@media (max-width: 1080px) {
+@media (min-width: 1280px) {
+  .shell { grid-template-columns: 260px minmax(0, 1fr); }
+  .side-rail { padding-inline: 20px; }
+}
+@media (max-width: 1180px) {
   .shell { grid-template-columns: 84px minmax(0, 1fr); }
   .side-rail { align-items: center; padding-inline: 10px; }
   .side-rail .wordmark { margin-inline: 0; font-size: 0; gap: 0; width: 38px; height: 30px; mask-image: url("/brand/igloo-symbol.svg"); }
   .side-rail .wordmark sup { display: none; }
   .side-link { justify-content: center; width: 44px; padding: 0; font-size: 0; gap: 0; }
+  .side-links { width: 44px; }
   .side-post { width: 44px; min-height: 44px; padding: 0; font-size: 0; gap: 0; }
   .side-me { justify-content: center; padding: 4px; }
   .side-me span:last-child { display: none; }
@@ -465,69 +474,50 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
   .feed-shell .bottom-nav { background: none; }
   .dock-round { width: 48px; height: 48px; flex: none; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--ink); color: #eceee8; }
   .dock-round.active { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--lav); }
-  .dock-pill { flex: 1; max-width: 300px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; height: 48px; padding: 4px; border-radius: var(--r-pill); background: var(--ink); }
+  .dock-pill { position: relative; flex: 1; max-width: 300px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; height: 48px; padding: 4px; border-radius: var(--r-pill); background: var(--ink); }
   .dock-pill button { border: 0; border-radius: var(--r-pill); background: transparent; color: rgba(236, 238, 232, 0.72); font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
   .dock-pill button.active { background: var(--lav); color: var(--ink); }
   .screen { padding: 18px 16px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom)); }
   .overlay { align-items: flex-end; padding: 0; }
-  .sheet { width: 100%; max-height: 94dvh; border-radius: var(--r-xl) var(--r-xl) 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); animation: sheet-up 480ms var(--ease-sheet); }
+  .sheet { width: 100%; max-height: 94dvh; border-radius: var(--r-xl) var(--r-xl) 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); animation: sheet-up 280ms var(--ease-out); }
 }
 /* ==========================================================================
    Motion
-   Each kind of change gets its own movement, all on transform and opacity:
-   - Pages: the new page lifts in; the dock and rail pills glide between
-     pages (view transitions, also across full page loads).
+   Keep navigation geometry fixed. Move only the highlight and incoming
+   content, using short transform/opacity transitions.
    - Tabs, segments and chips: a highlight slides between options and the
      panel slides in from the side you moved toward.
    - Steps: forward slides in from the right, back from the left.
-   - Opening a market: the card expands into an ink panel (expandInto).
+   - Opening a market: the card gives a small press response, without
+     delaying navigation or covering the sidebar.
    - Sheets rise on a sheet curve; numbers count up; tick bars fill.
    ========================================================================== */
-@view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
-::view-transition-group(*) { animation-duration: 440ms; animation-timing-function: var(--ease-glide); }
-.side-rail { view-transition-name: rail; }
-.side-link.active { view-transition-name: rail-active; }
-.bottom-nav { view-transition-name: dock; }
-.dock-pill button.active { view-transition-name: dock-active; }
 
+@keyframes content-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes page-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes rise-soft { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes slab-in { from { opacity: 0; transform: translateY(16px) scale(0.985); } to { opacity: 1; transform: none; } }
-@keyframes from-right { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
-@keyframes from-left { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+@keyframes from-right { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+@keyframes from-left { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
 @keyframes ticks-fill { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-@keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
-@keyframes sheet-pop { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes sheet-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes sheet-pop { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes heart-pop { 0% { transform: scale(1); } 35% { transform: scale(1.28); } 100% { transform: scale(1); } }
 
-/* Page entrance: the page lifts in, its first blocks a beat apart. */
-.screen > * { animation: page-in 460ms var(--ease-out) backwards; }
-.screen > .slab, .step-body > .slab { animation: slab-in 560ms var(--ease-out) backwards; }
-.screen > :nth-child(2) { animation-delay: 50ms; }
-.screen > :nth-child(3) { animation-delay: 100ms; }
-.screen > :nth-child(4) { animation-delay: 150ms; }
-.screen > :nth-child(n+5) { animation-delay: 200ms; }
-.screen > .step-body, .screen-foot { animation: none; }
-.slab > .slab-section { animation: rise-soft 480ms var(--ease-out) backwards; }
-.slab > .slab-section:nth-child(2) { animation-delay: 90ms; }
-.slab > .slab-section:nth-child(n+3) { animation-delay: 160ms; }
+/* One entrance per screen avoids layers of cards scaling at different times. */
+.step-body > .slab { animation: none; }
 
 /* Lists settle in once, lightly. */
-.market-grid > *, .position-list > * { animation: rise-soft 420ms var(--ease-out) backwards; }
-.market-grid > :nth-child(2), .position-list > :nth-child(2) { animation-delay: 40ms; }
-.market-grid > :nth-child(3), .position-list > :nth-child(3) { animation-delay: 80ms; }
-.market-grid > :nth-child(4), .position-list > :nth-child(4) { animation-delay: 120ms; }
-.market-grid > :nth-child(n+5), .position-list > :nth-child(n+5) { animation-delay: 160ms; }
-.search-section > *, .pick-list > * { animation: rise-soft 280ms var(--ease-out) backwards; }
+.market-grid > *, .position-list > *, .search-section > *, .pick-list > * { animation: content-in 220ms var(--ease-out) backwards; }
 
 /* Tabs and steps: slide in from the direction of travel. */
-.panel.forward, .step-body.forward { animation: from-right 380ms var(--ease-out) backwards; }
-.panel.back, .step-body.back { animation: from-left 380ms var(--ease-out) backwards; }
+.panel.forward, .step-body.forward { animation: from-right 240ms var(--ease-out) backwards; }
+.panel.back, .step-body.back { animation: from-left 240ms var(--ease-out) backwards; }
 
 /* Sliding highlight for tabs, segments and chips (useIndicator). */
 .indicator { position: absolute; z-index: 0; top: 0; left: 0; width: 0; height: 0; border-radius: var(--r-pill); background: var(--lav); opacity: 0; pointer-events: none; }
-.indicator.ready { transition: transform 420ms var(--ease-glide), width 420ms var(--ease-glide), height 420ms var(--ease-glide), opacity 160ms linear; }
+.indicator.ready { transition: transform 260ms var(--ease-out), width 260ms var(--ease-out), height 260ms var(--ease-out), opacity 160ms linear; }
 .chip-indicator { background: var(--ink); }
 :is(.segmented, .line-tabs, .feed-tabs, .chip-row) { position: relative; }
 :is(.segmented, .line-tabs, .feed-tabs, .chip-row) > :not(.indicator) { position: relative; z-index: 1; }
@@ -543,9 +533,6 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 .follow-pill { transition: background 300ms var(--ease-glide), color 300ms var(--ease-glide); }
 .overlay { animation: fade-in 260ms var(--ease-out); }
 .toast { animation: rise-soft 360ms var(--ease-out); }
-
-/* The ink panel a market card expands into (expandInto in lib/motion.ts). */
-.expand-ghost { position: fixed; z-index: 100; background: var(--ink); pointer-events: none; }
 
 /* The dock glides away while a sheet or full-screen task is open. */
 .bottom-nav { transition: transform 480ms var(--ease-sheet); }
