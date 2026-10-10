@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowRight, CircleX, Mail, Wallet } from "lucide-react";
+import { ArrowRight, Mail, Wallet } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import type { Session } from "@/lib/use-session";
 import "@/styles/intro.css";
 
@@ -57,10 +58,9 @@ export function IntroFlow({ session }: { session: Session }) {
 
   return <div className={"intro" + (splash ? " is-splash" : "")} role="dialog" aria-modal="true" aria-label="Sign in to Igloo">
     <div className="intro-inner">
-      <div className="intro-top" aria-hidden={splash}><span className="wordmark">Igloo<sup>®</sup></span><button type="button" className="btn btn-quiet btn-sm" tabIndex={splash ? -1 : 0} onClick={close}>Browse first</button></div>
+      <div className="intro-top" aria-hidden={splash}><BrandLogo /><button type="button" className="btn btn-quiet btn-sm" tabIndex={splash ? -1 : 0} onClick={close}>Browse first</button></div>
       <button type="button" className="slab intro-hero" onClick={() => setSplash(false)} tabIndex={splash ? 0 : -1} aria-label={splash ? "Continue" : undefined}>
-        <span className="intro-mark" aria-hidden="true"><CircleX size={26} strokeWidth={1.75} /></span>
-        <span className="intro-brand">Igloo<sup>®</sup></span>
+        <BrandLogo className="intro-brand" />
         <span className="intro-tagline">Watch the market.<br />Make your call.</span>
         <span className="intro-dot" aria-hidden="true" />
       </button>

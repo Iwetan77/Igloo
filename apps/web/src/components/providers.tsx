@@ -3,6 +3,7 @@
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { useEffect } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { syncThemeColor, useTheme } from "@/lib/theme";
 
 const solanaConnectors = toSolanaWalletConnectors({ shouldAutoConnect: false });
@@ -27,7 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           accentColor: theme === "dark" ? "#cbc6fb" : "#06191c",
           walletChainType: "solana-only",
           landingHeader: "Sign in to Igloo",
-          logo: <span className="privy-logo"><span className="privy-logo-mark" />Igloo</span>,
+          logo: <BrandLogo />,
         },
       }}
     >

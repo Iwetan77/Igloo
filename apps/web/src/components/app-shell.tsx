@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { BriefcaseBusiness, ChartSpline, House, Moon, Plus, Search, Settings, Sun, UserRound } from "lucide-react";
 import { useThemeSwitch } from "@/lib/theme";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { BrandLogo } from "@/components/brand-logo";
 import type { Session } from "@/lib/use-session";
 
 export type NavKey = "home" | "markets" | "portfolio" | "profile" | "settings" | null;
@@ -36,7 +37,7 @@ export function AppShell({ active, session, children, className = "", ...handler
   return <div className={"shell " + className}>
     <aside className="side-nav" aria-label="Main navigation">
       <div className="side-rail slab">
-        <span className="wordmark"><span className="logo-square" />Igloo<sup>®</sup></span>
+        <BrandLogo />
         <button type="button" className={"side-link" + (active === "home" ? " active" : "")} onClick={home}><House {...icon} />Home</button>
         <button type="button" className={"side-link" + (active === "markets" ? " active" : "")} onClick={markets}><ChartSpline {...icon} />Markets</button>
         <button type="button" className="side-link" onClick={search}><Search {...icon} />Search</button>

@@ -13,6 +13,7 @@ import type { FeedPost, FeedTab, MarketSummary, Side, UserProfile } from "@/lib/
 import { useSession } from "@/lib/use-session";
 import { useWatchSignals } from "@/lib/use-watch-signals";
 import { AppShell } from "@/components/app-shell";
+import { BrandLogo } from "@/components/brand-logo";
 import { BuySheet } from "@/components/buy-sheet";
 import { CommentsDrawer } from "@/components/comments-drawer";
 import { MarketPicker } from "@/components/market-picker";
@@ -271,7 +272,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     if (next) document.getElementById("post-" + next.id)?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
   }
 
-  if (!process.env.NEXT_PUBLIC_PRIVY_APP_ID) return <main className="setup-screen"><span className="wordmark"><span className="logo-square" />Igloo</span><p className="muted">Set NEXT_PUBLIC_PRIVY_APP_ID in apps/web/.env.local to enable sign in.</p></main>;
+  if (!process.env.NEXT_PUBLIC_PRIVY_APP_ID) return <main className="setup-screen"><BrandLogo /><p className="muted">Set NEXT_PUBLIC_PRIVY_APP_ID in apps/web/.env.local to enable sign in.</p></main>;
 
   const follower = (post: FeedPost) => profiles[post.author.id];
   const isFollowing = (post: FeedPost) => follower(post)?.is_following ?? post.author.is_following ?? false;

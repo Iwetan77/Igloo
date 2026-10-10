@@ -8,7 +8,7 @@
 .intro-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; width: 100%; min-height: 300px; padding: 30px 24px; border: 0; color: var(--text); text-align: center; cursor: default; transition: min-height 760ms var(--ease-glide); animation: slab-in 700ms var(--ease-out); }
 .intro.is-splash .intro-hero { min-height: calc(100dvh - 30px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); cursor: pointer; }
 .intro-mark { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 16px; background: var(--lav); color: var(--ink); animation: mark-in 800ms var(--ease-pop) 100ms backwards; }
-.intro-brand { font-size: 60px; line-height: 1; letter-spacing: -0.05em; animation: page-in 700ms var(--ease-out) 180ms backwards; }
+.intro-brand { width: min(100%, 300px); height: 69px; animation: page-in 700ms var(--ease-out) 180ms backwards; }
 .intro-brand sup { font-size: 15px; vertical-align: 2.4em; }
 .intro-tagline { color: var(--muted); font-size: 17px; line-height: 1.35; animation: page-in 700ms var(--ease-out) 280ms backwards; }
 .intro-dot { width: 8px; height: 8px; margin-top: 8px; border-radius: 50%; background: var(--lav); animation: dot-breathe 1.6s var(--ease-glide) infinite; transition: opacity 300ms var(--ease-out); }
