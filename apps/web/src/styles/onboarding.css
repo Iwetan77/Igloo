@@ -2,6 +2,9 @@
 .onboarding { --canvas: var(--bg); position: fixed; z-index: 80; inset: 0; overflow-y: auto; background: var(--bg); animation: fade-in var(--t) var(--ease); }
 .onboarding-shell { width: min(100%, 460px); min-height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; padding: calc(10px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom)); }
 .onboarding-panel { flex: 1; display: flex; flex-direction: column; }
+.onboarding-layout { flex: 1; display: flex; flex-direction: column; }
+.onboarding-header, .onboarding-steps, .onboarding-form-title { display: none; }
+.onboarding-overview { margin-bottom: 22px; }
 
 /* Header: back, the step tag over a row of progress bars. */
 .onboarding-top { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 8px; min-height: 52px; padding: 0 4px 10px; }
@@ -13,7 +16,7 @@
 .onboarding-progress span.done { background: var(--ink); }
 .onboarding-progress span.active { width: 34px; background: var(--lav-deep); }
 
-.onboarding-intro { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 22px; padding: 64px 22px 24px; }
+.onboarding-intro { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 64px 22px 24px; }
 .onboarding-intro h1 { margin: 0; font-size: 36px; line-height: 1.02; letter-spacing: var(--tracking-heading); }
 .onboarding-lede { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .onboarding-panel > .field, .onboarding-panel > .interest-chips, .onboarding-panel > .label, .onboarding-panel > .inline-error, .onboarding-avatar { margin-inline: 8px; }
@@ -73,5 +76,44 @@
 .welcome-foot::before { background: var(--lav) !important; animation: dot-pulse 1.2s var(--ease-glide) infinite; }
 @keyframes draw-check { to { stroke-dashoffset: 0; } }
 @keyframes dot-pulse { 50% { opacity: 0.3; } }
+
+/* Setup becomes a workspace on desktop, with a persistent progress rail. */
+@media (min-width: 900px) {
+  .onboarding-shell { width: min(100%, 1200px); padding: 32px 40px 40px; }
+  .onboarding-header { display: flex; align-items: center; justify-content: space-between; min-height: 48px; margin-bottom: 20px; }
+  .onboarding-header > .label { color: var(--muted); text-transform: uppercase; letter-spacing: var(--tracking-caps); }
+  .onboarding-top { padding: 0 0 24px; min-height: 64px; }
+  .onboarding-step { display: none; }
+  .onboarding-layout { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 40px; margin-block: auto; align-items: stretch; }
+  .onboarding-overview { margin: 0; min-height: 560px; border-radius: 32px; }
+  .onboarding-intro { min-height: 250px; padding: 48px 40px 40px; gap: 20px; justify-content: center; }
+  .onboarding-intro h1 { font-size: clamp(38px, 3.5vw, 48px); line-height: 1.08; max-width: 12ch; }
+  .onboarding-lede { font-size: 15px; line-height: 1.6; max-width: 38ch; }
+  .onboarding-steps { display: grid; gap: 18px; list-style: none; margin: 0; padding: 36px 40px 40px; }
+  .onboarding-steps li { display: flex; align-items: center; gap: 14px; font-size: 15px; color: var(--muted); }
+  .onboarding-steps li.active { color: var(--text); font-weight: 600; }
+  .onboarding-step-number { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border: 1px solid var(--line-strong); border-radius: 50%; font-size: 11px; font-variant-numeric: tabular-nums; }
+  .onboarding-steps li.active .onboarding-step-number, .onboarding-steps li.done .onboarding-step-number { background: var(--lav); border-color: var(--lav); color: #06191c; }
+  .onboarding-panel { min-width: 0; min-height: 560px; padding: 32px; background: var(--surface); border: 1px solid var(--line); border-radius: 32px; }
+  .onboarding-form-title { display: block; margin: 0 0 28px; font-size: 24px; line-height: 1.2; }
+  .onboarding-panel > .field, .onboarding-panel > .interest-chips, .onboarding-panel > .label, .onboarding-panel > .inline-error, .onboarding-avatar { margin-inline: 0; }
+  .onboarding-wallet { gap: 16px; }
+  .onboarding-account { padding: 18px; }
+  .onboarding-backup { padding: 20px; }
+  .onboarding-check { align-items: flex-start; line-height: 1.5; }
+  .onboarding-check .onboarding-box { margin-top: -1px; }
+  .onboarding-panel > .onboarding-stack { padding-top: 28px; }
+  .onboarding-x { margin: 12px 0 32px; }
+  .onboarding-people { margin-bottom: 28px; }
+  .interest-chips { gap: 10px; }
+  .interest-chips .chip { min-height: 46px; padding-inline: 18px; }
+  .onboarding-welcome { width: min(calc(100% - 80px), 1120px); min-height: min(680px, calc(100dvh - 80px)); margin: 40px auto; padding: 64px; border-radius: 36px; }
+  .onboarding-welcome h1 { font-size: 56px; }
+  .onboarding-welcome p { font-size: 18px; }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .onboarding-shell { width: min(100%, 600px); padding-inline: 32px; }
+}
 
 @media (prefers-reduced-motion: reduce) { .welcome-mark svg { stroke-dashoffset: 0; animation: none; } }
