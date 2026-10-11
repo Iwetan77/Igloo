@@ -19,4 +19,4 @@
 .faq-item.open button svg { transform: rotate(180deg); }
 .faq-item p { margin: 0; padding: 0 16px 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .about-card { display: grid; gap: 12px; padding: 26px 22px; margin-bottom: 10px; }
-.about-card p { margin: 0; font-size: 28px; line-height: 1.1; letter-spacing: -0.02em; }
+.about-card p { margin: 0; font-size: 28px; line-height: 1.1; letter-spacing: var(--tracking-heading); }

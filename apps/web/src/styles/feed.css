@@ -10,7 +10,7 @@
 .feed-bar > :first-child { justify-self: start; }
 .feed-bar > :last-child { justify-self: end; }
 .feed-tabs { display: flex; gap: 2px; padding: 3px; border-radius: var(--r-pill); background: rgba(236, 238, 232, 0.08); }
-.feed-tabs button { min-height: 28px; padding: 0 12px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.feed-tabs button { min-height: 28px; padding: 0 12px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; }
 .feed-tabs button:hover { color: var(--text); }
 .feed-tabs button.active { color: var(--ink); background: var(--lav); }
 .balance-pill { min-height: 26px; border: 0; cursor: pointer; }
@@ -21,7 +21,7 @@
 .post-video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .video-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(6, 25, 28, 0.3) 0%, transparent 20%, transparent 45%, rgba(6, 25, 28, 0.55) 66%, rgba(6, 25, 28, 0.9) 100%); }
 .video-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 36px; background: var(--ink); color: #eceee8; }
-.video-fallback strong { max-width: 360px; font-size: 28px; font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; }
+.video-fallback strong { max-width: 360px; font-size: 28px; font-weight: 400; line-height: 1.15; letter-spacing: var(--tracking-heading); }
 .video-fallback .label { color: rgba(236, 238, 232, 0.6); }
 .demo-tag { position: absolute; top: 76px; left: 14px; }
 
@@ -29,7 +29,7 @@
 .post-copy { grid-area: copy; min-width: 0; padding-left: 4px; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5); }
 .author-line { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .author { display: inline-flex; align-items: center; gap: 9px; padding: 0; border: 0; background: transparent; color: #eceee8; font-size: 14px; font-weight: 500; }
-.follow-pill { height: 24px; padding: 0 10px; border-radius: var(--r-pill); border: 0; background: var(--lav); color: var(--ink); font-size: 9px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; text-shadow: none; }
+.follow-pill { height: 24px; padding: 0 10px; border-radius: var(--r-pill); border: 0; background: var(--lav); color: var(--ink); font-size: 9px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; text-shadow: none; }
 .follow-pill.following { background: rgba(236, 238, 232, 0.16); color: #eceee8; }
 .post-caption { margin: 0; max-height: 4.2em; overflow: hidden; color: rgba(236, 238, 232, 0.88); font-size: 14px; line-height: 1.4; }
 .quoted-preview { display: flex; gap: 10px; width: min(100%, 320px); margin-top: 10px; padding: 7px; border-radius: var(--r-md); border: 0; background: rgba(6, 25, 28, 0.78); color: #eceee8; text-align: left; text-shadow: none; }
@@ -51,9 +51,9 @@
 .mcf-slab { padding: 14px 16px 12px; border-radius: var(--r-lg); }
 .mcf-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
 .live-dot::before { content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 5px 1px 0; border-radius: 50%; background: var(--lav); vertical-align: middle; }
-.mcf-link { display: inline-flex; align-items: center; gap: 3px; padding: 0; border: 0; background: transparent; color: var(--text); font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.mcf-link { display: inline-flex; align-items: center; gap: 3px; padding: 0; border: 0; background: transparent; color: var(--text); font-size: 10px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; }
 .mcf-link:hover { color: var(--lav); }
-.mcf-question { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 16px; font-weight: 400; line-height: 1.3; }
+.mcf-question { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 16px; font-weight: 500; line-height: 1.35; letter-spacing: var(--tracking-title); }
 .mcf-odds { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
 .mcf-chance { font-size: 36px; }
 .mcf-meter { flex: 1; min-width: 0; }
