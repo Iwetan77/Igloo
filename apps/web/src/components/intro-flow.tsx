@@ -64,13 +64,14 @@ export function IntroFlow({ session }: { session: Session }) {
         <span className="intro-tagline">Watch the market.<br />Make your call.</span>
         <span className="intro-dot" aria-hidden="true" />
       </button>
-      {!splash && <div className="intro-auth">
+      <div className="intro-auth" aria-hidden={splash} inert={splash}>
+        <div className="intro-auth-heading"><span className="label">Your prediction workspace</span><h1>Make yourself at home.</h1><p>Sign in or create an account to make your next call.</p></div>
         <div className="rows intro-methods">{methods.map((method) => <button type="button" key={method.id} className="row intro-method" onClick={() => signIn(method.id)}>
           <span className="intro-method-icon">{method.icon}</span><span className="row-title">{method.label}</span><ArrowRight size={16} strokeWidth={1.5} />
         </button>)}</div>
         <p className="intro-terms">By continuing, you agree to Igloo&apos;s Terms of Service and Privacy Policy.</p>
         <p className="intro-signin">Already have an account? <button type="button" className="link-btn" onClick={() => signIn()}>Sign in</button></p>
-      </div>}
+      </div>
     </div>
   </div>;
 }
