@@ -97,6 +97,13 @@
 
   --font: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Urbanist: open body copy, gently tightened titles, spaced small capitals. */
+  --tracking-body: 0em;
+  --tracking-heading: -0.02em;
+  --tracking-title: -0.012em;
+  --tracking-display: -0.025em;
+  --tracking-caps: 0.06em;
+  --tracking-label: 0.01em;
 
   --nav-h: 84px;
 }
@@ -179,36 +186,43 @@ body {
   color: var(--text);
   font-family: var(--font);
   font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: var(--tracking-body);
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures contextual;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-button, input, textarea, select { font: inherit; color: inherit; }
+button, input, textarea, select { font: inherit; font-kerning: normal; letter-spacing: inherit; color: inherit; }
 button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:disabled { cursor: not-allowed; opacity: 0.4; }
 a { color: inherit; }
 :focus-visible { outline: 2px solid var(--lav-deep); outline-offset: 3px; }
 .slab :focus-visible, .on-ink :focus-visible { outline-color: var(--lav); }
 h1, h2, h3, p { margin-top: 0; }
-h1, h2, h3 { font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
+h1, h2, h3 { font-weight: 500; letter-spacing: var(--tracking-title); text-wrap: balance; }
+h1 { letter-spacing: var(--tracking-heading); }
 ::selection { background: var(--lav); color: var(--ink); }
-.tabular { font-variant-numeric: tabular-nums; }
+.tabular { font-variant-numeric: lining-nums tabular-nums; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---------- Type ---------- */
 /* Small descriptive label, BRIK style: plain, quiet, sentence case. */
-.label { font-size: 12px; font-weight: 400; line-height: 1.4; letter-spacing: 0; color: var(--muted); }
+.label { font-size: 12px; font-weight: 500; line-height: 1.4; letter-spacing: var(--tracking-label); color: var(--muted); }
 /* Tiny bold uppercase, for actions and pills. */
-.caps { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
-.display { font-weight: 400; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.caps { font-size: 10px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; }
+.display { font-weight: 400; letter-spacing: var(--tracking-display); line-height: 1; font-variant-numeric: lining-nums tabular-nums; }
 .display sup { font-size: 0.5em; vertical-align: 0.8em; letter-spacing: 0; margin-left: 1px; color: var(--muted); }
-.ghost-number { font-weight: 300; letter-spacing: -0.04em; line-height: 1; color: var(--ghost); font-variant-numeric: tabular-nums; }
+.ghost-number { font-weight: 300; letter-spacing: var(--tracking-display); line-height: 1; color: var(--ghost); font-variant-numeric: lining-nums tabular-nums; }
 .money-unit { margin-left: 6px; font-size: 0.42em; font-weight: 500; letter-spacing: 0.04em; color: var(--muted); }
 .page-title { font-size: 28px; line-height: 1.1; margin: 0; }
 .muted { color: var(--muted); }
 .handle { font-size: 13px; color: var(--muted); }
 
 /* ---------- Brand ---------- */
-.wordmark { display: inline-flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 400; letter-spacing: -0.02em; }
+.wordmark { display: inline-flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 400; letter-spacing: var(--tracking-title); }
 .wordmark sup { font-size: 9px; vertical-align: 0.9em; margin-left: -4px; }
 .brand-logo { display: inline-block; width: 150px; height: 34px; flex: none; color: var(--text); background: currentColor; mask: url("/brand/igloo-logo.svg") center / contain no-repeat; }
 .brand-symbol { width: 40px; height: 30px; mask-image: url("/brand/igloo-symbol.svg"); }
@@ -218,7 +232,7 @@ h1, h2, h3 { font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 40px; padding: 0 18px; border-radius: var(--r-pill);
   border: 1.5px solid var(--edge); background: transparent; color: var(--text);
-  font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+  font-size: 11px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase;
   text-decoration: none; white-space: nowrap;
   transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
@@ -273,7 +287,7 @@ h1, h2, h3 { font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
 .slab-split.slab-section > * { padding: 0; }
 .stat { display: grid; gap: 3px; min-width: 0; }
 .stat > .label + .label { font-size: 10px; color: var(--subtle); }
-.stat strong { margin-top: 10px; font-size: 22px; font-weight: 400; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat strong { margin-top: 10px; font-size: 22px; font-weight: 400; letter-spacing: var(--tracking-title); font-variant-numeric: tabular-nums; }
 
 /* ---------- Chips, segments, tabs ---------- */
 .chip-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
@@ -286,7 +300,7 @@ h1, h2, h3 { font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
 .chip:hover { background: var(--no-soft); }
 .chip.active { color: #eceee8; background: var(--ink); border-color: var(--ink); }
 .slab .chip.active, .on-ink .chip.active { color: var(--ink); background: var(--lav); border-color: var(--lav); }
-.tag { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px; background: var(--ink); color: #eceee8; font-size: 9px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px; background: var(--ink); color: #eceee8; font-size: 9px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; white-space: nowrap; }
 .slab .tag, .on-ink .tag { background: rgba(236, 238, 232, 0.12); color: var(--text); }
 .tag-yes, .slab .tag-yes, .on-ink .tag-yes { background: var(--lav); color: var(--ink); }
 .tag-no { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1.2px var(--edge); }
@@ -296,11 +310,11 @@ h1, h2, h3 { font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
 
 /* Segmented: an ink pill with a lavender active segment. */
 .segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 4px; gap: 4px; border-radius: var(--r-pill); background: var(--ink); }
-.segmented button { min-height: 34px; border: 0; border-radius: var(--r-pill); background: transparent; color: rgba(236, 238, 232, 0.7); font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.segmented button { min-height: 34px; border: 0; border-radius: var(--r-pill); background: transparent; color: rgba(236, 238, 232, 0.7); font-size: 10px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
 .segmented button:hover { color: #eceee8; }
 .segmented button.active { background: var(--lav); color: var(--ink); }
 .line-tabs { display: flex; gap: 4px; padding: 4px; width: max-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; border-radius: var(--r-pill); background: var(--ink); }
-.line-tabs button { flex: none; min-height: 32px; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: transparent; color: rgba(236, 238, 232, 0.7); font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.line-tabs button { flex: none; min-height: 32px; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: transparent; color: rgba(236, 238, 232, 0.7); font-size: 10px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; }
 .line-tabs button:hover { color: #eceee8; }
 .line-tabs button.active { background: var(--lav); color: var(--ink); }
 
@@ -368,7 +382,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 /* ---------- Empty and status states ---------- */
 .empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 52px 24px; }
 .empty-icon { width: 76px; height: 76px; display: grid; place-items: center; margin-bottom: 8px; border-radius: 22px; border: 1.5px solid var(--edge); background: var(--surface); color: var(--text); }
-.empty h2, .empty strong { font-size: 19px; font-weight: 400; margin: 0; color: var(--text); }
+.empty h2, .empty strong { font-size: 19px; font-weight: 500; margin: 0; color: var(--text); }
 .empty p { max-width: 300px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .empty .btn { margin-top: 12px; }
 .status-ring { width: 76px; height: 76px; display: grid; place-items: center; border-radius: 22px; border: 1.5px solid var(--edge); background: var(--surface); }
@@ -417,7 +431,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 .side-link {
   display: flex; align-items: center; gap: 12px; width: 100%; min-height: 42px; padding: 0 12px;
   border: 0; border-radius: var(--r-pill); background: transparent; color: var(--muted); text-align: left; text-decoration: none;
-  font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+  font-size: 11px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase;
   transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
 }
 .side-link:hover { color: var(--text); background: rgba(236, 238, 232, 0.06); }
@@ -480,7 +494,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
   .dock-round { width: 48px; height: 48px; flex: none; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--ink); color: #eceee8; }
   .dock-round.active { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--lav); }
   .dock-pill { position: relative; flex: 1; max-width: 300px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; height: 48px; padding: 4px; border-radius: var(--r-pill); background: var(--ink); }
-  .dock-pill button { border: 0; border-radius: var(--r-pill); background: transparent; color: rgba(236, 238, 232, 0.72); font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+  .dock-pill button { border: 0; border-radius: var(--r-pill); background: transparent; color: rgba(236, 238, 232, 0.72); font-size: 10px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; }
   .dock-pill button.active { background: var(--lav); color: var(--ink); }
   .screen { padding: 18px 16px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom)); }
   .overlay { align-items: flex-end; padding: 0; }

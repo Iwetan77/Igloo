@@ -14,11 +14,11 @@
 .onboarding-progress span.active { width: 34px; background: var(--lav-deep); }
 
 .onboarding-intro { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 22px; padding: 64px 22px 24px; }
-.onboarding-intro h1 { margin: 0; font-size: 36px; line-height: 1.02; letter-spacing: -0.035em; }
+.onboarding-intro h1 { margin: 0; font-size: 36px; line-height: 1.02; letter-spacing: var(--tracking-heading); }
 .onboarding-lede { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .onboarding-panel > .field, .onboarding-panel > .interest-chips, .onboarding-panel > .label, .onboarding-panel > .inline-error, .onboarding-avatar { margin-inline: 8px; }
 .onboarding-avatar { position: relative; align-self: center; margin-bottom: 22px; cursor: pointer; }
-.username-status { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.username-status { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; }
 .username-status.available { color: var(--lav-deep); }
 .username-status.taken, .username-status.invalid { color: var(--danger); }
 .interest-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
@@ -33,7 +33,7 @@
 .onboarding-wallet { display: grid; gap: 10px; margin: 0 0 20px; }
 .onboarding-account { display: flex; align-items: center; gap: 14px; padding: 14px 14px 14px 16px; border-radius: var(--r-lg); }
 .onboarding-account-icon { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--lav); color: var(--ink); }
-.onboarding-address { font-family: var(--mono); font-size: 17px; letter-spacing: -0.01em; }
+.onboarding-address { font-family: var(--mono); font-size: 17px; letter-spacing: 0; }
 .onboarding-backup > div { display: grid; gap: 2px; }
 .onboarding-export { justify-self: start; margin-top: 12px; }
 .onboarding-check { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--warn-line); color: var(--text); font-size: 13px; cursor: pointer; }
@@ -67,7 +67,7 @@
 .onboarding-welcome { width: calc(100% - 24px); min-height: calc(100dvh - 24px); margin: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 22px 22px calc(26px + env(safe-area-inset-bottom)); border: 0; color: var(--text); text-align: center; animation: slab-in 600ms var(--ease-out); }
 .welcome-mark { display: grid; place-items: center; width: 104px; height: 104px; margin-bottom: 18px; border-radius: 28px; background: var(--lav); color: var(--ink); box-shadow: 0 0 0 10px rgba(203, 198, 251, 0.12); animation: mark-pop 700ms var(--ease-pop) 120ms backwards; }
 .welcome-mark svg { stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw-check 520ms var(--ease-out) 520ms forwards; }
-.onboarding-welcome h1 { margin: 0; font-size: 40px; line-height: 1; letter-spacing: -0.04em; animation: page-in 600ms var(--ease-out) 260ms backwards; }
+.onboarding-welcome h1 { margin: 0; font-size: 40px; line-height: 1; letter-spacing: var(--tracking-heading); animation: page-in 600ms var(--ease-out) 260ms backwards; }
 .onboarding-welcome p { margin: 0; color: var(--muted); animation: page-in 600ms var(--ease-out) 340ms backwards; }
 .welcome-foot { position: absolute; bottom: calc(26px + env(safe-area-inset-bottom)); animation: fade-in 600ms var(--ease-out) 700ms backwards; }
 .welcome-foot::before { background: var(--lav) !important; animation: dot-pulse 1.2s var(--ease-glide) infinite; }

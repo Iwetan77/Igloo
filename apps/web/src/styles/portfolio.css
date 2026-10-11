@@ -14,7 +14,7 @@ button.position-card:hover { background: var(--bg-2); }
 .position-card.claimable .btn-primary { background: var(--lav); border-color: var(--lav); color: var(--ink); }
 .position-card.claimable .tag-yes { background: var(--lav); }
 .position-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.position-question { font-size: 15px; font-weight: 400; line-height: 1.35; overflow-wrap: anywhere; }
+.position-question { font-size: 15px; font-weight: 500; line-height: 1.35; letter-spacing: var(--tracking-title); overflow-wrap: anywhere; }
 .position-figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
 .position-figures > span { display: grid; gap: 4px; }
 .position-figures.settled { grid-template-columns: 1fr 2fr; }
