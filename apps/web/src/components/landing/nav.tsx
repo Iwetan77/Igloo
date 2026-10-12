@@ -27,7 +27,7 @@ export function LandingNav() {
         <a href="#risk">Risk</a>
       </div>
       <Link href="/signup" className={s.navCta}>
-        Sign up
+        Sign in
       </Link>
     </nav>
   );
