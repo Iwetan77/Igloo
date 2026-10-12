@@ -17,6 +17,15 @@ Branch: `frontend`.
 - Profile pages at `/profile` and `/u/:username`, using `GET /usernames/:username`. Own profiles support editing, signed avatar upload to `avatars`, Videos/Liked tabs, and wallet access. Names and avatars appear in feed, comments, quotes, search, and market videos.
 - Feed, list, and detail markets show Ended and disable YES/NO when `end_time` is past.
 
+## Redesign (2026-10-06)
+
+Screens follow the Figma flow file; the visual language follows the reference moodboard: near-black surfaces, dusk gradients, light display numerals, uppercase Geist Mono labels, hairline lists, white pill actions, and thin tick-bar probability meters. Tokens and primitives live in `src/app/globals.css`; `AppShell` provides the side rail on desktop and a five-slot bottom bar with a centre post orb on phones.
+
+- Redesigned: feed (phone and desktop "Now watching"), Following empty state, Markets grid and empty category, search, market detail with Overview / Timeline / Videos tabs and related markets, buy flow (amount → order summary → slide-to-confirm → success or error), comments, post flow (market → record/upload → caption → publishing), wallet with deposit view, own and other profiles, edit profile.
+- New: `/portfolio` (open and resolved positions, position detail, claim via `POST /claims/build`), `/settings` (account, wallet, support FAQ, about, sign out), `/create` (market form → fee quote → confirm and sign → live, via `/markets/quote`, `/markets/build`, `/markets/register`), and a full-screen first-run flow (handle with live availability check, avatar, interests, welcome).
+- Not built because no API exists yet: X account linking, follow suggestions, withdraw, in-app transaction history (the wallet links to Solscan instead), notifications, public trade stream, privacy and blocking, and account deletion.
+- Claim and market creation are wired to the backend routes on `main` but have not been exercised against live Panta; verify them in a signed-in session.
+
 ## Configuration
 
 Set `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SOLANA_RPC_URL`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in ignored `apps/web/.env.local`. The temporary backend tunnel URL belongs only in that environment value.

@@ -78,7 +78,7 @@ export function CommentsDrawer({
       if (event.target === event.currentTarget) onClose();
     }}>
       <section className="sheet comments-sheet" role="dialog" aria-modal="true" aria-label="Comments">
-        <div className="sheet-head"><div><span className="eyebrow">Conversation</span><h2>Comments {post.comment_count > 0 ? "(" + post.comment_count + ")" : ""}</h2></div><button className="icon-action" type="button" onClick={onClose} aria-label="Close comments" title="Close"><X size={20} /></button></div>
+        <div className="sheet-head"><div><span className="label">Conversation</span><h2>Comments {post.comment_count > 0 ? "(" + post.comment_count + ")" : ""}</h2></div><button className="icon-btn sm" type="button" onClick={onClose} aria-label="Close comments" title="Close"><X size={17} strokeWidth={1.5} /></button></div>
         <div className="comment-list">
           {post.demo ? <p className="empty-note">Demo posts have no conversation. Add your own video to start one.</p> :
             loading ? <p className="empty-note">Loading comments...</p> :
@@ -86,13 +86,13 @@ export function CommentsDrawer({
             comments.map((comment) => (
               <article className="comment" key={comment.id}>
                 <ProfileAvatar src={comment.author.avatar_url} name={comment.author.display_name} size={34} />
-                <div><div className="comment-meta"><strong>{authorName(comment.author)}</strong><time dateTime={comment.created_at}>{new Date(comment.created_at).toLocaleDateString()}</time></div><p>{comment.body}</p></div>
+                <div><div className="comment-meta"><strong>{authorName(comment.author)}</strong><time dateTime={comment.created_at}>{new Date(comment.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</time></div><p>{comment.body}</p></div>
               </article>
             ))}
         </div>
         {!post.demo && <form className="comment-form" onSubmit={send}>
           {error && <p className="inline-error" role="alert">{error}</p>}
-          <div className="comment-entry"><input aria-label="Add a comment" placeholder={uiCopy("comment.placeholder")} value={body} maxLength={2000} onChange={(event) => setBody(event.target.value)} /><button type="submit" className="send-button" disabled={!body.trim() || sending} aria-label="Send comment" title="Send"><Send size={19} /></button></div>
+          <div className="comment-entry"><input className="input" aria-label="Add a comment" placeholder={uiCopy("comment.placeholder")} value={body} maxLength={2000} onChange={(event) => setBody(event.target.value)} /><button type="submit" className="send-button" disabled={!body.trim() || sending} aria-label="Send comment" title="Send"><Send size={18} strokeWidth={1.5} /></button></div>
         </form>}
       </section>
     </div>

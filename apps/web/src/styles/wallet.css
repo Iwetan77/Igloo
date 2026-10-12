@@ -1,0 +1,15 @@
+.wallet-sheet { width: min(100%, 420px); }
+.wallet-title { flex: 1; font-size: 19px; }
+.wallet-sheet .sheet-head > .icon-btn:first-child + .wallet-title { text-align: center; }
+.wallet-hero { margin-bottom: 10px; }
+.wallet-hero .slab-section:first-child { display: grid; gap: 14px; padding-top: 22px; }
+.wallet-balance { font-size: 52px; }
+.wallet-tags { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 16px 18px; }
+.address-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 16px; border-radius: var(--r-md); border: 1.5px solid var(--edge); background: var(--surface); color: var(--muted); }
+.address-row:hover { background: var(--surface-2); }
+.address-value { flex: 1; text-align: left; font-family: var(--mono); font-size: 14px; color: var(--text); }
+.wallet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.wallet-note { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px 0 0; }
+.wallet-signout { margin-top: 14px; }
+.deposit-card { display: grid; gap: 14px; padding: 22px 20px; margin-bottom: 10px; }
+.deposit-address { margin: 0; font-family: var(--mono); font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }

@@ -1,0 +1,28 @@
+# Keeps the Markets tab current on serverless hosting: calls the API's
+# budgeted catalog refresh every 30 minutes (Vercel's free cron runs daily).
+# Needs repository secrets IGLOO_API_URL (e.g. https://igloo-api.vercel.app)
+# and CRON_SECRET (the same value as the API's CRON_SECRET env var).
+name: Refresh market catalog
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call the refresh route
+        env:
+          API_URL: ${{ secrets.IGLOO_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "IGLOO_API_URL or CRON_SECRET secret is not set; skipping."
+            exit 0
+          fi
+          curl --fail-with-body -sS --max-time 90 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$API_URL/api/v1/internal/refresh-catalog"

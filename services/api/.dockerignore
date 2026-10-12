@@ -1,0 +1,5 @@
+.env
+Dockerfile
+.dockerignore
+STATUS.md
+README.md
