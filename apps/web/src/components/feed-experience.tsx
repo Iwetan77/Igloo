@@ -49,11 +49,11 @@ function question(post: FeedPost): string {
 type ComposerTarget = { quotePost: FeedPost; market?: never } | { market: MarketSummary; quotePost?: never };
 type BuyTarget = { post: Pick<FeedPost, "panta_market_id" | "market" | "caption">; side: Side };
 
-export function FeedExperience({ initialPostId, initialMarketId }: { initialPostId?: string; initialMarketId?: string }) {
+export function FeedExperience({ initialPostId, initialMarketId, initialTab }: { initialPostId?: string; initialMarketId?: string; initialTab?: FeedTab | "markets" }) {
   const session = useSession();
   const marketNow = useMarketClock();
   const { authenticated, getAccessToken, authorized, me, synced } = session;
-  const [tab, setTab] = useState<FeedTab | "markets">(initialMarketId ? "markets" : "for_you");
+  const [tab, setTab] = useState<FeedTab | "markets">(initialMarketId ? "markets" : initialTab ?? "for_you");
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [source, setSource] = useState<"live" | "demo">("live");
   const [cursor, setCursor] = useState<string | null>(null);
@@ -82,7 +82,8 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
   const watch = useWatchSignals(tab === "markets" ? "" : activeId, session);
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("tab") === "markets") setTab("markets");
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (requestedTab === "markets" || requestedTab === "following") setTab(requestedTab);
   }, []);
   useEffect(() => {
     if (!session.authenticated) walletSetupShown.current = false;
@@ -254,8 +255,10 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     window.location.assign("/post/" + encodeURIComponent(id));
   }
   function switchTab(next: FeedTab | "markets") {
-    if (initialMarketId) { window.location.assign(next === "markets" ? "/?tab=markets" : "/"); return; }
     if (next === "following" && !session.authenticated) { session.login(); return; }
+    if (initialMarketId) { window.location.assign(next === "markets" ? "/trade" : "/feed"); return; }
+    if (next === "markets" && initialTab !== "markets") { window.location.assign("/trade"); return; }
+    if (initialTab === "markets" && next !== "markets") { window.location.assign(next === "following" ? "/feed?tab=following" : "/feed"); return; }
     feedRef.current?.scrollTo({ top: 0 });
     setTab(next);
     setPosts([]);
@@ -270,7 +273,7 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
 
   const follower = (post: FeedPost) => profiles[post.author.id];
   return <div className={"app-frame" + (tab === "markets" ? " market-mode" : "")}>
-    <aside className="left-nav" aria-label="Main navigation"><div className="wordmark"><span className="logo-square" />Igloo</div><nav>
+    <aside className="left-nav" aria-label="Main navigation"><a className="wordmark" href="/landing" style={{ color: "inherit", textDecoration: "none" }}><span className="logo-square" />Igloo</a><nav>
       <button type="button" className={"nav-item" + (tab === "for_you" ? " active" : "")} onClick={() => switchTab("for_you")}><Compass size={20} />For You</button>
       <button type="button" className={"nav-item" + (tab === "markets" ? " active" : "")} onClick={() => switchTab("markets")}><TrendingUp size={20} />Markets</button>
       <button type="button" className="nav-item" onClick={() => setSearch(true)}><Search size={20} />Search</button>
@@ -282,9 +285,9 @@ export function FeedExperience({ initialPostId, initialMarketId }: { initialPost
     <main className="feed-column"><header className="feed-header"><button type="button" className="header-search" onClick={() => setSearch(true)} aria-label="Search markets and people" title="Search"><Search size={18} /></button><nav className="top-tabs" aria-label="Feed tabs">
       <button type="button" className={tab === "following" ? "active" : ""} onClick={() => switchTab("following")}>Following</button>
       <button type="button" className={tab === "for_you" ? "active" : ""} onClick={() => switchTab("for_you")}>For You</button>
-    </nav>{session.authenticated ? <button type="button" className="header-wallet" onClick={() => setAccount(true)}><Image src="/brand/usdc-token.svg" alt="" width={32} height={32} className="usdc-token-mark" />{session.balance === null ? <span>Wallet</span> : <><span className="wallet-full">{session.balance.toFixed(2)} USDC</span><span className="wallet-short" aria-hidden="true">{compactUsd(session.balance)}</span></>}</button> : <button type="button" className="header-signin" onClick={session.login}>Sign in</button>}</header>
+    </nav>{session.authenticated ? <button type="button" className="header-wallet" onClick={() => setAccount(true)}><Image src="/brand/usdc-token.svg" alt="" width={32} height={32} className="usdc-token-mark" />{session.balance === null ? <span>Wallet</span> : <><span className="wallet-full">{session.balance.toFixed(2)} USDC</span><span className="wallet-short" aria-hidden="true">{compactUsd(session.balance)}</span></>}</button> : <a className="header-signin" href="/signup" style={{ textDecoration: "none" }}>Sign in</a>}</header>
 
-    {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => window.location.assign("/?tab=markets")} /> : <div className="feed-scroll" ref={feedRef} onScroll={(event) => { const element = event.currentTarget; if (element.scrollTop + element.clientHeight >= element.scrollHeight - element.clientHeight * 1.5) void loadMore(); }}>
+    {tab === "markets" ? <MarketsView marketId={initialMarketId} session={session} onPost={(market) => setComposer({ market })} onQuote={openQuote} onBuy={buyMarket} onOpenPost={openOriginal} onBack={() => window.location.assign("/trade")} /> : <div className="feed-scroll" ref={feedRef} onScroll={(event) => { const element = event.currentTarget; if (element.scrollTop + element.clientHeight >= element.scrollHeight - element.clientHeight * 1.5) void loadMore(); }}>
       {posts.map((post, index) => <article className="feed-item" id={"post-" + post.id} data-post-id={post.id} key={post.id}>
         {videoErrors[post.id] ? <div className="video-fallback"><span>{post.market.category || "Market"}</span><strong>{question(post)}</strong><small>Video unavailable</small></div> : <video ref={(element) => { if (element) videos.current.set(post.id, element); else videos.current.delete(post.id); }} src={post.video_url} className="post-video" autoPlay={post.id === activeId} loop muted playsInline preload={post.id === activeId || posts[index - 1]?.id === activeId ? "auto" : "metadata"} onPlay={() => watch.onPlay(post.id)} onPause={() => watch.onPause(post.id)} onTimeUpdate={(event) => watch.onTimeUpdate(post.id, event.currentTarget)} onEnded={() => watch.onEnded(post.id)} onClick={() => setUnmutedId((current) => current === post.id ? "" : post.id)} onError={() => setVideoErrors((current) => ({ ...current, [post.id]: true }))} aria-label={question(post) + " video; tap to toggle sound"} />}
         <div className="video-shade" aria-hidden /><div className="post-topline"><span className="category-tag">{post.market.category || "Market"}</span>{post.demo && <span className="demo-tag">Demo</span>}</div>

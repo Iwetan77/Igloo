@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { APP_HREF } from "./data";
 import s from "./landing.module.css";
 import { IglooLogo } from "./logo";
 
@@ -27,8 +26,8 @@ export function LandingNav() {
         <a href="#categories">Categories</a>
         <a href="#risk">Risk</a>
       </div>
-      <Link href={APP_HREF} className={s.navCta}>
-        Open Igloo
+      <Link href="/signup" className={s.navCta}>
+        Sign up
       </Link>
     </nav>
   );

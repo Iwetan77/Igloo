@@ -1,6 +1,7 @@
-import { FeedExperience } from "@/components/feed-experience";
+import { Landing } from "@/components/landing/landing";
+import { HomeGateway } from "@/components/home-gateway";
 
 export default function Home() {
-  return <FeedExperience />;
+  return <HomeGateway landing={<Landing />} />;
 }
 

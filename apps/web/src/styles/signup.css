@@ -1,0 +1,65 @@
+.signup-screen {
+  min-height: 100svh;
+  background: var(--bg);
+  color: var(--text);
+}
+.signup-screen a { color: inherit; text-decoration: none; }
+.signup-header {
+  max-width: 1200px;
+  height: 76px;
+  margin: 0 auto;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.signup-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  font-weight: 800;
+}
+.signup-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted) !important;
+  font-size: 14px;
+}
+.signup-back:hover { color: var(--text) !important; }
+.signup-content {
+  width: min(calc(100% - 40px), 520px);
+  min-height: calc(100svh - 76px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 42px 0 90px;
+}
+.signup-eyebrow { color: var(--ice); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.signup-content h1 { margin: 18px 0 10px; font-size: clamp(38px, 6vw, 62px); line-height: 1.1; letter-spacing: 0; }
+.signup-content p { margin: 0 0 34px; color: var(--muted); font-size: 17px; line-height: 1.6; }
+.signup-google {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 700;
+}
+.signup-google svg { margin-left: auto; }
+.signup-google::before { content: ""; width: 18px; margin-left: auto; }
+.signup-explore { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; color: var(--ice) !important; font-size: 13px; font-weight: 600; }
+@media (max-width: 600px) {
+  .signup-header { height: 68px; padding: 0 20px; }
+  .signup-content { min-height: calc(100svh - 68px); padding-bottom: 70px; }
+  .signup-content p { font-size: 15px; }
+}

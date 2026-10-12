@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 /** Where every "Open Igloo" button goes: the app's feed. */
-export const APP_HREF = "/";
+export const APP_HREF = "/feed";
 
 // Invented examples for the landing page only. Never real market data or prices.
 
