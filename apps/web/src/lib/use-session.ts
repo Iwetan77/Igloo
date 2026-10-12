@@ -65,8 +65,10 @@ export function useSession() {
 
   useEffect(() => {
     if (!authenticated || !user?.id || !address) {
+      syncKey.current = "";
       setSynced(false);
       setMe(null);
+      setSyncError("");
       return;
     }
     const key = user.id + ":" + address;
